@@ -295,12 +295,13 @@ function mobUpdate(dt){
  }
  // Um atacante descansa após cada investida; outros têm oportunidade de entrar.
  let active=0;
+ const usedSlots=new Set();
  for(const m of R.mobs){
   if(!m.alive||!m.spawned)continue;
   if(m.attackUntil>0&&m.attackUntil<=R.clock){
    m.attackUntil=0;m.restUntil=R.clock+3.5+(m.seed%1.0);
   }
-  if(m.attackUntil>R.clock)active++;
+  if(m.attackUntil>R.clock){active++;usedSlots.add(m.attackSlot);}
  }
  const candidates=R.mobs.filter(m=>m.alive&&m.spawned&&m.attackUntil<=R.clock&&m.restUntil<=R.clock&&
    Math.abs(m.x-heroX)<W*.74);
@@ -308,7 +309,8 @@ function mobUpdate(dt){
  for(const m of candidates){
   if(active>=3)break;
   m.attackUntil=R.clock+4.6+(m.seed%1.25);
-  active++;
+  m.attackSlot=[0,1,2].find(slot=>!usedSlots.has(slot))??0;
+  usedSlots.add(m.attackSlot);active++;
  }
  for(const m of R.mobs){
   if(!m.alive)continue;
@@ -327,20 +329,19 @@ function mobUpdate(dt){
   let aimX,aimY,speed;
   if(striking){
    // Três faixas de ataque em diferentes alturas, com distância da boca.
-   const lane=m.territory+(m.seed%3);
-   const offsetLane=(m.id%3);
-   const reach=Math.max(110,m.size*.77)+(m.id%2)*70;
+   const slot=m.attackSlot||0;
+   const reach=Math.max(155,m.size*.98)+(slot%2)*95;
    aimX=heroX+side*reach;
-   aimY=heroY-145+offsetLane*94;
+   aimY=heroY-170+slot*112;
    speed=Math.max(280,m.speed*3.45);
   }else{
-   // Acompanha sem convergir: anéis de observação 0,55–1 tela longe do herói.
-   // Assim os dragões restantes continuam alertas, mas não formam aglomeração.
-   const ring=m.id%5;
-   const hold=W*(.57+ring*.11);
+   // Formação de espera em grade 5 x 3: distância e altitude próprias para
+   // cada um dos 15 dragões, em vez de doze alvos quase idênticos.
+   const column=m.id%5,row=Math.floor(m.id/5)%3;
+   const hold=W*(.51+column*.16);
    aimX=heroX+side*hold;
-   aimY=m.baseY+Math.sin(R.clock*1.5+m.seed)*H*.07;
-   speed=Math.max(130,m.speed*1.65);
+   aimY=H*(.22+row*.20)+Math.sin(R.clock*1.5+m.seed)*H*.014;
+   speed=Math.max(135,m.speed*1.68);
   }
   aimX=clamp(aimX,m.size*.35,R.world-m.size*.35);
   aimY=clamp(aimY,m.size*.55+10,floor()-m.size*.62);
@@ -365,7 +366,7 @@ function mobUpdate(dt){
   // fora do espaço do jogador, mantendo o ataque na borda do alcance.
   if(striking){
    const hdx=m.x-heroX,hdy=m.y-heroY,hr=Math.hypot(hdx,hdy)||1;
-   const safeHeroDist=Math.max(90,m.size*.55);
+   const safeHeroDist=Math.max(145,m.size*.88);
    if(hr<safeHeroDist){
     const push=safeHeroDist-hr;
     m.x=clamp(m.x+(hdx/hr)*push,m.size*.35,R.world-m.size*.35);
@@ -373,6 +374,11 @@ function mobUpdate(dt){
    }
   }
   const heroDistance=Math.hypot(m.x-heroX,m.y-heroY);
+  if(!striking&&heroDistance<m.size*1.35){
+   // Reservas não devem ficar em cima do jogador enquanto aguardam a vez.
+   const direction=m.x>=heroX?1:-1;
+   m.x=clamp(m.x+direction*Math.max(130,m.speed*2)*step,m.size*.35,R.world-m.size*.35);
+  }
   if(striking&&heroDistance<m.size*.34+38&&m.contact<=0){
    applyDragonDamage(4+R.area,'contato');
    m.contact=1.55;
