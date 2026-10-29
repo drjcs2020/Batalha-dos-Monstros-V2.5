@@ -325,7 +325,12 @@ function mobUpdate(dt){
    continue;
   }
   const striking=m.attackUntil>R.clock;
-  const side=m.x<heroX?-1:1;
+  // Escolhe o flanco que tem espaço de voo no mundo; não prende 12 dragões
+  // no limite direito/esquerdo da arena quando o herói chega à saída.
+  const leftRoom=heroX-m.size*.35,rightRoom=R.world-m.size*.35-heroX;
+  let side=m.x<heroX?-1:1;
+  if(rightRoom<W*.40&&leftRoom>W*.40)side=-1;
+  else if(leftRoom<W*.40&&rightRoom>W*.40)side=1;
   let aimX,aimY,speed;
   if(striking){
    // Três faixas de ataque em diferentes alturas, com distância da boca.
@@ -340,8 +345,10 @@ function mobUpdate(dt){
    const column=m.id%5,row=Math.floor(m.id/5)%3;
    const hold=W*(.51+column*.16);
    aimX=heroX+side*hold;
-   aimY=H*(.22+row*.20)+Math.sin(R.clock*1.5+m.seed)*H*.014;
-   speed=Math.max(135,m.speed*1.68);
+   // Se precisar trocar de flanco, passa SOBRE o herói, nunca por cima do corpo.
+   const crossing=side<0&&m.x>heroX+W*.18 || side>0&&m.x<heroX-W*.18;
+   aimY=crossing?H*.16:H*(.22+row*.20)+Math.sin(R.clock*1.5+m.seed)*H*.014;
+   speed=crossing?Math.max(215,m.speed*2.3):Math.max(135,m.speed*1.68);
   }
   aimX=clamp(aimX,m.size*.35,R.world-m.size*.35);
   aimY=clamp(aimY,m.size*.55+10,floor()-m.size*.62);
