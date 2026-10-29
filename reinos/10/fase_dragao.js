@@ -52,7 +52,7 @@ const territoryFloorCorrectionPxR10=Object.freeze([0,0,15,20,36]);
 // Recuo para o interior das passarelas (px CSS); por territorio.
 // Menor em T3/T4 para preservar parte dos ajustes locais anteriores.
 // Sprite, escudo, pickups e fisica compartilham a mesma ancora do piso.
-const walkwayDepthInsetPxR10=Object.freeze([18,18,12,12,18]);
+const walkwayDepthInsetPxR10=Object.freeze([30,30,24,24,18]);
 const floor=()=>H*floorRatiosR10[R.area]+territoryFloorCorrectionPxR10[R.area]-walkwayDepthInsetPxR10[R.area];
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 window.cm25HeroDepthScale=()=>heroScaleRatiosR10[R.area]||1;
@@ -67,7 +67,7 @@ const getShotAim=m=>({x:p.x,y:p.y-52});
 const killMob=m=>{if(m.hp<=0&&m.alive){m.alive=false;score+=120+(m.territory*30);burst(m.x-R.cam,m.y-m.size*.52,'#ffd56b',19)}};
 const imageDraw=(im,x,y,w,h)=>{if(im&&im.complete&&im.naturalWidth)ctx.drawImage(im,x,y,w,h)};
 function mobFrame(m){return dragon[m.territory][Math.floor(R.clock*8+m.seed)%4]}
-// Desenhar apenas dragoes ativados; os 40 continuam no total por territorio.
+// Os dragões patrulham seus setores; somente três fazem investidas simultâneas.
 function mobDraw(m){if(!m.alive)return;const im=mobFrame(m);if(!im?.naturalWidth)return;const height=m.size,width=height*im.naturalWidth/im.naturalHeight;
  const dx=m.x-R.cam;if(dx<-width||dx>W+width)return;ctx.save();ctx.globalAlpha=m.hit>0?.7:1;
  // Espelhar dragao jovem em torno de seu centro; o heroi pode estar de qualquer lado.
@@ -78,11 +78,13 @@ function createMob(territory,x,id,bossGuard=false){
  // Dragões já são jovens no desenho: escala de combate (não miniaturas).
  const sizes=[182,188,195,202];
  const size=Math.min(H*.355,sizes[territory]*clamp(H/640,.85,1.18));
- const max=bossGuard?120:70+territory*22;
+ // Quinze dragões mais resistentes em cada território comum; guardiões não mudam.
+ const max=bossGuard?120:220+territory*65;
  const anchorY=H*(.30+(id%4)*.085);
  return {territory,x,y:anchorY,baseY:anchorY,size,max,hp:max,alive:true,seed:id*.91,
   speed:(bossGuard?0:72+territory*9),cool:1.1+(id*.2%3),contact:0,hit:0,
-  guard:bossGuard, spawned:bossGuard, spawnX:x, swoop:0, vx:0, vy:0, modeTime:.7+id*.16};
+  guard:bossGuard, spawned:bossGuard, spawnX:x, swoop:0, vx:0, vy:0, modeTime:.7+id*.16,
+   attackUntil:0,restUntil:0};
 }
 function updateHud(){document.getElementById('ename').textContent=R.area===4?'DRAGÃO DE FOGO':names[R.area];document.getElementById('round').textContent='REINO 10 · TERRITÓRIO '+(R.area+1)+'/5';document.getElementById('stageText').textContent=names[R.area];document.getElementById('difficulty').textContent=R.area===4?'CHEFÃO + QUATRO DRAGÕES GUARDIÕES':'SUBALTERNOS RESTANTES: '+R.mobs.filter(x=>x.alive).length;
  if(R.area<4){const alive=R.mobs.filter(x=>x.alive).length;document.getElementById('ehp').style.width=100*alive/R.mobs.length+'%';}}
@@ -92,7 +94,7 @@ function startTerritory(){R.active=true;R.shift=false;R.cleared=false;R.cam=0;R.
  if(R.area===4){R.bossIntro=.5;boss.max=4510;boss.hp=4510;boss.x=W*.78;boss.y=floor()-Math.min(360,H*.52)*.5;boss.cool=2.55;R.bossShot=3.5;R.world=W;R.bossFollowers=[0,1,2,3].map((t,i)=>{const m=createMob(t,W*(.49+.115*i),i,true);m.size=Math.min(H*.29,155+i*9);m.y=H*(.29+(i%2)*.15);m.baseY=m.y;return m});R.mobs=R.bossFollowers;
   // stageAudio() below uses the ORIGINAL V2.4 dragon track index, never overwrites the boss track.
   playMediaAudio(trilhaFases[9],true,.75);
- }else{const counts=[40,40,40,40];const n=counts[R.area];for(let i=0;i<n;i++){
+ }else{const counts=[15,15,15,15];const n=counts[R.area];for(let i=0;i<n;i++){
   // Distribuição uniforme no percurso inteiro: cada inimigo pertence a um trecho.
   // Nunca antecipar a patrulha dos trechos futuros só porque o relógio avançou.
   const x=W*.62+(R.world-W*.92)*(i+.5)/n;
@@ -207,7 +209,7 @@ function projectileDraw(){for(const q of R.projectiles){
 // e das abelhas (R5): patrulha por setor -> desperta perto do herói ->
 // perseguição persistente, mesmo quando o herói passa ou volta para trás.
 // Todos os 40 inimigos entram no combate por proximidade, SEM teto de 6.
-function mobUpdate(dt){
+function mobUpdateBossGuards(dt){
  const step=Math.min(dt,.055);
  const heroX=p.x,heroY=p.y-52;
  for(const m of R.mobs){
@@ -274,6 +276,123 @@ function mobUpdate(dt){
     createFire(m);
     m.cool=2.9+(m.seed%1.4)+m.territory*.12;
    }else m.cool=.35;
+  }
+ }
+}
+
+// Reino 10 T1-T4: 15 dragões, três investindo por vez em rodízio.
+// Os outros patrulham e acompanham à distância, sem se empilharem no herói.
+// O chefão/guardiões T5 continuam com a IA que já existia antes desta revisão.
+function mobUpdate(dt){
+ if(R.area===4)return mobUpdateBossGuards(dt);
+ const step=Math.min(dt,.055),heroX=p.x,heroY=p.y-52;
+ // Primeiro despertar por proximidade: dragões de regiões futuras não invadem o início.
+ for(const m of R.mobs){
+  if(!m.alive||m.spawned)continue;
+  if(Math.abs(m.x-heroX)<W*.80){
+   m.spawned=true;m.cool=Math.max(.65,m.cool);m.modeTime=.6+(m.seed%1.0);
+  }
+ }
+ // Um atacante descansa após cada investida; outros têm oportunidade de entrar.
+ let active=0;
+ const usedSlots=new Set();
+ for(const m of R.mobs){
+  if(!m.alive||!m.spawned)continue;
+  if(m.attackUntil>0&&m.attackUntil<=R.clock){
+   m.attackUntil=0;m.restUntil=R.clock+3.5+(m.seed%1.0);
+  }
+  if(m.attackUntil>R.clock){active++;usedSlots.add(m.attackSlot);}
+ }
+ const candidates=R.mobs.filter(m=>m.alive&&m.spawned&&m.attackUntil<=R.clock&&m.restUntil<=R.clock&&
+   Math.abs(m.x-heroX)<W*.74);
+ candidates.sort((a,b)=>Math.abs(a.x-heroX)-Math.abs(b.x-heroX));
+ for(const m of candidates){
+  if(active>=3)break;
+  m.attackUntil=R.clock+4.6+(m.seed%1.25);
+  m.attackSlot=[0,1,2].find(slot=>!usedSlots.has(slot))??0;
+  usedSlots.add(m.attackSlot);active++;
+ }
+ for(const m of R.mobs){
+  if(!m.alive)continue;
+  m.hit=Math.max(0,m.hit-dt);
+  m.contact=Math.max(0,m.contact-dt);
+  if(!m.spawned){
+   // Patrulha visível e suave do setor, não fica parado mirando bolas de fogo.
+   const homeX=m.spawnX+Math.sin(R.clock*.92+m.seed)*Math.min(42,W*.04);
+   const homeY=clamp(m.baseY+Math.sin(R.clock*1.65+m.seed)*H*.05,m.size*.55+12,floor()-m.size*.72);
+   m.x+=clamp(homeX-m.x,-70*step,70*step);
+   m.y+=clamp(homeY-m.y,-65*step,65*step);
+   continue;
+  }
+  const striking=m.attackUntil>R.clock;
+  // Escolhe o flanco que tem espaço de voo no mundo; não prende 12 dragões
+  // no limite direito/esquerdo da arena quando o herói chega à saída.
+  const leftRoom=heroX-m.size*.35,rightRoom=R.world-m.size*.35-heroX;
+  let side=m.x<heroX?-1:1;
+  if(rightRoom<W*.40&&leftRoom>W*.40)side=-1;
+  else if(leftRoom<W*.40&&rightRoom>W*.40)side=1;
+  let aimX,aimY,speed;
+  if(striking){
+   // Três faixas de ataque em diferentes alturas, com distância da boca.
+   const slot=m.attackSlot||0;
+   const reach=Math.max(155,m.size*.98)+(slot%2)*95;
+   aimX=heroX+side*reach;
+   aimY=heroY-170+slot*112;
+   speed=Math.max(280,m.speed*3.45);
+  }else{
+   // Reservas patrulham em seus setores originais. Quando o herói passa,
+   // acompanham à distância, cada uma em uma coluna DIFERENTE no mundo.
+   // Não usar a posição do herói como o mesmo ponto de encontro para as 15.
+   const passed=heroX>m.spawnX;
+   const trailing=W*(.55+m.id*.135);
+   const patrol=m.spawnX+Math.sin(R.clock*.85+m.seed)*Math.min(46,W*.045);
+   aimX=passed?Math.min(m.spawnX+W*.25,heroX-trailing):patrol;
+   // Faixas verticais estáveis, não uma altura única sobre o jogador.
+   aimY=H*(.23+(m.id%3)*.19)+Math.sin(R.clock*1.55+m.seed)*H*.025;
+   speed=Math.max(125,m.speed*1.65);
+  }
+  aimX=clamp(aimX,m.size*.35,R.world-m.size*.35);
+  aimY=clamp(aimY,m.size*.55+10,floor()-m.size*.62);
+  const dx=aimX-m.x,dy=aimY-m.y,len=Math.hypot(dx,dy)||1;
+  // Repulsão física entre dragões próximos. Mais forte entre os que investem.
+  let repelX=0,repelY=0;
+  for(const other of R.mobs){
+   if(other===m||!other.alive||!other.spawned)continue;
+   const ox=m.x-other.x,oy=m.y-other.y,d=Math.hypot(ox,oy);
+   const minSep=(m.size+other.size)*(striking?.62:.51);
+   if(d>.001&&d<minSep){
+    const force=(minSep-d)/minSep;
+    repelX+=ox/d*force;repelY+=oy/d*force;
+   }
+  }
+  const steer=1-Math.exp(-step*(striking?3.3:2.6));
+  const vx=clamp((dx/len)*speed+repelX*(striking?230:135),-speed*1.05,speed*1.05);
+  const vy=clamp((dy/len)*speed*.80+repelY*(striking?210:125),-speed*.9,speed*.9);
+  m.x=clamp(m.x+vx*step,m.size*.35,R.world-m.size*.35);
+  m.y=clamp(m.y+vy*step,m.size*.55+10,floor()-m.size*.62);
+  // Defesa contra sprites sobrepostos: após aproximação, empurra o atacante para
+  // fora do espaço do jogador, mantendo o ataque na borda do alcance.
+  if(striking){
+   const hdx=m.x-heroX,hdy=m.y-heroY,hr=Math.hypot(hdx,hdy)||1;
+   const safeHeroDist=Math.max(145,m.size*.88);
+   if(hr<safeHeroDist){
+    const push=safeHeroDist-hr;
+    m.x=clamp(m.x+(hdx/hr)*push,m.size*.35,R.world-m.size*.35);
+    m.y=clamp(m.y+(hdy/hr)*push,m.size*.55+10,floor()-m.size*.62);
+   }
+  }
+  const heroDistance=Math.hypot(m.x-heroX,m.y-heroY);
+
+  if(striking&&heroDistance<m.size*.34+38&&m.contact<=0){
+   applyDragonDamage(4+R.area,'contato');
+   m.contact=1.55;
+  }
+  m.cool-=step;
+  if(striking&&m.cool<=0){
+   const visible=m.x-R.cam>-m.size&&m.x-R.cam<W+m.size;
+   if(visible&&heroDistance<W*.70&&R.projectiles.length<6){
+    createFire(m);m.cool=3.2+(m.seed%1.3)+m.territory*.15;
+   }else m.cool=.45;
   }
  }
 }
