@@ -101,7 +101,7 @@ const bossVisualFootPad=()=>0;
 // física, imagem, escudo e hitbox voltam a compartilhar o mesmo y.
 const heroGroundContactPxR5=()=>{
  const oldNegativePad=Math.max(11,Math.round(H*.027));
- return (S.area===4?31:20)-oldNegativePad;
+ return Math.max(4,(S.area===4?31:20)-oldNegativePad); // nunca deixar âncora acima do piso em telas altas
 };
 const ground=()=>floorAnchorY()+45-heroHeight()/2+heroHeight()*heroFootTrim()+heroVisualFootPad()+heroGroundContactPxR5();
 const isWingedHero=()=>heroIdx===0||heroIdx===5;
