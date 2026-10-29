@@ -93,7 +93,10 @@ const heroFootTrim=()=>0; // Pontos de pouso agora calculados no desenho a parti
 // Compensações restritas ao território final; Física continua ancorada pelo limite inferior.
 const heroVisualFootPad=()=>0;
 const bossVisualFootPad=()=>0;
-const ground=()=>floorAnchorY()+45-heroHeight()/2+heroHeight()*heroFootTrim()+heroVisualFootPad();
+// Ajuste LOCAL do herói nos cinco territórios R4: pés +9px CSS (~2,4 mm a 96dpi).
+// Não move o piso gráfico, os monstros nem o chefão; só a âncora física do herói.
+const heroGroundContactPxR4=Object.freeze([9,9,9,9,9]);
+const ground=()=>floorAnchorY()+45-heroHeight()/2+heroHeight()*heroFootTrim()+heroVisualFootPad()+heroGroundContactPxR4[S.area];
 const gravity=()=>heroIdx===0?380:570; // salto amplo; fada flutua um pouco mais
 const heroCeiling=()=>Math.max(125,H*.24); // limite superior da faixa de voo/salto
 const worldLen=()=>W*4.25; // Permite rolagem longa e pelo menos uma repetição do cenário.
