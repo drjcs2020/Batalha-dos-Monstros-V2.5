@@ -340,15 +340,16 @@ function mobUpdate(dt){
    aimY=heroY-170+slot*112;
    speed=Math.max(280,m.speed*3.45);
   }else{
-   // Formação de espera em grade 5 x 3: distância e altitude próprias para
-   // cada um dos 15 dragões, em vez de doze alvos quase idênticos.
-   const column=m.id%5,row=Math.floor(m.id/5)%3;
-   const hold=W*(.51+column*.16);
-   aimX=heroX+side*hold;
-   // Se precisar trocar de flanco, passa SOBRE o herói, nunca por cima do corpo.
-   const crossing=side<0&&m.x>heroX+W*.18 || side>0&&m.x<heroX-W*.18;
-   aimY=crossing?H*.16:H*(.22+row*.20)+Math.sin(R.clock*1.5+m.seed)*H*.014;
-   speed=crossing?Math.max(215,m.speed*2.3):Math.max(135,m.speed*1.68);
+   // Reservas patrulham em seus setores originais. Quando o herói passa,
+   // acompanham à distância, cada uma em uma coluna DIFERENTE no mundo.
+   // Não usar a posição do herói como o mesmo ponto de encontro para as 15.
+   const passed=heroX>m.spawnX;
+   const trailing=W*(.55+m.id*.135);
+   const patrol=m.spawnX+Math.sin(R.clock*.85+m.seed)*Math.min(46,W*.045);
+   aimX=passed?Math.min(m.spawnX+W*.25,heroX-trailing):patrol;
+   // Faixas verticais estáveis, não uma altura única sobre o jogador.
+   aimY=H*(.23+(m.id%3)*.19)+Math.sin(R.clock*1.55+m.seed)*H*.025;
+   speed=Math.max(125,m.speed*1.65);
   }
   aimX=clamp(aimX,m.size*.35,R.world-m.size*.35);
   aimY=clamp(aimY,m.size*.55+10,floor()-m.size*.62);
@@ -381,12 +382,7 @@ function mobUpdate(dt){
    }
   }
   const heroDistance=Math.hypot(m.x-heroX,m.y-heroY);
-  if(!striking&&heroDistance<W*.34){
-   // Reservas dentro da zona do jogador saem por cima e pelo flanco livre,
-   // mesmo na borda da arena; somente os três atacantes podem se aproximar.
-   m.x=clamp(m.x+side*Math.max(580,m.speed*5.2)*step,m.size*.35,R.world-m.size*.35);
-   m.y=clamp(m.y-340*step,H*.15,floor()-m.size*.62);
-  }
+
   if(striking&&heroDistance<m.size*.34+38&&m.contact<=0){
    applyDragonDamage(4+R.area,'contato');
    m.contact=1.55;
