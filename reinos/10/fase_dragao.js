@@ -52,7 +52,9 @@ const territoryFloorCorrectionPxR10=Object.freeze([0,0,15,20,36]);
 // Recuo para o interior das passarelas (px CSS); por territorio.
 // Menor em T3/T4 para preservar parte dos ajustes locais anteriores.
 // Sprite, escudo, pickups e fisica compartilham a mesma ancora do piso.
-const walkwayDepthInsetPxR10=Object.freeze([30,30,24,24,18]);
+// Corrige a subida indevida de 12px provocada pelo ajuste anterior.
+// A mesma referência física governa sprite, escudo e colisão nos cinco territórios.
+const walkwayDepthInsetPxR10=Object.freeze([18,18,12,12,18]);
 const floor=()=>H*floorRatiosR10[R.area]+territoryFloorCorrectionPxR10[R.area]-walkwayDepthInsetPxR10[R.area];
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 window.cm25HeroDepthScale=()=>heroScaleRatiosR10[R.area]||1;
@@ -97,7 +99,8 @@ function startTerritory(){R.active=true;R.shift=false;R.cleared=false;R.cam=0;R.
  }else{const counts=[15,15,15,15];const n=counts[R.area];for(let i=0;i<n;i++){
   // Distribuição uniforme no percurso inteiro: cada inimigo pertence a um trecho.
   // Nunca antecipar a patrulha dos trechos futuros só porque o relógio avançou.
-  const x=W*.62+(R.world-W*.92)*(i+.5)/n;
+  // Três primeiros dragões aparecem na tela inicial; sem teleporte.
+   const x=W*.30+(R.world-W*.65)*(i+.4)/n;
   R.mobs.push(createMob(R.area,x,i));
  }playMediaAudio(trilhaFases[9],true,.67)}
  p.x=W*.18;p.y=feet();p.hp=100;p.mana=100;p.inv=1.2;p.shield=0;p.shieldCd=0;shots=[];bad=[];parts=[];bossDefeated=false;defeatPending=false;superCooldown=0;superUses=0;R.showingDefeat=false;
@@ -303,8 +306,17 @@ function mobUpdate(dt){
   }
   if(m.attackUntil>R.clock){active++;usedSlots.add(m.attackSlot);}
  }
+ // Ativar o próximo dragão com antecedência quando restarem menos de dois
+ // perseguidores. O reforço voa do próprio setor; nunca aparece por teleporte.
+ if(active<2){
+  const backup=R.mobs.filter(m=>m.alive&&!m.spawned)
+    .sort((a,b)=>Math.abs(a.x-heroX)-Math.abs(b.x-heroX))[0];
+  if(backup&&Math.abs(backup.x-heroX)<W*1.55){
+   backup.spawned=true;backup.cool=Math.max(.65,backup.cool);
+  }
+ }
  const candidates=R.mobs.filter(m=>m.alive&&m.spawned&&m.attackUntil<=R.clock&&m.restUntil<=R.clock&&
-   Math.abs(m.x-heroX)<W*.74);
+   Math.abs(m.x-heroX)<W*.94);
  candidates.sort((a,b)=>Math.abs(a.x-heroX)-Math.abs(b.x-heroX));
  for(const m of candidates){
   if(active>=3)break;
@@ -344,9 +356,11 @@ function mobUpdate(dt){
    // acompanham à distância, cada uma em uma coluna DIFERENTE no mundo.
    // Não usar a posição do herói como o mesmo ponto de encontro para as 15.
    const passed=heroX>m.spawnX;
-   const trailing=W*(.55+m.id*.135);
+   const trailing=W*(.38+m.id*.145); // Cada dragão tem sua coluna própria; sem agrupamento a cada 6.
    const patrol=m.spawnX+Math.sin(R.clock*.85+m.seed)*Math.min(46,W*.045);
-   aimX=passed?Math.min(m.spawnX+W*.25,heroX-trailing):patrol;
+   // Reservas seguem depois que o herói passa, com distância separada.
+   // Não prendê-las no spawnX: isso deixava a tela vazia ao avançar.
+   aimX=passed?heroX-trailing:patrol;
    // Faixas verticais estáveis, não uma altura única sobre o jogador.
    aimY=H*(.23+(m.id%3)*.19)+Math.sin(R.clock*1.55+m.seed)*H*.025;
    speed=Math.max(125,m.speed*1.65);
@@ -395,6 +409,25 @@ function mobUpdate(dt){
    }else m.cool=.45;
   }
  }
+ // Resolver cruzamentos entre dragões: evitar o bolo visual mesmo quando vários
+ // chegam ao fim da passarela ou o herói muda de direção.
+ // Corrigir em coordenadas do mundo; NÃO aproxima ninguém do herói.
+ const engaged=R.mobs.filter(m=>m.alive&&m.spawned);
+ for(let pass=0;pass<3;pass++){
+  for(let i=0;i<engaged.length;i++)for(let j=i+1;j<engaged.length;j++){
+   const u=engaged[i],v=engaged[j];
+   let dx=u.x-v.x,dy=u.y-v.y,dist=Math.hypot(dx,dy);
+   const spacing=(u.size+v.size)*.66;
+   if(dist>=spacing)continue;
+   if(dist<.1){dx=(i%2===0?-1:1)*.72;dy=(j%2===0?-1:1)*.7;dist=1;}
+   const correction=Math.min(30,(spacing-dist)*.45),ox=dx/dist*correction,oy=dy/dist*correction;
+   u.x=clamp(u.x+ox,u.size*.35,R.world-u.size*.35);
+   v.x=clamp(v.x-ox,v.size*.35,R.world-v.size*.35);
+   u.y=clamp(u.y+oy,u.size*.55+10,floor()-u.size*.62);
+   v.y=clamp(v.y-oy,v.size*.55+10,floor()-v.size*.62);
+  }
+ }
+
 }
 function mobHitByWeapons(dt){for(const q of shots){if(q.life<=0||q.cmBoss)continue;for(const m of R.mobs){if(!m.alive)continue;const cx=m.x,cy=m.y;const a=q.x-q.vx*dt,b=q.y-q.vy*dt,vx=q.x-a,vy=q.y-b,f=clamp(((cx-a)*vx+(cy-b)*vy)/(vx*vx+vy*vy||1),0,1);if(Math.hypot(a+vx*f-cx,b+vy*f-cy)<m.size*.32+(q.r||12)){q.life=0;m.hp=Math.max(0,m.hp-q.dmg);m.hit=.13;if(m.hp<=0)killMob(m);else burst(m.x-R.cam,cy,'#ffeeaa',5);break}}}
  shots=shots.filter(q=>q.life>0)}
