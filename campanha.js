@@ -4,7 +4,7 @@
    Não sobrescreve o combate e os chefões individuais. */
 const CAMPAIGN=window.CM25_CONFIG.reinos.map(r=>[r.nome,r.territorios,r.dificuldade]);
 const $=id=>document.getElementById(id),frame=$('gameWindow'),sel=$('realmSelect');
-let realm=1,territory=1,ready=false,pendingArea=1,identity=null,loadId=0,lastCommand=0,autoTimer=null,automaticEntry=false,campaignStarted=false;
+let realm=1,territory=1,ready=false,pendingArea=1,identity=null,loadId=0,lastCommand=0,autoTimer=null,automaticEntry=false,campaignStarted=false,entering=false;
 CAMPAIGN.forEach((r,i)=>{const o=document.createElement('option');o.value=i+1;o.textContent=`${i+1}. ${r[0]} — nível ${r[2]}`;sel.appendChild(o)});
 try{identity=JSON.parse(sessionStorage.getItem('cm25TesteIdentidade')||'null')}catch(e){}
 function report(s){$('status').textContent=s;}
@@ -12,32 +12,65 @@ function info(){const a=CAMPAIGN[realm-1];sel.value=String(realm);$('realmTitle'
 function capture(){try{const s=frame.contentWindow.CM25RealmBridge?.status();if(s&&s.realm===realm){identity={hero:s.hero,name:s.name,className:s.className};sessionStorage.setItem('cm25TesteIdentidade',JSON.stringify(identity))}}catch(e){console.warn('Não foi possível preservar personagem',e)}}
 function switchRealm(next,target=1,direct=true){
  if(next<1||next>10){report('Limite da campanha: Reino '+realm);return;}
- if(next!==realm)capture();
+ // Preservar o personagem também ao mudar de território no mesmo reino.
+ if(ready)capture();
  if(autoTimer){clearTimeout(autoTimer);autoTimer=null;}
- realm=next;territory=target;pendingArea=target;ready=false;automaticEntry=direct;loadId++;
+ realm=next;territory=target;pendingArea=target;ready=false;entering=false;automaticEntry=direct;loadId++;
  info();report(`Carregando ${CAMPAIGN[realm-1][0]} · território ${target}…`);
  frame.src=`reinos/${String(realm).padStart(2,'0')}/index.html?cm25=${loadId}&direct=${direct?'1':'0'}`;
 }
-function area(n){
+// READY confirma o código do iframe, mas não o carregamento das imagens.
+// Aguardar o cenário antes de iniciar uma área nos testes rápidos.
+const backgroundCache=new Map();
+function preloadScene(realmNumber,areaNumber){
+ // O quinto território do Reino 2 é a arena original da V2.4,
+ // sem um cenario_5.jpg local. Não bloquear essa luta.
+ if(realmNumber===2&&areaNumber===5)return Promise.resolve();
+ const url=new URL(`reinos/${String(realmNumber).padStart(2,'0')}/assets_v25/cenarios/cenario_${areaNumber}.jpg`,location.href).href;
+ if(backgroundCache.has(url))return backgroundCache.get(url);
+ const job=new Promise((resolve,reject)=>{
+  const image=new Image();let done=false;
+  const timeout=setTimeout(()=>finish(new Error('Tempo excedido ao carregar o cenário')),30000);
+  const finish=error=>{if(done)return;done=true;clearTimeout(timeout);image.onload=null;image.onerror=null;error?reject(error):resolve()};
+  image.onload=()=>image.naturalWidth>0?finish():finish(new Error('Imagem vazia'));
+  image.onerror=()=>finish(new Error('Não foi possível baixar o cenário'));
+  image.src=url;
+  if(image.complete&&image.naturalWidth>0)finish();
+ });
+ backgroundCache.set(url,job);
+ job.catch(()=>backgroundCache.delete(url));
+ return job;
+}
+async function area(n){
  const maximum=CAMPAIGN[realm-1][1];n=Math.max(1,Math.min(maximum,n));
  if(!ready){pendingArea=n;territory=n;info();report('Carregando recursos antes de abrir território '+n+'…');return;}
- const bridge=frame.contentWindow.CM25RealmBridge;
- if(!bridge||bridge.realm!==realm){report('Erro de ligação: reino diferente do selecionado');return;}
+ if(entering){report('Território em preparação; aguarde o cenário carregar.');return;}
+ entering=true;
+ const token=loadId,selectedRealm=realm;
  try{
-  const confirmed=bridge.selectArea(n-1,identity),s=bridge.status();
-  if(confirmed!==n||!s.active||s.territory!==n)throw Error('O jogo não confirmou a entrada no território');
-  if(n<maximum&&s.monstersLoaded===0)throw Error('Nenhum monstro foi criado; território interrompido para evitar um cenário vazio');
-  territory=n;pendingArea=0;campaignStarted=true;info();frame.focus();try{frame.contentWindow.focus()}catch(e){};report(`Reino ${realm} · território ${n} · ${n===maximum?'chefão':s.monstersLoaded+' monstros carregados'}`);
- }catch(e){const error=String(e.message||e);report('ERRO NO TERRITÓRIO: '+error);console.error('[ClassMana] Falha ao iniciar',realm,n,e);}
+  report(`Preparando cenário do Reino ${selectedRealm} · território ${n}…`);
+  await preloadScene(selectedRealm,n);
+  // Um salto novo pode ter invalidado o carregamento anterior.
+  if(token!==loadId||selectedRealm!==realm||!ready)return;
+  const bridge=frame.contentWindow.CM25RealmBridge;
+  if(!bridge||bridge.realm!==realm)throw Error('Ligação do reino não está pronta');
+  const confirmed=bridge.selectArea(n-1,identity),status=bridge.status();
+  if(confirmed!==n||!status.active||status.territory!==n)throw Error('O jogo não confirmou a entrada no território');
+  if(n<maximum&&status.monstersLoaded===0)throw Error('Nenhum monstro foi criado; território interrompido para evitar cenário vazio');
+  territory=n;pendingArea=0;campaignStarted=true;info();frame.focus();try{frame.contentWindow.focus()}catch(e){}
+  report(`Reino ${realm} · território ${n} · ${n===maximum?'chefão':status.monstersLoaded+' monstros carregados'}`);
+ }catch(e){
+  if(token===loadId){report('ERRO AO ABRIR TERRITÓRIO: '+String(e.message||e));console.error('[ClassMana] Falha ao iniciar',selectedRealm,n,e);}
+ }finally{if(token===loadId)entering=false;}
 }
 function command(key,shift=false){
  if(key==='F8'){if(realm+(shift?-1:1)<1||realm+(shift?-1:1)>10){report('Limite da campanha');return;}switchRealm(realm+(shift?-1:1),1);return;}
- if(key==='F7'){if(!campaignStarted){switchRealm(realm,CAMPAIGN[realm-1][1],true);}else area(CAMPAIGN[realm-1][1]);return;}
+ if(key==='F7'){switchRealm(realm,CAMPAIGN[realm-1][1],true);return;}
  if(key==='F6'){
   if(!campaignStarted){switchRealm(realm,Math.min(2,CAMPAIGN[realm-1][1]),true);return;}
   if(!ready){report('Carregamento do reino em andamento; comando ignorado');return;}
   try{const s=frame.contentWindow.CM25RealmBridge?.status();if(s?.active&&s.realm===realm)territory=s.territory;}catch(e){}
-  if(territory<CAMPAIGN[realm-1][1])area(territory+1);
+  if(territory<CAMPAIGN[realm-1][1])switchRealm(realm,territory+1,true);
   else if(realm<10)switchRealm(realm+1,1);else report('Você está no chefão final, Reino 10');
  }
 }
@@ -71,7 +104,7 @@ window.addEventListener('keydown',e=>{
  command(e.code,e.shiftKey);
 },true);
 sel.addEventListener('change',()=>switchRealm(Number(sel.value),1));
-$('startHere').onclick=()=>{if(!campaignStarted)switchRealm(realm,1,true);else if(!ready)switchRealm(realm,1,true);else area(1);};
+$('startHere').onclick=()=>switchRealm(realm,1,true);
 $('f6').onclick=()=>command('F6');$('f7').onclick=()=>command('F7');$('f8').onclick=()=>command('F8');$('prev').onclick=()=>command('F8',true);
 $('musicButton').onclick=()=>{try{const game=frame.contentWindow;const ok=game.ClassManaNucleo?.audio?.play();report(ok?'Música solicitada para o reino atual. Se estiver sem som, confira o botão de áudio no jogo e a conexão.':'Não foi possível iniciar a música. Inicie o território e tente novamente.')}catch(e){report('Áudio indisponível: '+e.message)}};
 $('helpButton').onclick=()=>{$('help').hidden=!$('help').hidden};
