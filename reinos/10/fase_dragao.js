@@ -381,10 +381,11 @@ function mobUpdate(dt){
    }
   }
   const heroDistance=Math.hypot(m.x-heroX,m.y-heroY);
-  if(!striking&&heroDistance<m.size*1.35){
-   // Reservas não devem ficar em cima do jogador enquanto aguardam a vez.
-   const direction=m.x>=heroX?1:-1;
-   m.x=clamp(m.x+direction*Math.max(130,m.speed*2)*step,m.size*.35,R.world-m.size*.35);
+  if(!striking&&heroDistance<W*.34){
+   // Reservas dentro da zona do jogador saem por cima e pelo flanco livre,
+   // mesmo na borda da arena; somente os três atacantes podem se aproximar.
+   m.x=clamp(m.x+side*Math.max(580,m.speed*5.2)*step,m.size*.35,R.world-m.size*.35);
+   m.y=clamp(m.y-340*step,H*.15,floor()-m.size*.62);
   }
   if(striking&&heroDistance<m.size*.34+38&&m.contact<=0){
    applyDragonDamage(4+R.area,'contato');
