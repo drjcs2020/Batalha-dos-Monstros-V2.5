@@ -124,8 +124,13 @@
               acerto:'acerto.mp3',erro:'erro.mp3',moedas:'moedas.mp3',
               derrota:'derrota.mp3',vitoria:'vitoria.mp3'};
             for(const [k,file] of Object.entries(fx)){
-              if(cacheEfeitos[k]){cacheEfeitos[k].pause();cacheEfeitos[k].src=this.local(file);}
-              else{const a=new Audio(this.local(file));a.preload='none';cacheEfeitos[k]=a;}
+              const priority=k==='raio_supremo'||k==='golpe_monstro'||k==='especial';
+              const url=this.local(file);
+              let audio=cacheEfeitos[k];
+              if(!audio){audio=new Audio();cacheEfeitos[k]=audio;}
+              if(audio.src!==url){audio.pause();audio.src=url;}
+              audio.preload=priority?'auto':'metadata';
+              if(priority&&audio.readyState===0)audio.load();
             }
           }
         }catch(e){console.warn('[V2.5] Erro na configuracao local de efeitos',e);}
@@ -195,6 +200,16 @@
       // O reino ja foi criado pela extensao; configurar audio ANTES do primeiro reset.
       this.audio.configure();
       this.audio.configureKnownEffects();
+      // Pré-carregar a trilha sem iniciar reprodução automática no iframe.
+      try{
+        const track=this.audio.originalTrack();
+        if(track){
+          const warmed=new Audio(track);
+          warmed.preload='auto';
+          warmed.load();
+          this.audio._warmedTrack=warmed;
+        }
+      }catch(e){console.warn('[V2.5] Pré-carga da trilha falhou',e);}
       const oldUpdate=update,oldDraw=draw;
       update=function(dt){
         try{core.hooks.beforeUpdate?.(dt)}catch(e){console.error('Hook global de física',e)}
