@@ -356,7 +356,7 @@ function mobUpdate(dt){
    // acompanham à distância, cada uma em uma coluna DIFERENTE no mundo.
    // Não usar a posição do herói como o mesmo ponto de encontro para as 15.
    const passed=heroX>m.spawnX;
-   const trailing=W*(.34+(m.id%6)*.18);
+   const trailing=W*(.38+m.id*.145); // Cada dragão tem sua coluna própria; sem agrupamento a cada 6.
    const patrol=m.spawnX+Math.sin(R.clock*.85+m.seed)*Math.min(46,W*.045);
    // Reservas seguem depois que o herói passa, com distância separada.
    // Não prendê-las no spawnX: isso deixava a tela vazia ao avançar.
