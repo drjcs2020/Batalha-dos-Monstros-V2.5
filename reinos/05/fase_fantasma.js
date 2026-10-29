@@ -95,8 +95,15 @@ const heroVisualFootPad=()=>0;
 const bossVisualFootPad=()=>0;
 // Ajuste LOCAL do apoio do herói nos cinco territórios R5: +9px T1-T4 e +11px T5
 // (~2,4–2,9 mm CSS a 96dpi), sem mudar piso dos inimigos e a arte original.
-const heroGroundContactPxR5=Object.freeze([9,9,9,9,11]);
-const ground=()=>floorAnchorY()+45-heroHeight()/2+heroHeight()*heroFootTrim()+heroVisualFootPad()+heroGroundContactPxR5[S.area];
+// Revisão R5 T1-T5: eliminar compensações opostas na altura do herói.
+// O ajuste anterior somava +9/+11 no pouso e SUBTRAÍA ~14–22px no desenho.
+// Nova âncora única = posição visual anterior +11px em todos os cinco territórios;
+// física, imagem, escudo e hitbox voltam a compartilhar o mesmo y.
+const heroGroundContactPxR5=()=>{
+ const oldNegativePad=Math.max(11,Math.round(H*.027));
+ return (S.area===4?31:20)-oldNegativePad;
+};
+const ground=()=>floorAnchorY()+45-heroHeight()/2+heroHeight()*heroFootTrim()+heroVisualFootPad()+heroGroundContactPxR5();
 const isWingedHero=()=>heroIdx===0||heroIdx===5;
 const gravity=()=>isWingedHero()?380:570; // salto amplo; fada flutua um pouco mais
 const heroCeiling=()=>Math.max(125,H*.24); // limite superior da faixa de voo/salto
@@ -105,7 +112,7 @@ const heroCeiling=()=>Math.max(125,H*.24); // limite superior da faixa de voo/sa
  // em vez de ultrapassá-la. Sem mexer nos monstros voadores ou no cenário.
 // Ajuste exclusivo do Reino 5: os pes visiveis do heroi estavam abaixo da linha
 // de contato. Este deslocamento corrige o desenho, nao a fisica nem o piso.
-const heroGroundOffset=()=>-Math.max(11,Math.round(H*.027))+(S.area===4?9:0); // Só Território 5: herói 9 px (~2,4 mm) mais baixo; 1–4 intactos.
+const heroGroundOffset=()=>0; // Sem segundo deslocamento visual: referência física única nos 5 territórios.
 const worldLen=()=>W*4.25; // Permite rolagem longa e pelo menos uma repetição do cenário.
 
 // ITENS DE APOIO — somente assets existentes da V2.4; os PNGs são carregados uma vez.
