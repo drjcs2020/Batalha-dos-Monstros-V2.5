@@ -1,0 +1,22 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Batalha dos Monstros versão 2.5 Teste</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;width:100%;background:#050c1b;color:#f4f8ff;font:14px 'Trebuchet MS',Arial,sans-serif;overflow:hidden}
+#shell{height:100%;display:flex;flex-direction:column}#top{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:7px 12px;background:#06142cee;border-bottom:2px solid #e8af4f;z-index:10;min-height:66px}h1{margin:0;color:#f9d27e;font-size:16px;white-space:nowrap}#details{font-size:12px;color:#d8e9ff}button,select{border:1px solid #c89c48;border-radius:8px;padding:8px 10px;color:white;background:#173861;font-weight:bold;cursor:pointer}button:hover{background:#285990}button:focus-visible,select:focus-visible{outline:3px solid #ffe68e}select{min-width:170px;max-width:230px}#realmTitle{color:#fff2ab;font-weight:bold;min-width:150px}#gameWindow{width:100%;border:0;flex:1;min-height:0;background:#070c19}#status{font-size:11px;color:#acc5e0}#menu{display:flex;align-items:center;gap:6px;flex-wrap:wrap}#help{position:fixed;right:10px;top:73px;z-index:15;background:#102341f0;border:1px solid #d6aa6b;padding:10px;border-radius:12px;box-shadow:0 12px 30px #000b;max-width:300px;line-height:1.5}#help[hidden]{display:none}#mobile{display:none}@media(max-width:880px){#top{padding:5px;gap:5px}h1{font-size:12px}#details{display:none}button,select{font-size:11px;padding:6px}#mobile{display:flex}}
+</style></head><body><div id="shell">
+<header id="top">
+<div><h1>BATALHA DOS MONSTROS — VERSÃO 2.5 TESTE — REVISÃO 14</h1><div id="details">Campanha unificada · 10 reinos · 49 territórios · ranking V2.4 desligado</div></div>
+<nav id="menu" aria-label="Controles da campanha">
+<label>Reino <select id="realmSelect" aria-label="Escolher reino"></select></label>
+<button id="startHere" title="Atalho explícito: pular a abertura e testar diretamente o reino selecionado">▶ Entrada rápida</button>
+<button id="f6" title="Próximo território">F6 · Território +</button>
+<button id="f7" title="Ir ao chefão deste reino">F7 · Chefão</button>
+<button id="f8" title="Ir para o reino seguinte">F8 · Reino +</button>
+<button id="prev" title="Voltar ao reino anterior">⇤ Reino −</button>
+<button id="musicButton" title="Ativar a trilha sonora após entrar no reino">♫ Ativar música</button>
+<button id="helpButton" title="Mostrar ajuda e atalhos">?</button>
+</nav>
+<div id="realmTitle" aria-live="polite"></div><small id="status">Iniciando</small>
+</header>
+<iframe id="gameWindow" title="Jogo ClassMana V2.5" allow="autoplay;fullscreen" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+<section id="help" hidden><b>CONTROLES DO MODO TESTE</b><p><b>F6</b>: próximo território, incluindo a passagem ao reino seguinte após o último.<br><b>F7</b>: território do chefão deste reino.<br><b>F8</b>: próximo reino, direto no território 1.<br><b>Shift+F8</b>: reino anterior.<br><b>Botões acima</b>: alternativa quando o navegador interceptar uma tecla.</p><p>Na primeira vez, assista ou pule o vídeo e clique em <b>INICIAR TESTE V2.5</b> no menu do jogo. Para pular toda a abertura de propósito, use <b>Entrada rápida</b>. A pontuação deste pacote não é enviada ao ranking V2.4. Alguns recursos da V2.4 ainda precisam de internet.</p></section>
+</div><script src="configuracao_global.js"></script><script src="campanha.js"></script></body></html>

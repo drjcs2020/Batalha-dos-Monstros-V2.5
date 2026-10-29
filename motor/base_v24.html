@@ -1,0 +1,1367 @@
+<!-- ClassMana Batalha Real V2.4: proporção do vídeo 9x16 -->
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>ClassMana — Batalha dos Monstros V26</title><style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#030916;font-family:Trebuchet MS,Arial;color:#fff}#game{position:fixed;inset:0}canvas{width:100%;height:100%;display:block;touch-action:none}.hud{position:absolute;inset:8px 10px auto;display:flex;justify-content:space-between;gap:10px;pointer-events:none}.card{width:min(355px,43vw);background:#071326e8;border:2px solid #f0c35c;border-radius:16px;padding:8px 11px;box-shadow:0 5px 22px #000b}.title{font-size:11px;color:#ffd66b;letter-spacing:1px}.name{font-weight:900;font-size:clamp(13px,2vw,19px)}.stats{display:flex;gap:10px;align-items:center;font-weight:900;font-size:13px;margin:3px 0}.bar{height:12px;background:#020710;border:1px solid #ffffff66;border-radius:8px;overflow:hidden;margin-top:4px}.bar i{display:block;height:100%;width:100%;transition:width .18s}.hp i{background:linear-gradient(90deg,#31d46c,#a8f76b)}.mana i{background:linear-gradient(90deg,#38b9ff,#a44dff)}.enemy i{background:linear-gradient(90deg,#ffcc38,#ff4438)}#stageText{position:absolute;top:94px;left:50%;transform:translateX(-50%);font-size:clamp(16px,2.3vw,26px);font-weight:900;text-shadow:0 3px 8px #000;text-align:center;pointer-events:none}#msg{position:absolute;top:130px;left:50%;transform:translateX(-50%);padding:7px 14px;border-radius:15px;background:#050b16c9;font-weight:bold;text-align:center;pointer-events:none;min-width:220px}.controls{position:absolute;bottom:12px;right:12px;display:grid;grid-template-columns:repeat(2,minmax(118px,160px));gap:8px}.btn{border:2px solid #f4cf70;border-radius:14px;padding:12px 9px;color:white;font-weight:900;font-size:12px;background:linear-gradient(#254e83,#102342);box-shadow:0 5px 0 #030914;cursor:pointer}.btn:active{transform:translateY(3px)}.btn.special{background:linear-gradient(#8c43bb,#401e70)}.btn.def{background:linear-gradient(#2d9d91,#125d5a)}.btn.charge{background:linear-gradient(#b27a28,#704314)}#joy{position:absolute;left:18px;bottom:18px;width:108px;height:108px;border:2px solid #ffffff70;border-radius:50%;background:#07132680;touch-action:none}#knob{position:absolute;width:46px;height:46px;left:29px;top:29px;border-radius:50%;background:#d5edffdd;border:2px solid #fff}.overlay{position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(135deg,#fff4c9f2 0%,#f5c453ef 38%,#5aa9e6ed 100%);z-index:10}.panel{width:min(820px,94vw);max-height:94vh;overflow:auto;padding:20px;text-align:center;border:3px solid #d99a18;border-radius:22px;background:linear-gradient(145deg,#fffdf4f7 0%,#ffe9a6f5 54%,#d9effff5 100%);color:#173653;box-shadow:0 15px 50px #174f7b55, inset 0 0 28px #ffffffaa}.panel img.logo{max-width:270px;max-height:95px}.panel h1{margin:5px;color:#9a5d00;text-shadow:0 2px 0 #fff6c9}.start{font-size:17px;padding:13px 28px;border:0;border-radius:13px;font-weight:900;background:linear-gradient(#ffd86a,#c98728);color:#26170b;cursor:pointer}.heroes{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:12px 0}.heroPick{background:linear-gradient(145deg,#ffffff,#dff1ff);border:2px solid #4f8fc2;border-radius:14px;padding:7px;cursor:pointer;color:#173653}.heroPick.sel{border-color:#075cff;background:linear-gradient(145deg,#e9f6ff,#79c8ff);box-shadow:0 0 0 4px #ffffff,0 0 24px #075cffcc;transform:translateY(-3px);position:relative}.heroPick.sel:after{content:'✓ SELECIONADO';display:block;margin-top:5px;padding:4px 6px;border-radius:8px;background:#075cff;color:#fff;font-size:11px;font-weight:900;letter-spacing:.4px}.heroCanvas{width:120px;height:125px;max-width:100%;display:block;margin:0 auto}.qbox{width:min(620px,92vw);padding:22px;border:3px solid #d99a18;border-radius:20px;background:linear-gradient(145deg,#fffdf4,#ffe8a1 55%,#dff2ff);color:#173653;text-align:center;box-shadow:0 15px 50px #174f7b55}.answers{display:grid;gap:9px;margin-top:15px}.ans{font-size:clamp(12px,1.65vw,17px);line-height:1.2;overflow-wrap:anywhere;white-space:normal;min-height:48px;padding:10px;border:2px solid #6fa5cc;border-radius:10px;background:linear-gradient(145deg,#ffffff,#e4f3ff);color:#173653;font-weight:bold;cursor:pointer;transition:background .18s,border-color .18s,transform .18s,box-shadow .18s}.ans.correct{background:linear-gradient(145deg,#d9ffe1,#65d57c)!important;border-color:#16883b!important;color:#073d19!important;box-shadow:0 0 0 3px #fff,0 0 18px #24a94c88}.ans.wrong{background:linear-gradient(145deg,#ffe0e0,#f06d6d)!important;border-color:#b71919!important;color:#5c0808!important;box-shadow:0 0 0 3px #fff,0 0 18px #d32f2f66}.transition{font-size:clamp(28px,5vw,60px);font-weight:900;color:#ffd55c;text-shadow:0 4px 20px #000;text-align:center}.playerName{width:min(420px,90%);padding:12px 14px;border-radius:12px;border:2px solid #6f8eac;background:#fff;color:#173653;font-size:17px;text-align:center;margin:8px 0}.menuActions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.rankBtn{font-size:15px;padding:12px 20px;border:2px solid #d99a18;border-radius:13px;font-weight:900;background:linear-gradient(#fff4bf,#e9b640);color:#173653;cursor:pointer}.rankingScroll{max-height:58vh;overflow-y:auto;overflow-x:auto;border:2px solid #d99a18;border-radius:14px;background:#fff9e8cc;-webkit-overflow-scrolling:touch}.ranking{width:100%;border-collapse:collapse;margin-top:0}.ranking thead th{position:sticky;top:0;background:#ffe7a0;z-index:2}.ranking th,.ranking td{padding:9px;border-bottom:1px solid #ffffff22;text-align:left}.ranking th{color:#8a5600}.ranking td{color:#173653}.ranking th,.ranking td{border-bottom-color:#174f7b33}.rankMe{background:#ffd75f18}.hidden{display:none!important}#sound{position:absolute;right:12px;top:126px;z-index:4;border:1px solid #ffd35d;border-radius:10px;background:#071326d9;color:#fff;padding:7px 10px;cursor:pointer}#menu{overflow-y:auto;overflow-x:hidden;place-items:start center;padding:16px 0;-webkit-overflow-scrolling:touch}#menu>.panel{max-height:none;overflow:visible;margin:auto}.menuPanel{position:relative;overflow:hidden;background:linear-gradient(145deg,#fffdf4f5 0%,#ffe49aef 52%,#d8effff2 100%),url('assets/bg_hive.png') center/cover}.menuPanel:before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#fff8dcdd,#f6c94dbb 45%,#58a6d6aa);z-index:0}.menuPanel>*{position:relative;z-index:1}.decorRow{display:flex;justify-content:center;align-items:center;gap:18px;margin:4px 0 10px}.decorRow img{width:42px;height:42px;object-fit:contain;filter:drop-shadow(0 4px 5px #17365355)}.classPick{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:12px 0}.classBtn{padding:12px 22px;border-radius:14px;border:2px solid #5c91bd;background:linear-gradient(#fff,#d9efff);color:#173653;font-weight:900;cursor:pointer}.classBtn.sel{border-color:#c88913;background:linear-gradient(#fff1ad,#e8b23b);box-shadow:0 0 18px #e8b23b88}.tutorialProgress{height:14px;border-radius:10px;background:#ffffff99;border:2px solid #c38b22;overflow:hidden;margin:12px auto;max-width:620px}.tutorialProgress i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#2c83c3,#f0b83f);transition:width 1s linear}.timerHud{position:absolute;top:54px;left:50%;transform:translateX(-50%);z-index:3;background:#fff6d9e8;color:#173653;border:2px solid #d39b2c;border-radius:14px;padding:6px 12px;font-weight:900;box-shadow:0 4px 15px #0003;pointer-events:none}@media(max-width:700px){.hud{inset:4px 4px auto}.card{padding:5px 7px}.title{font-size:8px}.stats{font-size:10px;gap:5px}.bar{height:9px}#stageText{top:83px}#msg{top:110px;font-size:11px}.controls{right:5px;bottom:5px;grid-template-columns:repeat(2,98px);gap:5px}.btn{padding:10px 4px;font-size:10px}#joy{left:6px;bottom:6px;width:94px;height:94px}#knob{left:25px;top:25px;width:40px;height:40px}.heroes{grid-template-columns:repeat(2,1fr)}.heroCanvas{height:95px}#sound{top:104px}.timerHud{top:48px;font-size:12px;padding:5px 9px}}
+#openingVideo{position:fixed;inset:0;z-index:100;background:#020713;display:flex;align-items:center;justify-content:center;overflow:hidden}#openingVideo::before{content:'';position:absolute;inset:-10%;background:radial-gradient(circle at center,rgba(25,55,110,0.85) 0%,rgba(2,7,19,0.98) 70%);filter:blur(40px);z-index:0}#openingVideo video{position:relative;z-index:1;max-width:100%;max-height:100vh;width:auto;height:auto;object-fit:contain;box-shadow:0 0 60px #000;background:transparent}#openingVideo .videoActions{position:absolute;bottom:max(22px,env(safe-area-inset-bottom));left:0;right:0;display:flex;justify-content:center;gap:12px;flex-wrap:wrap;padding:0 12px}#openingVideo button{font:800 15px Trebuchet MS,Arial;border:2px solid #f8d476;border-radius:14px;background:linear-gradient(#fff1b5,#e4ad34);color:#18365a;padding:12px 18px;cursor:pointer;box-shadow:0 3px 14px #000a}#gameOverOverlay{z-index:30;overflow-y:auto;overflow-x:hidden;place-items:start center;padding:18px 0;-webkit-overflow-scrolling:touch;background:radial-gradient(circle at 50% 35%,#4b1220f5 0%,#160711f8 48%,#03040afc 100%)}#gameOverOverlay .gameOverPanel{width:min(650px,92vw);max-height:none;margin:auto;padding:28px 22px;text-align:center;border:3px solid #d7a33b;border-radius:24px;background:linear-gradient(160deg,#24101bee,#080b15f5);box-shadow:0 0 50px #ff314455,inset 0 0 30px #d7a33b22;color:#fff}#gameOverOverlay .goLogo{width:min(310px,70vw);max-height:110px;object-fit:contain;filter:drop-shadow(0 6px 14px #000)}#gameOverOverlay h1{font-size:clamp(38px,8vw,76px);margin:10px 0 0;color:#ff5265;letter-spacing:3px;text-shadow:0 4px 0 #5c0914,0 0 24px #ff263f99}#gameOverOverlay .defeatTitle{font-size:clamp(18px,3vw,28px);font-weight:900;color:#ffd46b;margin:8px 0}#gameOverOverlay .goDetails{font-size:15px;line-height:1.55;color:#f5e8df;margin:12px auto 20px}.gameOverActions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.gameOverActions button{min-width:180px}#openingVideo[hidden]{display:none!important}#openingVideo:not(.playing) video{filter:brightness(.43)}#openingVideo .videoActions{z-index:2}#openingVideo.playing #openingSound{display:none}
+#gameOverOverlay .goDragonStage{position:relative;height:190px;overflow:hidden;margin:0 auto 2px;max-width:580px}#gameOverOverlay .goDragon{position:absolute;width:min(330px,62vw);right:-360px;top:0;filter:drop-shadow(0 8px 16px #000) drop-shadow(0 0 16px #ff6a22);animation:dragonEnter .9s cubic-bezier(.2,.8,.2,1) forwards}#gameOverOverlay .goFireLayer{position:absolute;inset:0;pointer-events:none}.goFireball{position:absolute;right:190px;top:86px;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff7a0 0 12%,#ffb21f 28%,#ff4b12 62%,#7b0800 100%);box-shadow:0 0 18px #ff7b18,0 0 36px #ff3218;animation:goFire 1.05s linear forwards}.goFireball:after{content:'';position:absolute;left:24px;top:9px;width:70px;height:16px;border-radius:50%;background:linear-gradient(90deg,#ffb21fcc,#ff321866,transparent);filter:blur(3px)}@keyframes dragonEnter{to{right:4px}}@keyframes goFire{0%{transform:translate(0,0) scale(.6);opacity:0}12%{opacity:1}100%{transform:translate(-520px,55px) scale(1.25);opacity:0}}@media(max-width:700px){#gameOverOverlay .goDragonStage{height:150px}.goFireball{right:135px;top:68px}@keyframes goFire{100%{transform:translate(-360px,45px) scale(1.15);opacity:0}}}
+
+.classmanaTitle{font-family:Impact,"Arial Black",sans-serif!important;font-size:clamp(24px,3.1vw,36px)!important;line-height:1.05!important;white-space:nowrap!important;letter-spacing:1px!important;color:#1769aa!important;-webkit-text-fill-color:#1769aa!important;-webkit-text-stroke:2px #f2a01f!important;paint-order:stroke fill!important;text-shadow:0 2px 0 #9a4b0b,0 0 3px #ffd45d,0 0 8px #e88a16!important;text-transform:uppercase;margin:7px 0 10px!important}.heroPick{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important}.heroCanvas{margin-left:auto!important;margin-right:auto!important}.sceneDecor{position:absolute;z-index:2;pointer-events:none;object-fit:contain;filter:drop-shadow(0 7px 9px #0008)}.decor-sign{left:2%;bottom:19%;width:min(120px,11vw)}.decor-rocks{right:1%;bottom:10%;width:min(120px,11vw)}.decor-compass{left:1.5%;top:25%;width:min(74px,7vw)}.decor-chest{right:2%;top:42%;bottom:auto;width:min(110px,10vw)}.decor-scroll{right:2%;top:24%;width:min(80px,8vw)}@media(max-width:700px){.sceneDecor{opacity:.78}.decor-sign,.decor-rocks,.decor-chest{width:70px}.decor-chest{right:2%;top:43%;bottom:auto}.decor-compass,.decor-scroll{width:50px}}
+
+/* ===== V43 • INTERFACE VISUAL SOBRE BASE FUNCIONAL V41 ===== */
+#menu{background:linear-gradient(135deg,#55d6ff36,#a56cff2e),url('assets/arena/fundos/arena-medieval-original.png') center/cover no-repeat fixed!important;padding:18px 0!important}
+#menu:before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 50% 43%,#d5fbff1f 0%,#65d7ff14 36%,#07152a50 100%);pointer-events:none}
+#menu>.menuPanel{width:min(900px,94vw);background:linear-gradient(145deg,#d9f7ffe8 0%,#8ee2f3df 43%,#ae9ae9dc 100%)!important;border:2px solid #83eaff!important;box-shadow:0 0 0 2px #6246a388,0 16px 45px #031025aa,inset 0 0 30px #f4fdff99!important;color:#092a4a!important;backdrop-filter:blur(5px)}
+#menu>.menuPanel:before{background:linear-gradient(135deg,#effdff48,#64d8ef2b 48%,#a879e638)!important}
+#menu .classmanaTitle{color:#123d78!important;-webkit-text-fill-color:#123d78!important;-webkit-text-stroke:2.4px #b85a16!important;paint-order:stroke fill!important;text-shadow:0 3px 0 #71350d,0 0 4px #f19a3a,0 0 10px #ffd08a88!important}
+#menu .classBtn{border-color:#62dff4;background:linear-gradient(#f2fdff,#93e1ef);color:#12375a;box-shadow:0 4px 12px #183e7c33}
+#menu .classBtn.sel{border-color:#f2bd55;background:linear-gradient(#fff0a0,#e4aa35);box-shadow:0 0 0 2px #fff4bd,0 0 18px #f0b84e99}
+#menu .heroPick{background:linear-gradient(150deg,#f1fdfff0,#a4e5f1e8 55%,#c2a9ece8)!important;border-color:#72e4f6!important;color:#102e55!important;box-shadow:0 6px 14px #0c255c42,inset 0 0 12px #ffffff88}
+#menu .heroPick.sel{border-color:#efbd55!important;background:linear-gradient(145deg,#f1fdff,#a8e9f3 50%,#d5b8f1)!important;box-shadow:0 0 0 3px #fff0aa,0 0 24px #53dfffbb!important}
+#menu .playerName{background:#effdfff2;border-color:#64d9ec;color:#0b3154;box-shadow:inset 0 0 10px #68cfff44,0 0 12px #4adfff33}
+#menu .start,#menu .rankBtn{border:2px solid #e9b650;background:linear-gradient(#7be9f7,#438fd1 55%,#7659b6);color:#fff;text-shadow:0 2px 3px #15366b;box-shadow:0 5px 0 #29386d,0 0 15px #66e8ff66}
+#menu .decorRow img{filter:drop-shadow(0 5px 7px #17365388) drop-shadow(0 0 8px #70e9ff66)}
+#tutorial{background:linear-gradient(135deg,#0d2d5860,#603c9150),url('assets/arena/fundos/tutorial-esmeralda.png') center/cover no-repeat fixed!important}
+#question{background:url('assets/arena/fundos/arena-medieval-original.png') center/cover no-repeat fixed!important}
+#tutorial .panel,#question .qbox{background:linear-gradient(145deg,#e8fafff2,#9de3f0ed 52%,#c0ace9ed)!important;border-color:#7ce9ff!important;color:#0b2c50!important;box-shadow:0 0 0 2px #7651bb77,0 18px 50px #020b1dbb,inset 0 0 24px #fff9!important}
+#tutorial .ans,#question .ans{background:linear-gradient(145deg,#f8feff,#c7eff7)!important;border-color:#6ccfe8!important;color:#12395e!important}
+#rankingOverlay{background:linear-gradient(135deg,#3b071c55,#6d101a55),url('assets/arena/fundos/arena-medieval-vermelha.png') center/cover no-repeat fixed!important;padding:16px 0!important;place-items:start center!important;overflow-y:auto!important}
+#rankingOverlay>.panel{width:min(1040px,95vw);max-height:none;margin:auto;background:linear-gradient(145deg,rgba(174,52,62,.70) 0%,rgba(119,22,40,.72) 48%,rgba(75,12,27,.76) 100%)!important;border:2px solid #df8271!important;color:#fff4e8!important;box-shadow:0 0 0 2px #7c302f99,0 18px 55px #190408cc,inset 0 0 26px #ffc7a333!important;backdrop-filter:blur(6px)}
+#rankingOverlay .rankingLogo{display:block;width:min(300px,58vw);max-height:105px;object-fit:contain;margin:0 auto 2px;filter:drop-shadow(0 5px 10px #06132988)}
+#rankingOverlay h1{margin:2px 0 8px;color:#ffc344!important;-webkit-text-stroke:2px #110806;paint-order:stroke fill;text-shadow:0 2px 0 #130808,0 0 7px #e88a2999!important;font-family:Impact,'Arial Black',sans-serif;letter-spacing:2px}
+#rankingOverlay .rankingScroll{background:#390d19c9!important;border-color:#d78069!important;box-shadow:inset 0 0 18px #ff9d6322}
+#rankingOverlay .ranking thead th{background:linear-gradient(#8e2834,#4f1225)!important;color:#ffe69a!important}
+#rankingOverlay .ranking td{color:#fff5ed!important;border-bottom-color:#ffb18b35!important}
+#rankingOverlay .rankMe{background:#bd653f5c!important;outline:1px solid #ffe36c88}
+#rankingOverlay .rankBtn{border:2px solid #e9b650;background:linear-gradient(#dc7968,#ac3342 55%,#6e1b30);color:#fff;text-shadow:0 2px 3px #451323;box-shadow:0 5px 0 #4b1825,0 0 15px #f3a56a66}
+#gameOverOverlay{background:linear-gradient(135deg,#24113a99,#081d38a8),url('assets/ui_ranking_bg.jpg') center/cover no-repeat fixed!important}
+#gameOverOverlay .gameOverPanel{background:linear-gradient(155deg,#173858e8,#49316be8)!important;border-color:#72e8ff!important;box-shadow:0 0 45px #58dcff55,inset 0 0 28px #9b75e833!important}
+.decor-rocks{left:2%!important;right:auto!important;top:48%!important;bottom:auto!important;width:min(105px,9vw)!important}
+@media(max-width:700px){#menu>.menuPanel,#rankingOverlay>.panel{width:96vw}.decor-rocks{left:1%!important;top:45%!important;width:58px!important}}
+
+/* V44 — feedback visual das questões + transição de monstro derrotado */
+#question .ans.correct,#tutorial .ans.correct{background:linear-gradient(145deg,#d9ffe1,#55d675)!important;border-color:#0f8d39!important;color:#063b18!important;box-shadow:0 0 0 3px #fff,0 0 22px #20c45a99!important;transform:scale(1.015)}
+#question .ans.wrong,#tutorial .ans.wrong{background:linear-gradient(145deg,#ffe1e1,#f05261)!important;border-color:#b70e23!important;color:#5b0712!important;box-shadow:0 0 0 3px #fff,0 0 22px #e12c4388!important;transform:scale(.985)}
+#transition{background:radial-gradient(circle at 50% 42%,rgba(74,78,178,.91) 0%,rgba(30,39,101,.96) 44%,rgba(8,13,43,.99) 100%)!important;backdrop-filter:blur(2px)}
+#transition .transition{width:min(760px,92vw);padding:28px 24px;border-radius:28px;border:3px solid #55dfff;background:linear-gradient(145deg,rgba(26,49,116,.95),rgba(89,43,132,.94));box-shadow:0 0 0 3px rgba(255,109,77,.72),0 20px 60px #000b,inset 0 0 35px rgba(94,231,255,.16);color:#ff557d;text-shadow:0 3px 0 #50172b,0 0 18px #ff4777aa}
+.defeatedBadge{position:relative;width:150px;height:150px;margin:0 auto 14px;border:8px solid #ff405e;border-radius:50%;background:radial-gradient(circle,#273b7d 0%,#101b4d 72%);box-shadow:0 0 28px #ff405e88,inset 0 0 24px #0008;display:grid;place-items:center;overflow:hidden}
+.defeatedBadge img{max-width:125px;max-height:125px;object-fit:contain;filter:drop-shadow(0 5px 8px #0008)}
+.defeatedBadge:after{content:'';position:absolute;width:190px;height:12px;background:#ff405e;transform:rotate(-42deg);border-radius:8px;box-shadow:0 0 10px #ff405e}
+.defeatedSkull{font-size:44px;line-height:1;margin-bottom:5px;filter:drop-shadow(0 4px 5px #0008)}
+.defeatedMain{font-size:clamp(27px,4.6vw,54px);font-weight:1000;letter-spacing:.5px;color:#ff557d}
+.defeatedBonus{margin-top:8px;font-size:clamp(17px,2.5vw,28px);color:#7eeaff;text-shadow:0 2px 8px #000;font-weight:900}
+.defeatedNext{margin-top:12px;font-size:14px;color:#fff;letter-spacing:1px;opacity:.9}
+@media(max-width:700px){.defeatedBadge{width:118px;height:118px}.defeatedBadge img{max-width:98px;max-height:98px}#transition .transition{padding:20px 14px}.defeatedSkull{font-size:34px}}
+
+/* V47 — paleta ClassMana mais saturada + splash + Magia Suprema */
+#classmanaSplash{position:fixed;inset:0;z-index:120;display:grid;place-items:center;background:radial-gradient(circle at 50% 42%,#174e91 0%,#182b6a 42%,#120d35 76%,#050817 100%);overflow:hidden;transition:opacity .55s ease}
+#classmanaSplash.hide{opacity:0;pointer-events:none}
+#classmanaSplash img{width:min(1100px,94vw);max-height:88vh;object-fit:contain;filter:drop-shadow(0 16px 30px #000a) drop-shadow(0 0 28px #28dfff66);animation:splashIn .75s ease-out both}
+#classmanaSplash:after{content:'';position:absolute;inset:-20%;background:radial-gradient(circle,#ffe26a99 0 1px,transparent 2px) 0 0/65px 65px;opacity:.18;animation:sparkle 3s linear infinite;pointer-events:none}
+@keyframes splashIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}@keyframes sparkle{to{transform:translate3d(35px,-28px,0)}}
+#openingVideo{visibility:hidden}
+#menu>.menuPanel{background:linear-gradient(145deg,rgba(18,75,115,.78) 0%,rgba(24,68,135,.78) 48%,rgba(66,40,120,.78) 100%),url('assets/arena/fundos/arena-medieval-original.png') center/cover no-repeat fixed!important;border-color:#54e9ff!important;color:#fff!important;box-shadow:0 0 0 2px #8058d799,0 18px 55px #020917cc,inset 0 0 28px #9af5ff66!important}
+#menu .menuPanel:before{background:linear-gradient(135deg,#15c9e455,#286ed177 48%,#7a45c477)!important}
+#menu .menuPanel p,#menu .menuPanel b{color:#fff!important;text-shadow:0 2px 4px #123b6c}
+#menu .classBtn{background:linear-gradient(#52e4f3,#2f82d2 60%,#6047b2)!important;color:#fff!important;border-color:#8ff4ff!important;text-shadow:0 1px 2px #17386a;box-shadow:0 4px 12px #09265366}
+#menu .classBtn.sel{background:linear-gradient(#ffe56d,#efad35)!important;color:#263b69!important;border-color:#fff0a0!important;text-shadow:none;box-shadow:0 0 20px #ffe26d99!important}
+#menu .heroPick{background:linear-gradient(145deg,#e9fdff,#75dce9 50%,#8c72d5)!important;border-color:#70ecff!important;color:#10365c!important}
+#menu .playerName{background:#e9fdfff2!important;border-color:#6deaff!important;color:#0b3154!important}
+#rankingOverlay>.panel{background:linear-gradient(145deg,rgba(173,49,59,.72) 0%,rgba(121,24,41,.74) 48%,rgba(74,12,29,.78) 100%)!important;border-color:#e2a076!important;color:#fff!important;box-shadow:0 0 0 2px #8a3c36aa,0 18px 55px #170508cc,inset 0 0 28px #ffb38c33!important}
+#rankingOverlay #rankSummary{color:#fff;text-shadow:0 2px 5px #491721;font-weight:800}
+#ultimate{grid-column:1/-1;background:linear-gradient(100deg,#d83aa9,#7b45d5 48%,#247fd6)!important;border-color:#ffb8f0!important;box-shadow:0 5px 0 #27134c,0 0 18px #d949d899!important}
+#ultimate:disabled{filter:grayscale(.65);opacity:.65}
+@media(max-width:700px){#classmanaSplash img{width:96vw}#ultimate{padding:9px 4px!important}}
+
+/* V60 • título inspirado no wordmark CLASSMANA enviado pelo usuário */
+#menu .classmanaTitle{font-family:Impact,"Arial Narrow","Arial Black",sans-serif!important;font-stretch:condensed;font-size:clamp(28px,4.2vw,48px)!important;line-height:1!important;letter-spacing:1.5px!important;color:#fff7a8!important;-webkit-text-fill-color:#fff7a8!important;background:linear-gradient(180deg,#fffde7 0%,#fff7a0 32%,#ffd52e 68%,#fff08a 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-stroke:5px #071b57!important;paint-order:stroke fill!important;text-shadow:0 3px 0 #e6004f,0 6px 0 #071b57,0 9px 0 #08bfd1,0 11px 8px #07142b99!important;text-transform:uppercase;margin:8px 0 12px!important;}
+#menu .battleTitleImg{
+    display:block;
+    width:min(650px,90vw);
+    height:auto;
+    max-height:180px;
+    object-fit:contain;
+    margin:0 auto -52px;
+    filter:drop-shadow(0 5px 8px #07142b66);
+}
+
+#menu .logo{
+    display:block;
+    margin:0 auto 4px;
+}
+
+#tutorial:not(.hidden){background:#073b32!important;isolation:isolate!important;}
+#tutorial{background:#073b32!important;place-items:center!important;padding:0!important;}
+#tutorial .panel{position:relative!important;box-sizing:border-box!important;width:100vw!important;height:100vh!important;max-width:none!important;max-height:none!important;min-width:0!important;min-height:0!important;overflow:hidden!important;padding:0!important;margin:auto!important;border:0!important;border-radius:0!important;box-shadow:none!important;background: url('assets/arena/fundos/tutorial-esmeralda.png') center center / 100% 100% no-repeat!important;filter:none!important;opacity:1!important;}
+#tutorial .panel>*:not(#skipTutorial){visibility:hidden!important;}
+#tutorial #skipTutorial{position:absolute!important;left:37%!important;bottom:6.3%!important;width:26%!important;height:9.1%!important;box-sizing:border-box!important;margin:0!important;padding:0!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;cursor:pointer!important;z-index:100!important;display:block!important;background:transparent!important;border:0!important;border-radius:10px!important;box-shadow:none!important;color:transparent!important;font-size:0!important;text-shadow:none!important;}
+#tutorial #skipTutorial:focus-visible{outline:3px solid #fff!important;outline-offset:-3px!important;}
+
+/* DESAFIO DA ARENA — somente apresentação da tela de recarga */
+#question{background:url('assets/arena/fundos/arena-medieval-original.png') center/cover no-repeat!important;overflow:hidden;padding:0!important;display:flex;align-items:center;justify-content:center}
+#question.hidden{display:none!important}
+#question .arena-stage{position:relative;width:min(1190px,98vw);height:min(650px,98dvh);aspect-ratio:16/9;max-height:98dvh;isolation:isolate}
+#question .arena-frame{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none;z-index:1}
+#question .arena-content{position:absolute;z-index:2;inset:0;display:flex;flex-direction:column;align-items:center;padding:0 10.3% 6.7%;gap:clamp(3px,.8vh,8px);color:#fff;text-shadow:0 2px 4px #001}
+#question .arena-heading-space{height:22%;flex:none}
+#question .arena-progress{background:#061b3edc;border-radius:20px;padding:3px 14px;font-weight:800;font-size:clamp(10px,1.2vw,15px);white-space:nowrap}
+#question .arena-question{width:100%;height:23%;flex:none;display:flex;align-items:center;justify-content:space-between;gap:14px;background:#071f4cbb;border:1px solid #a8ceff77;border-radius:12px;padding:clamp(8px,1.5vw,18px);box-sizing:border-box}
+#question #qtext{flex:1;margin:0;text-align:center;font-size:clamp(14px,2.1vw,27px);line-height:1.25;color:#fff}
+#question .arena-logo{width:27%;max-height:95%;object-fit:contain;flex:none}
+#question .arena-answers{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));grid-auto-flow:row;gap:clamp(4px,.8vh,9px) clamp(6px,1vw,14px);width:100%;height:19%;margin:0!important;flex:none}
+#question .arena-answers .ans{position:relative;min-width:0;min-height:0!important;height:100%;background:url('assets/arena/molduras/barra-resposta.png') center/100% 100% no-repeat!important;border:0!important;border-radius:0!important;color:white!important;text-align:left;padding:3px 9px 3px clamp(43px,5.4vw,66px)!important;font-size:clamp(12px,1.35vw,18px);font-weight:800;text-shadow:0 2px 4px #000;box-shadow:none!important;overflow-wrap:anywhere;cursor:pointer}
+#question .arena-answers .ans::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);height:clamp(33px,4.6vw,58px);width:clamp(33px,4.6vw,58px);background:center/contain no-repeat;pointer-events:none}
+#question .arena-answers .ans:nth-child(1)::before{background-image:url('assets/arena/botoes/medalhao-a.png')}
+#question .arena-answers .ans:nth-child(2)::before{background-image:url('assets/arena/botoes/medalhao-b.png')}
+#question .arena-answers .ans:nth-child(3)::before{background-image:url('assets/arena/botoes/medalhao-c.png')}
+#question .arena-answers .ans:nth-child(4)::before{background-image:url('assets/arena/botoes/medalhao-d.png')}
+#question .arena-answers .ans.correct{filter:drop-shadow(0 0 7px #23ff87);outline:2px solid #36ff7b!important}
+#question .arena-answers .ans.wrong{filter:grayscale(.5);opacity:.65;outline:2px solid #ff4260!important}
+#question .arena-hint{flex:none;width:clamp(120px,20vw,220px);height:clamp(28px,5vh,48px);border:0;background:url('assets/arena/botoes/pedir-dica.png') center/100% 100% no-repeat;cursor:pointer}
+#question #qfeedback{margin:0;min-height:1.3em;font-size:clamp(11px,1.15vw,15px);font-weight:800;color:#fff;text-align:center}
+#question .arena-status{font-size:clamp(10px,1.05vw,14px);font-weight:800;background:#071a3ed0;border-radius:5px;padding:2px 12px;text-align:center;max-width:100%;transform:translateY(-4px)}
+#question .arena-hero{position:absolute;z-index:4;bottom:0;left:max(0px,calc((100vw - 1250px)/2));height:clamp(85px,22vh,185px);max-width:19vw;object-fit:contain;object-position:bottom left;pointer-events:none;filter:drop-shadow(0 4px 6px #0008)}
+@media(max-width:650px){#question .arena-stage{width:100vw;height:min(100dvh,620px);aspect-ratio:auto}#question .arena-content{padding:0 9% 7%;gap:4px}#question .arena-heading-space{height:22%}#question .arena-question{height:23%;padding:5px}#question .arena-logo{width:23%}#question .arena-answers{height:23%;gap:4px}#question .arena-answers .ans{font-size:11px;padding-left:32px!important}#question .arena-answers .ans::before{height:32px;width:32px}#question .arena-hint{height:30px}#question #qfeedback{top:81%;left:12%;width:76%}#question .arena-status{font-size:9px}}
+@media(max-height:510px){#question .arena-heading-space{height:19%}#question .arena-question{height:21%}#question .arena-answers{height:22%}#question .arena-hint{height:30px}#question .arena-content{gap:2px}}
+
+/* Imagem fixa na questão e lupa clicável, sem interferir nas alternativas */
+#question .arena-image-slot{position:relative;width:27%;height:95%;flex:none;display:flex;align-items:center;justify-content:center;min-width:0}
+#question .arena-image-slot .arena-logo{width:100%;height:100%;max-height:100%;object-fit:contain}
+#question #arenaZoom{position:absolute;right:0;bottom:0;z-index:3;border:1px solid #e5c471;border-radius:50%;background:#082552e8;color:#fff;cursor:pointer;width:clamp(29px,3.1vw,43px);height:clamp(29px,3.1vw,43px);font-size:clamp(15px,1.7vw,23px)}
+#arenaImageModal{position:fixed;inset:0;z-index:1000;background:#020916ed;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:22px}
+#arenaImageModal.hidden{display:none!important}
+#arenaImageExpanded{max-width:94vw;max-height:82vh;object-fit:contain}
+#arenaImageClose{align-self:flex-end;background:#183b6d;color:white;border:2px solid #f1c76b;border-radius:10px;padding:10px 18px;cursor:pointer;font-weight:900}
+@media(max-width:650px){#question .arena-image-slot{width:23%}}
+
+/* V2.14 — ajuste visual isolado da recarga, mantendo as funções existentes */
+#question .arena-stage{width:100vw!important;height:100dvh!important;max-height:none!important;aspect-ratio:auto!important}
+#question .arena-frame{width:100%!important;height:100%!important;object-fit:fill!important}
+#question .arena-content{position:absolute!important;inset:0!important;display:block!important;padding:0!important;gap:0!important}
+#question .arena-heading-space{display:none!important}
+#question .arena-progress{position:absolute;top:24.2%;left:50%;transform:translateX(-50%);z-index:3;padding:2px 12px;font-size:clamp(11px,1.1vw,15px)}
+#question .arena-question{position:absolute;left:16.7%;top:30.5%;width:66.6%;height:21%;padding:1% 1.4%;gap:1.5%;border-radius:12px;background:rgba(4,25,69,.78)!important;border:1px solid rgba(174,207,255,.7)!important}
+#question #qtext{font-size:clamp(14px,2vw,28px);min-width:0}
+#question .arena-image-slot{width:29%!important;height:90%!important;border:1px solid #d8e8ff;border-radius:10px;background:rgba(0,18,53,.35);padding:5px;box-sizing:border-box}
+#question #arenaZoom{right:4px!important;top:4px!important;bottom:auto!important;width:auto!important;height:auto!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;padding:1px 3px!important;font-size:clamp(18px,2vw,27px)!important;line-height:1.1;filter:drop-shadow(0 2px 3px #001)}
+#question .arena-answers{position:absolute;left:17%;top:54%;width:66%;height:15%;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:6% 3%!important;margin:0!important}
+#question .arena-answers .ans{box-sizing:border-box!important;display:flex!important;align-items:center!important;min-width:0!important;height:100%!important;min-height:0!important;padding:2px 10px 2px clamp(35px,4.6vw,66px)!important;background-size:100% 100%!important;font-size:clamp(11px,1.4vw,19px)!important;line-height:1.12!important;text-align:left!important;transition:background-color .12s,box-shadow .12s}
+#question .arena-answers .ans::before{left:-1%;width:clamp(34px,4.1vw,60px);height:clamp(34px,4.1vw,60px)}
+#question .arena-answers .ans.correct{background-image:linear-gradient(rgba(13,174,69,.85),rgba(13,174,69,.85)),url('assets/arena/molduras/barra-resposta.png')!important;filter:drop-shadow(0 0 5px #25ed77)!important;outline:2px solid #4aff89!important;opacity:1!important;color:white!important}
+#question .arena-answers .ans.wrong{background-image:linear-gradient(rgba(211,30,48,.85),rgba(211,30,48,.85)),url('assets/arena/molduras/barra-resposta.png')!important;filter:drop-shadow(0 0 5px #fa5164)!important;outline:2px solid #ff6b72!important;opacity:1!important;color:white!important}
+#question .arena-hint{position:absolute;top:72.3%;left:50%;transform:translateX(-50%);width:clamp(150px,18vw,255px)!important;height:clamp(36px,5.2vh,53px)!important;background-size:contain!important}
+#question #qfeedback{position:absolute;top:80.5%;left:17%;width:66%;min-height:0!important;margin:0!important;font-size:clamp(10px,1.1vw,15px);line-height:1.2}
+#question .arena-status{position:absolute;top:85%;left:50%;transform:translateX(-50%)!important;width:max-content;max-width:75%;font-size:clamp(10px,1.03vw,14px);line-height:1.2}
+#question .arena-hero{position:absolute;left:1.2%!important;bottom:0!important;height:clamp(110px,28vh,240px)!important;max-width:20vw!important;z-index:4}
+@media(max-width:650px){#question .arena-progress{top:24%;font-size:10px}#question .arena-question{left:12%;width:76%;top:30%;height:22%}#question .arena-answers{left:12%;width:76%;top:54%;height:17%;gap:4% 2%!important}#question .arena-answers .ans{padding-left:33px!important;font-size:11px!important}#question .arena-answers .ans::before{width:33px;height:33px}#question .arena-hint{top:73%;height:38px!important}#question #qfeedback{top:81%;left:12%;width:76%}#question .arena-status{top:86%;font-size:9px;max-width:76%;white-space:normal}#question .arena-hero{height:clamp(100px,24vh,160px)!important;max-width:26vw!important}}
+
+/* V2.16 — geometria única: moldura em proporção nativa e áreas sem sobreposição */
+#question .arena-stage{width:min(96vw,calc(98dvh * 1672 / 941),1320px)!important;height:auto!important;aspect-ratio:1672/941!important;max-height:98dvh!important;flex:none!important}
+#question .arena-frame{inset:0!important;width:100%!important;height:100%!important;object-fit:contain!important}
+#question .arena-content{position:absolute!important;inset:0!important;display:block!important;padding:0!important}
+#question .arena-heading-space{display:none!important}
+#question .arena-progress{position:absolute!important;top:25.7%!important;left:50%!important;transform:translateX(-50%)!important;font-size:clamp(12px,1.45vw,19px)!important;padding:3px 13px!important;white-space:nowrap;z-index:3}
+#question .arena-question{position:absolute!important;top:32%!important;left:17%!important;width:66%!important;height:20%!important;box-sizing:border-box!important;padding:1% 1.5%!important;gap:2%!important;background:rgba(4,25,69,.78)!important}
+#question #qtext{font-size:clamp(13px,2vw,27px)!important;line-height:1.2!important}
+#question .arena-image-slot{width:31%!important;height:95%!important;box-sizing:border-box!important;padding:5px!important;border:1px solid #c6e4ff!important;border-radius:9px!important;overflow:visible!important}
+#question #arenaZoom{position:absolute!important;top:auto!important;right:1px!important;bottom:-19px!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;padding:0!important;font-size:clamp(18px,1.8vw,24px)!important;width:auto!important;height:auto!important;line-height:1!important}
+#question .arena-answers{position:absolute!important;left:18%!important;top:54%!important;width:64%!important;height:20%!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-template-rows:repeat(2,minmax(0,1fr))!important;column-gap:4%!important;row-gap:9%!important;margin:0!important}
+#question .arena-answers .ans{position:relative!important;display:flex!important;align-items:center!important;box-sizing:border-box!important;height:100%!important;min-height:0!important;width:100%!important;min-width:0!important;padding:4px 14px 4px clamp(43px,4.6vw,65px)!important;line-height:1.14!important;font-size:clamp(11px,1.3vw,18px)!important;white-space:normal!important;overflow-wrap:break-word!important;background-size:100% 100%!important;text-align:left!important}
+#question .arena-answers .ans::before{height:clamp(36px,4vw,55px)!important;width:clamp(36px,4vw,55px)!important;left:-1%!important}
+#question .arena-hint{position:absolute!important;top:75.6%!important;left:50%!important;transform:translateX(-50%)!important;width:clamp(140px,17vw,225px)!important;height:clamp(48px,7.2vh,70px)!important;min-height:0!important;background-size:contain!important}
+#question #qfeedback{position:absolute!important;top:84%!important;left:18%!important;width:64%!important;margin:0!important;font-size:clamp(10px,1.05vw,14px)!important;line-height:1.15!important;text-align:center!important}
+#question .arena-status{position:absolute!important;top:88%!important;left:50%!important;transform:translateX(-50%)!important;max-width:72%!important;width:max-content!important;font-size:clamp(10px,1vw,13px)!important;line-height:1.15!important;text-align:center!important}
+#question .arena-hero{position:absolute!important;left:.6%!important;bottom:0!important;height:clamp(145px,35vh,280px)!important;max-width:23vw!important;object-fit:contain!important;z-index:4!important}
+@media(max-width:650px){
+ #question .arena-stage{width:100vw!important;max-height:98dvh!important}
+ #question .arena-progress{top:25.5%!important;font-size:clamp(8px,2vw,12px)!important;padding:1px 5px!important}
+ #question .arena-question{top:32%!important;left:14%!important;width:72%!important;height:20%!important;padding:3px!important}
+ #question #qtext{font-size:clamp(9px,2.1vw,14px)!important}
+ #question .arena-image-slot{width:32%!important;padding:2px!important}
+ #question #arenaZoom{bottom:-12px!important;font-size:15px!important}
+ #question .arena-answers{left:15%!important;top:54%!important;width:70%!important;height:21%!important;column-gap:3%!important;row-gap:5%!important}
+ #question .arena-answers .ans{font-size:clamp(7px,1.8vw,11px)!important;padding:1px 3px 1px 25px!important}
+ #question .arena-answers .ans::before{height:25px!important;width:25px!important}
+ #question .arena-hint{top:76%!important;width:23vw!important;height:7vw!important;min-height:22px!important}
+ #question #qfeedback{top:84%!important;font-size:clamp(7px,1.6vw,10px)!important}
+ #question .arena-status{top:88%!important;font-size:clamp(7px,1.5vw,10px)!important;max-width:72%!important}
+ #question .arena-hero{height:30vh!important;max-width:23vw!important}
+}
+
+/* V2.17 — ajustes pontuais: respostas, dica e mensagens; sem alterar JS */
+#question .arena-answers{left:18%!important;width:64%!important;top:53.5%!important;height:21.5%!important;column-gap:3%!important;row-gap:10%!important}
+#question .arena-answers .ans{background-image:url('assets/arena/molduras/barra-resposta.png')!important;background-color:rgba(6,48,110,.38)!important;background-size:100% 100%!important;min-height:0!important;height:100%!important;overflow:visible!important;padding-top:5px!important;padding-bottom:5px!important;line-height:1.18!important}
+#question .arena-hint{top:75.5%!important;width:clamp(135px,15vw,195px)!important;height:clamp(44px,7.6vh,64px)!important;background-size:100% 100%!important;display:flex!important;align-items:center!important;justify-content:center!important;color:white!important;font-size:clamp(12px,1.15vw,17px)!important;font-weight:900!important;text-shadow:0 2px 3px #08163e,0 0 4px #08163e!important;white-space:nowrap!important}
+#question #qfeedback{top:82.1%!important;left:17%!important;width:66%!important;z-index:5!important}
+#question .arena-status{top:85.8%!important;z-index:5!important}
+@media(max-width:650px){
+#question .arena-answers{left:15%!important;width:70%!important;top:53.5%!important;height:22%!important;column-gap:2%!important;row-gap:8%!important}
+#question .arena-hint{top:76%!important;width:25vw!important;height:8vw!important;font-size:clamp(8px,2vw,12px)!important}
+#question #qfeedback{top:83%!important}
+#question .arena-status{top:86.5%!important}
+}
+#question .arena-answers .ans.correct{background-image:linear-gradient(rgba(13,174,69,.85),rgba(13,174,69,.85)),url('assets/arena/molduras/barra-resposta.png')!important}
+#question .arena-answers .ans.wrong{background-image:linear-gradient(rgba(211,30,48,.85),rgba(211,30,48,.85)),url('assets/arena/molduras/barra-resposta.png')!important}
+
+/* Ajustes pontuais: barras completas, DICA e avisos laterais. */
+#question .arena-answers .ans{
+  background-image:linear-gradient(90deg,rgba(8,44,105,.93),rgba(13,82,151,.84) 76%,rgba(7,49,114,.88)),url('assets/arena/molduras/barra-resposta.png')!important;
+  background-size:100% 100%,100% 100%!important;
+  background-position:center!important;
+  border:2px solid rgba(255,191,48,.88)!important;
+  border-radius:5px!important;
+  box-shadow:inset 0 0 0 1px rgba(52,192,255,.75),inset 0 0 9px #052554!important;
+  overflow:visible!important;
+}
+#question .arena-answers .ans.correct{background-image:linear-gradient(rgba(13,174,69,.85),rgba(13,174,69,.85)),url('assets/arena/molduras/barra-resposta.png')!important}
+#question .arena-answers .ans.wrong{background-image:linear-gradient(rgba(211,30,48,.85),rgba(211,30,48,.85)),url('assets/arena/molduras/barra-resposta.png')!important}
+#question .arena-hint{
+  top:77%!important;left:50%!important;width:clamp(140px,15vw,205px)!important;
+  height:clamp(38px,6vh,58px)!important;background-size:contain!important;
+  font-size:clamp(13px,1.3vw,17px)!important;z-index:6!important;
+}
+#question #qfeedback{
+  position:absolute!important;top:77.4%!important;left:16%!important;width:27%!important;
+  transform:none!important;margin:0!important;max-width:none!important;
+  text-align:center!important;font-size:clamp(10px,1.05vw,14px)!important;
+  line-height:1.22!important;padding:5px 6px!important;box-sizing:border-box!important;
+  border-radius:7px;background:rgba(5,22,59,.85)!important;z-index:5!important;
+}
+#question .arena-status{
+  top:77.4%!important;left:auto!important;right:15.5%!important;width:27%!important;
+  max-width:none!important;transform:none!important;margin:0!important;
+  white-space:normal!important;box-sizing:border-box!important;
+  font-size:clamp(10px,1.02vw,13px)!important;line-height:1.22!important;
+  padding:5px 6px!important;z-index:5!important;
+}
+@media(max-width:650px){
+ #question #qfeedback{left:11%!important;width:30%!important;top:78%!important;font-size:clamp(8px,1.7vw,11px)!important}
+ #question .arena-status{right:10%!important;width:30%!important;top:78%!important;font-size:clamp(8px,1.7vw,11px)!important}
+ #question .arena-hint{top:78%!important;width:18vw!important;min-width:70px!important;font-size:clamp(9px,1.7vw,12px)!important}
+}
+
+/* V2.20 - acabamento das alternativas, DICA e pulsacao da arte original. */
+#question .arena-answers .ans,
+#question .arena-answers .ans.correct,
+#question .arena-answers .ans.wrong{
+  background-image:linear-gradient(105deg,rgba(5,35,89,.94),rgba(12,80,150,.85) 66%,rgba(7,41,103,.94))!important;
+  background-color:transparent!important;
+  background-size:100% 100%!important;
+  border:3px solid #e7ad3b!important;
+  border-radius:12px!important;
+  box-shadow:inset 0 0 0 1px rgba(255,221,118,.6),inset 0 0 12px rgba(29,149,255,.38),0 2px 5px #031229a8!important;
+  overflow:visible!important;
+}
+#question .arena-answers .ans::before{
+  left:5px!important;
+  width:clamp(32px,3.5vw,48px)!important;
+  height:clamp(32px,3.5vw,48px)!important;
+  z-index:2!important;
+}
+#question .arena-answers .ans{padding-left:clamp(45px,4.7vw,65px)!important}
+#question .arena-answers .ans.correct{
+  background-image:linear-gradient(105deg,rgba(15,145,61,.85),rgba(21,188,81,.85))!important;
+  border-color:#6de68c!important;
+}
+#question .arena-answers .ans.wrong{
+  background-image:linear-gradient(105deg,rgba(170,24,41,.85),rgba(224,38,59,.85))!important;
+  border-color:#ff7779!important;
+}
+#question .arena-hint{
+  width:clamp(162px,15vw,210px)!important;
+  height:auto!important;
+  aspect-ratio:2003/785!important;
+  background-size:100% 100%!important;
+  padding:0 9% 0 34%!important;
+  box-sizing:border-box!important;
+  text-align:center!important;
+  font-size:clamp(12px,1.3vw,17px)!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  text-shadow:0 2px 3px #17042d,0 0 5px #17042d!important;
+}
+@media(max-width:650px){
+ #question .arena-answers .ans::before{width:clamp(22px,5vw,34px)!important;height:clamp(22px,5vw,34px)!important;left:2px!important}
+ #question .arena-answers .ans{padding-left:clamp(27px,6vw,38px)!important}
+ #question .arena-hint{width:clamp(85px,19vw,140px)!important;font-size:clamp(8px,1.7vw,12px)!important;padding-left:32%!important;padding-right:5%!important}
+}
+@keyframes classmanaEmeraldPulse{
+  0%,100%{box-shadow:0 0 3px 1px rgba(21,221,111,.12)}
+  50%{box-shadow:0 0 17px 5px rgba(26,255,128,.64),inset 0 0 12px rgba(36,255,141,.23)}
+}
+#tutorial #skipTutorial{
+  animation:classmanaEmeraldPulse 1.8s ease-in-out infinite!important;
+  border-radius:16px!important;
+}
+#tutorial #skipTutorial::after{content:none!important;display:none!important}
+@media(prefers-reduced-motion:reduce){#tutorial #skipTutorial{animation:none!important}}
+
+#question .arena-hint{
+  position:absolute!important;
+  top:75.5%!important;
+  left:50%!important;
+  transform:translateX(-50%)!important;
+  width:132px!important;
+  min-width:0!important;
+  max-width:132px!important;
+  height:52px!important;
+  min-height:0!important;
+  max-height:52px!important;
+  aspect-ratio:auto!important;
+  box-sizing:border-box!important;
+  flex:none!important;
+  padding:0 5px 0 45px!important;
+  text-indent:0!important;
+  margin:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  font-size:12px!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  background:url('assets/arena/botoes/pedir-dica.png') center / 100% 100% no-repeat!important;
+}
+@media(max-width:650px){
+  #question .arena-hint{
+    width:112px!important;max-width:112px!important;
+    height:44px!important;max-height:44px!important;
+    padding-left:38px!important;
+    font-size:11px!important;
+  }
+}
+
+#rankingOverlay>.panel{background:linear-gradient(145deg,rgba(173,49,59,.24) 0%,rgba(121,24,41,.28) 48%,rgba(74,12,29,.32) 100%)!important;}
+#rankingOverlay h1{-webkit-text-stroke:3px #080405!important;paint-order:stroke fill!important;}
+#rankingOverlay .ranking thead th{color:#ffc344!important;}
+</style><link rel="preload" as="audio" href="assets/sons/cm_selecao_herois.mp3"><link rel="preload" as="image" href="assets/arena/fundos/tutorial-esmeralda.png">
+<style id="cmLoadStyle">
+#classmanaSplash{z-index:120!important}
+#cmLoadUI{position:absolute;z-index:3;bottom:max(25px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(440px,86vw);padding:12px 17px 14px;border-radius:15px;background:rgba(5,14,34,.82);border:1px solid #e4c568a6;box-shadow:0 8px 30px #0009;text-align:center;color:#fff;font:700 15px Trebuchet MS,Arial,sans-serif}
+#cmLoadText{display:flex;justify-content:space-between;gap:12px;margin-bottom:9px;text-shadow:0 2px 3px #000}
+#cmLoadTrack{height:20px;border:2px solid #b4e1a7;border-radius:20px;background:#122a27;overflow:hidden;box-shadow:inset 0 2px 5px #0008}
+#cmLoadFill{height:100%;width:0%;background:linear-gradient(180deg,#8af86d,#2bd33e 60%,#148e32);box-shadow:0 0 13px #57ff5b;transition:width .25s ease}
+
+#classmanaSplash.hide #cmLoadUI{pointer-events:none}
+</style><style id="cm-review-css">
+#question #qtext{ text-align:left!important;text-indent:12px!important;overflow:auto!important;overflow-wrap:anywhere!important;hyphens:auto!important;font-size:clamp(15px,1.8vw,23px)!important;line-height:1.18!important;padding:4px 9px!important;min-height:0!important;max-height:100%!important;}
+#question .arena-image-slot{min-width:0!important;}
+#question #answers .ans{white-space:normal!important;overflow-wrap:anywhere!important;font-size:clamp(13px,1.45vw,19px)!important;line-height:1.12!important;}
+#cmTextPreview{display:none;width:100%;height:100%;overflow:hidden;background:white;color:#111;border-radius:7px;padding:7px;box-sizing:border-box;font-size:12px;text-align:left;line-height:1.2;}
+#cmFullText{display:none;background:#fff;color:#111;max-width:min(92vw,900px);max-height:75vh;overflow:auto;padding:24px;border-radius:12px;font:normal clamp(18px,2.5vw,27px)/1.45 Arial,sans-serif;white-space:pre-wrap;}
+#arenaImageModal.cm-text #arenaImageExpanded{display:none}#arenaImageModal.cm-text #cmFullText{display:block}
+#arenaImageModal.cm-text #cmTextZoom{display:flex}#cmTextZoom{display:none;gap:12px;justify-content:center}
+
+#bonusOverlay{z-index:35;background:#073d2c url('assets/arena/fundos/arena-esmeralda-bonus.png') center/cover no-repeat;overflow:auto;padding:12px}
+#bonusOverlay .bonusPanel{width:min(740px,96vw);margin:auto;text-align:center;padding:14px 18px 20px;border:3px solid #e8bc58;border-radius:20px;background:linear-gradient(145deg,#042d26e8,#0b4738e8);box-shadow:0 15px 55px #001c19;color:#fff}
+#bonusOverlay .bonusLogo{width:min(260px,60vw);max-height:95px;object-fit:contain}
+#bonusOverlay h1{font:900 clamp(24px,5vw,45px) Impact,'Arial Black',sans-serif;color:#ffe39b;letter-spacing:2px;margin:4px 0;text-shadow:0 4px 8px #000}
+#bonusOverlay .bonusStats{font-size:clamp(13px,2vw,19px);line-height:1.5}
+#bonusOverlay .bonusChest{display:block;width:min(200px,37vw);height:min(170px,28vh);object-fit:contain;margin:0 auto;filter:drop-shadow(0 7px 15px #0009);animation:bonusFloat 2s ease-in-out infinite}
+#bonusOverlay .bonusCounter{font:900 clamp(40px,9vw,76px) Impact,'Arial Black',sans-serif;color:#ffdf71;text-shadow:0 4px 0 #71470a,0 0 24px #f7bf42;letter-spacing:3px;font-variant-numeric:tabular-nums}
+#bonusOverlay .bonusCoins{position:relative;height:50px;overflow:hidden;pointer-events:none}
+#bonusOverlay .bonusCoin{position:absolute;bottom:-22px;width:19px;height:19px;border:3px solid #fff1a2;border-radius:50%;background:radial-gradient(circle at 30% 30%,#fff7be,#d79a1b);animation:bonusRise 1.5s ease-out forwards}
+#bonusOverlay .bonusDetails{font-size:14px;color:#e6f8ec;margin:8px 0 16px}
+#bonusOverlay .bonusMotivation{font-weight:900;font-size:clamp(17px,2.6vw,25px);color:#fff5b5;padding:14px 10px;margin:10px auto 18px;max-width:650px;border:2px solid #f8d46a;border-radius:14px;background:#064932e8;text-shadow:0 0 12px #ffca54;box-shadow:0 0 16px #f8d46a88;animation:bonusGlow 1.6s ease-in-out infinite alternate}
+@keyframes bonusGlow{from{box-shadow:0 0 10px #f8d46a66}to{box-shadow:0 0 28px #ffe16abb,0 0 9px #ffdc70 inset}}
+#bonusOverlay .bonusViewRanking{margin:8px auto 6px;display:block;font-size:clamp(16px,2.5vw,23px);padding:14px 24px}
+#bonusOverlay .bonusViewRanking:disabled{opacity:.6;cursor:wait}
+#gameOverOverlay .goAutoNotice{font-weight:800;color:#ffe9a8;text-shadow:0 0 10px #ffc94c}
+@keyframes bonusFloat{50%{transform:translateY(-5px)}}@keyframes bonusRise{to{transform:translateY(-75px) rotate(180deg);opacity:0}}
+@media(prefers-reduced-motion:reduce){#bonusOverlay .bonusChest{animation:none}#bonusOverlay .bonusCoin{animation:none}}
+</style></head><body><div id="classmanaSplash" aria-label="ClassMana"><img src="assets/splash_classmana.png" alt="ClassMana"><div id="cmLoadUI" role="status" aria-live="polite"><div id="cmLoadText">Aguarde <span id="cmLoadPercent">0%</span></div><div id="cmLoadTrack" role="progressbar" aria-label="Carregamento do jogo" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="cmLoadFill"></div></div></div></div><div id="openingVideo" aria-label="Vídeo de abertura ClassMana"><video id="openingMovie" playsinline preload="auto"><source media="(max-width: 700px) and (orientation: portrait)" src="assets/abertura_classmana_vertical.mp4" type="video/mp4">
+<source src="assets/abertura_classmana.mp4" type="video/mp4"></video><div class="videoActions"><button type="button" id="openingSound">🔊 ASSISTIR COM SOM</button><button type="button" id="openingSkip">PULAR ABERTURA ▶</button></div></div><div id="game"><canvas id="c"></canvas><div class="hud"><div class="card"><div class="title">✦ CLASSMANA • HERÓI</div><div class="name" id="hname">Herói</div><div class="stats"><span><img src="assets/items3d/heart.png" style="width:20px;height:20px;object-fit:contain;vertical-align:middle"> <b id="hearts">5</b></span><span>⭐ <b id="score">0</b></span><span><img src="assets/icon_shield.png" style="width:20px;height:20px;object-fit:contain;vertical-align:middle"> <b id="shieldTxt">PRONTO</b></span></div><div class="bar hp"><i id="php"></i></div><div class="bar mana"><i id="pmana"></i></div></div><div class="card"><div class="title" id="round">FASE 1 / 10</div><div class="name" id="ename">FANTASMA</div><div class="stats"><span id="difficulty">DIFICULDADE ★</span></div><div class="bar enemy"><i id="ehp"></i></div></div></div><div id="stageText"></div><div id="msg"></div><div class="timerHud" id="timerHud">⏳ 00:00</div><button id="sound">🔊</button><div id="joy"><div id="knob"></div></div><div class="controls"><button class="btn" id="magic">[ESPAÇO/Z] ⚔ GOLPE</button><button class="btn special" id="special">[X/ENTER] ✨ SUPER</button><button class="btn def" id="defend">[E/SHIFT] 🛡 ESCUDO</button><button class="btn charge" id="charge">[R/CTRL] 🧪 RECARREGAR</button><button class="btn" id="ultimate">[C] ⚡ MAGIA SUPREMA • -500 pts / -20% HP</button></div>
+<div class="overlay" id="menu"><div class="panel menuPanel"><img class="battleTitleImg" src="assets/titulo_batalha_monstros.png" alt="Batalha dos Monstros"><img class="logo" src="assets/logo.png"><div class="decorRow"><img src="assets/items3d/dagger.png"><img src="assets/items3d/crystal.png"><img src="assets/items3d/book_blue.png"><img src="assets/items3d/shield.png"><img src="assets/items3d/potion.png"></div><p><b>1. Escolha sua turma</b></p><div class="classPick" id="classPick"><button class="classBtn sel" data-class="4° A">4° A</button><button class="classBtn" data-class="4° B">4° B</button><button class="classBtn" data-class="4° C">4° C</button></div><p><b>2. Escolha seu herói</b></p><div class="heroes" id="heroes"></div><p><b>3. Selecione seu nome no cadastro</b></p><input class="playerName" id="playerName" maxlength="80" placeholder="DIGITE PARA PROCURAR SEU NOME" autocomplete="off"><div id="cmAlunoOpcoes" style="max-width:420px;margin:0 auto;max-height:180px;overflow:auto"></div><p id="cmAlunoAviso" style="font-size:13px;font-weight:bold;color:#173653">Digite pelo menos 2 letras do seu nome.</p><div class="menuActions"><button class="start" id="start">▶ INICIAR AVENTURA</button><button class="rankBtn" id="openRanking">🏆 PLACAR</button></div></div></div>
+<div class="overlay hidden" id="tutorial"><div class="panel"><h1>⚔ COMO JOGAR</h1><p><b>Objetivo:</b> derrote os 9 monstros para desbloquear o Dragão de Fogo.</p><div style="display:grid;grid-template-columns:repeat(2,minmax(220px,1fr));gap:10px;text-align:left;margin:16px auto;max-width:620px"><div class="ans">⬅️⬆️⬇️➡️ ou <b>W A S D</b><br><small>Mover o herói</small></div><div class="ans"><b>Z</b> ⚔ Golpe principal<br><small>Use como ataque padrão</small></div><div class="ans"><b>X</b> ✨ SUPER<br><small>Máximo de 3 por batalha • 5s entre usos</small></div><div class="ans"><b>E</b> 🛡 Escudo<br><small>Protege, mas custa pontos</small></div><div class="ans"><b>R</b> 🧪 Recarregar Mana<br><small>3 questões por recarga • erros reduzem a energia • automático após 3s</small></div><div class="ans"><b>C</b> ⚡ Magia Suprema<br><small>1 por monstro • custa 500 pontos + 20% de HP</small></div><div class="ans">🎯 Dica<br><small>Mantenha distância: chefes próximos causam mais dano.</small></div></div><p><b>🛡 Atenção:</b> cada uso do escudo reduz <b>50 pontos</b>. Use com estratégia.</p><div class="tutorialProgress"><i id="tutorialBar"></i></div><p id="tutorialCount">A batalha começa em 12...</p><button class="start" id="skipTutorial">⚡ COMEÇAR AGORA</button></div></div><div class="overlay hidden" id="question"><div class="arena-stage" role="dialog" aria-modal="true" aria-label="Desafio da Arena"><img class="arena-frame" src="assets/arena/molduras/moldura-principal.png" alt=""><div class="arena-content"><div class="arena-heading-space" aria-hidden="true"></div><div id="arenaProgress" class="arena-progress">Questão 1 de 2</div><div class="arena-question"><h2 id="qtext"></h2><div class="arena-image-slot"><img id="arenaQuestionImage" src="assets/logo.png" alt="Imagem da questão ou logo ClassMana" class="arena-logo"><button id="arenaZoom" type="button" aria-label="Ampliar imagem" title="Ampliar imagem">🔍</button></div></div><div class="answers arena-answers" id="answers"></div><button type="button" id="arenaHint" class="arena-hint" aria-label="Dica">DICA</button><p id="qfeedback" aria-live="polite"></p><div class="arena-status">[R] Recarregar mana • Batalha pausada até responder às 3 questões</div></div></div><img id="arenaHero" class="arena-hero" alt="Herói selecionado"></div><div id="arenaImageModal" class="hidden" role="dialog" aria-modal="true" aria-label="Imagem ampliada"><button type="button" id="arenaImageClose" aria-label="Fechar ampliação">✕ FECHAR</button><img id="arenaImageExpanded" alt="Imagem ampliada da questão"></div><div class="overlay hidden" id="transition"><div class="transition" id="transitionText"></div></div><div class="overlay hidden" id="gameOverOverlay"><div class="gameOverPanel"><img class="goLogo" src="assets/logo.png" alt="ClassMana"><div class="goDragonStage"><img class="goDragon" src="assets/monster_dragon.png" alt="Dragão de Fogo"><div class="goFireLayer" id="goFireLayer"></div></div><h1>GAME OVER</h1><div class="defeatTitle">VOCÊ FOI DERROTADO!</div><div class="goDetails" id="gameOverDetails"></div><div class="gameOverActions"><span class="goAutoNotice">A recompensa de pontos bônus aparecerá em instantes...</span></div></div></div><div class="overlay hidden" id="bonusOverlay" role="dialog" aria-modal="true" aria-label="Pontos bônus"><div class="bonusPanel"><img class="bonusLogo" src="assets/logo.png" alt="ClassMana Batalha dos Monstros"><h1>✦ PONTOS BÔNUS ✦</h1><div class="bonusStats" id="bonusAccuracy"></div><img class="bonusChest" src="assets/items3d/chest.png" alt="Baú do tesouro"><div class="bonusCoins" id="bonusCoins" aria-hidden="true"></div><div class="bonusCounter" id="bonusCounter">+0000</div><div class="bonusDetails" id="bonusDetails"></div><div class="bonusMotivation">✨ QUANTO MAIS RESPOSTAS CERTAS NA PRIMEIRA TENTATIVA, MAIOR SEU BÔNUS DE PONTOS! ✨</div><button class="start bonusViewRanking" id="bonusViewRanking" type="button" disabled>🏆 VER PLACAR FINAL</button></div></div><div class="overlay hidden" id="rankingOverlay"><div class="panel"><img class="rankingLogo" src="assets/logo.png" alt="ClassMana"><h1>🏆 PLACAR</h1><div class="decorRow"><img src="assets/items3d/dagger.png"><img src="assets/items3d/crystal.png"><img src="assets/items3d/book_blue.png"><img src="assets/items3d/shield.png"></div><p id="rankSummary"></p><div id="rankingTable"></div><button class="rankBtn" id="closeRanking">VOLTAR</button></div></div></div><script>
+const $=s=>document.querySelector(s),c=$('#c'),ctx=c.getContext('2d'),AS='assets/';let DPR=1,W=1280,H=720,last=0,T=0,playing=false,paused=false,stage=0,shake=0,msgUntil=0,score=0,audio,musicTimer,soundOn=true,heroIdx=0,mediaTrack=null,playerName="",playerId="",playerClass="4° A",shieldUses=0,bossDefeated=false,transitionBusy=false,superUses=0,iceAlt=0,tutorialTimer=null,elapsedMs=0,lastTimerStamp=0,furyUsed=false,bestStageReached=0,superCooldown=0,manaAutoCountdown=null,gameEnded=false,rechargeRound=null,sessionToken=0,furyTimers=[],expectedStage=0,defeatPending=false,defeatDelay=0,defeatStage=-1,defeatScore=0,defeatHp=0;
+const mediaAudio={avatar:AS+'sons/cm_selecao_herois.mp3',spider:AS+'sons/duquesa_aranha_epic_battle_corte25s.mp3'};
+const cmPreloadedAudio=window.cmPreloadedAudio||(window.cmPreloadedAudio={});
+function stopMediaAudio(){if(mediaTrack){mediaTrack.pause();mediaTrack.currentTime=0;mediaTrack=null}}
+function playMediaAudio(src,loop=false,volume=.55){
+ if(!soundOn)return;
+ if(mediaTrack&&mediaTrack.dataset.cmOriginal===src){mediaTrack.volume=volume*.9;if(mediaTrack.paused)mediaTrack.play().catch(()=>{});return;}
+ stopMediaAudio();mediaTrack=new Audio(cmPreloadedAudio[src]||src);mediaTrack.dataset.cmOriginal=src;mediaTrack.preload='auto';mediaTrack.loop=loop;mediaTrack.volume=volume*.9;mediaTrack.play().catch(()=>{});
+}
+const cmAudio={inicio:AS+'sons/cm_como_comecar.mp3',selecao:AS+'sons/cm_selecao_herois.mp3',tutorial:AS+'sons/cm_como_jogar.mp3',placar:AS+'sons/cm_placar.mp3',gameover:AS+'sons/cm_gameover.mp3',recarga:AS+'sons/cm_recarga.mp3'};
+const trilhaFases=[AS+'sons/cm_fantasma.mp3',AS+'sons/cm_golem.mp3',AS+'sons/cm_mega_aranha.mp3',AS+'sons/cm_flor.mp3',AS+'sons/cm_colmeia.mp3',mediaAudio.spider,AS+'sons/cm_morcego.mp3',AS+'sons/cm_hidra.mp3',AS+'sons/cm_peaks_pass.mp3',AS+'sons/cm_peaks_pass.mp3'];
+const efeitosClassMana={raio_supremo:'cm_raio_supremo',golpe_monstro:'cm_golpe_monstro',selecao:'selecao',confirmar:'confirmar',acerto:'acerto',erro:'erro',moedas:'moedas',especial:'ataque_especial',derrota:'derrota',vitoria:'vitoria',magia_nova:'cm_magia_nova',raio_eletrico:'cm_raio_eletrico',impacto_golpe:'cm_impacto_golpe'};
+const cacheEfeitos={};const ultimosEfeitos={};
+function cmFxAmplificar(elemento){ return elemento; }
+
+function efeitoClassMana(nome,volume=1,intervalo=250){
+ if(!soundOn||!efeitosClassMana[nome])return;
+ const agora=performance.now();if(agora-(ultimosEfeitos[nome]||-1e6)<intervalo)return;ultimosEfeitos[nome]=agora;
+ let a=cacheEfeitos[nome];if(!a){a=new Audio(AS+'sons/'+efeitosClassMana[nome]+'.mp3');a.preload='auto';cacheEfeitos[nome]=a;}
+ try{if(!a.paused&&!a.ended)return; a.currentTime=0;a.volume=Math.min(.38,Math.max(0,volume*.35));a.play().catch(()=>{});}catch(e){}
+}
+function cmRecarga(){if(!soundOn)return;let a=new Audio(cmAudio.recarga);a.volume=.35;a.play().catch(()=>{});a.onended=()=>{a.src='';};}
+function stageAudio(){window.cmQuestionPausedTrack=null;playMediaAudio(trilhaFases[stage]||mediaAudio.avatar,true,.75)}
+const sprites=new Image;sprites.src=AS+'sprites.png';
+const heroFiles=['hero_fada.png','hero_chama.png','hero_lobo.png','hero_cavaleiro.png','hero_maga.png','hero_dragao.png'];
+const heroImgs=heroFiles.map(f=>{let im=new Image;im.src=AS+f;return im});
+const fadaFrameFiles=['fada_anim/fada_1.png','fada_anim/fada_2.png','fada_anim/fada_3.png','fada_anim/fada_4.png','fada_anim/fada_5.png','fada_anim/fada_6.png'];
+const fadaFrames=fadaFrameFiles.map(f=>{let im=new Image;im.src=AS+f;return im});
+const FADA_FRAME_MS=130;
+const chamaFrameFiles=['chama_anim/chama_1.png','chama_anim/chama_2.png','chama_anim/chama_3.png','chama_anim/chama_4.png','chama_anim/chama_5.png','chama_anim/chama_6.png'];
+const chamaFrames=chamaFrameFiles.map(f=>{let im=new Image;im.src=AS+f;return im});
+const CHAMA_FRAME_MS=130;
+const cavaleiroFrameFiles=['cavaleiro_anim/cavaleiro_1.png','cavaleiro_anim/cavaleiro_2.png','cavaleiro_anim/cavaleiro_3.png','cavaleiro_anim/cavaleiro_4.png','cavaleiro_anim/cavaleiro_5.png','cavaleiro_anim/cavaleiro_6.png'];
+const cavaleiroFrames=cavaleiroFrameFiles.map(f=>{let im=new Image;im.src=AS+f;return im});
+const loboFrames=['lobo_1.png','lobo_2.png','lobo_3.png','lobo_4.png','lobo_5.png','lobo_6.png'].map(f=>{let im=new Image;im.src=AS+'lobo_anim/'+f;return im});
+const magaFrames=['maga_1.png','maga_2.png','maga_3.png','maga_4.png','maga_5.png','maga_6.png'].map(f=>{let im=new Image;im.src=AS+'maga_anim/'+f;return im});
+const dragaoCombateFrames=['dragao_1.png','dragao_2.png','dragao_3.png','dragao_4.png','dragao_5.png','dragao_6.png'].map(f=>{let im=new Image;im.src=AS+'dragao_combate_anim/'+f;return im});
+const dragaoFogoFrames=['dragao_1.png','dragao_2.png','dragao_3.png','dragao_4.png','dragao_5.png','dragao_6.png','dragao_7.png','dragao_8.png','dragao_9.png','dragao_10.png','dragao_11.png','dragao_12.png'].map(f=>{let im=new Image;im.src=AS+'dragao_fogo_anim/'+f;return im});
+const LOBO_FRAME_MS=150,MAGA_FRAME_MS=150,DRAGAO_FRAME_MS=150;
+const CAVALEIRO_FRAME_MS=130;
+const monsterCrop=[ [20,20,250,225],[278,18,255,230],[560,15,260,225],[845,18,255,225],[1110,15,300,225],[290,245,290,230],[585,245,275,230],[0,240,285,235],[865,240,290,235],[1165,240,330,240] ];
+const heroCrop=[[10,485,235,195],[250,480,235,200],[490,485,230,195],[720,480,245,200],[965,480,250,200],[1220,480,270,200]];
+const heroes=[
+{name:'Fada Guerreira',basic:'Luz Feérica',special:'Tempestade de Luz',col:'#ff7df0',fx:'fairy'},
+{name:'Chama Congelante',basic:'Lança Glacial',special:'Nevasca Arcana',col:'#65dfff',fx:'ice'},
+{name:'Lobo Gatuno',basic:'Adaga Sombria',special:'Corte Fantasma',col:'#d6a35a',fx:'dagger'},
+{name:'Cavaleiro Guardião',basic:'Golpe Real',special:'Onda do Escudo',col:'#ffd04f',fx:'sword'},
+{name:'Maga Engenheira',basic:'Orbe Arcano',special:'Supernova Rúnica',col:'#8e7dff',fx:'arcane'},
+{name:'Dragão de Combate',basic:'Brasa Dracônica',special:'Inferno Dracônico',col:'#ff633f',fx:'fire'}];
+const stages=[
+{name:'FANTASMA',difficulty:6,realm:'NECRÓPOLE ESPECTRAL',bg:'bg_ghost.png',img:'monster_ghost.png',hp:728,rate:4.4,atk:6,kind:'ghost'},
+{name:'GOLEM DE LAVA',difficulty:6.5,realm:'FORJA VULCÂNICA',bg:'bg_lava.png',img:'monster_golem.png',hp:878,rate:4.2,atk:7,kind:'lava',tint:'#8b2500'},
+{name:'MEGA ARANHA',difficulty:7,realm:'FORTALEZA DAS ARANHAS',bg:'bg_mega.png',img:'monster_mega.png',hp:1040,rate:4.0,atk:8,kind:'spider'},
+{name:'FLOR DE PRESAS',difficulty:7.5,realm:'JARDIM CARNÍVORO',bg:'bg_plant.png',img:'monster_plant.png',hp:1213,rate:3.8,atk:9,kind:'plant',tint:'#164d1d'},
+{name:'MESTRE DA COLMEIA',difficulty:8,realm:'REINO DOURADO DA COLMEIA',bg:'bg_bee.png',img:'monster_bee.png',hp:1334,rate:3.6,atk:10,kind:'bee'},
+{name:'DUQUESA ARANHA',difficulty:8.5,realm:'COVIL DA DUQUESA',bg:'bg_duchess.png',img:'monster_duchess.png',hp:1380,rate:3.4,atk:10,kind:'spider'},
+{name:'MORCEGO VAMPIRO',difficulty:9,realm:'CASTELO VAMPÍRICO',bg:'bg_bat.png',img:'monster_bat.png',hp:1620,rate:3.2,atk:11,kind:'bat'},
+{name:'HIDRA',difficulty:9.5,realm:'ABISMO DA HIDRA',bg:'bg_hydra.png',img:'monster_hydra.png',hp:1900,rate:3.0,atk:12,kind:'hydra',tint:'#3d120d'},
+{name:'RAINHA ARANHA',difficulty:10,realm:'TRONO DA RAINHA ARANHA',bg:'bg_queen.png',img:'monster_queen.png',hp:2220,rate:2.8,atk:13,kind:'spider'},
+{name:'DRAGÃO DE FOGO',difficulty:12,realm:'DESAFIO BÔNUS • CÂMARA DO DRAGÃO',bg:'bg_dragon.png',img:'monster_dragon.png',hp:2700,rate:2.55,atk:16,kind:'dragon',tint:'#641400'}];
+const bgs={};for(const s of stages){if(!bgs[s.bg]){bgs[s.bg]=new Image;bgs[s.bg].src=AS+s.bg}} const monsters={};for(const s of stages){monsters[s.img]=new Image;monsters[s.img].src=AS+s.img}
+const fxIcons={};for(const [k,f] of Object.entries({sword:'icon_sword.png',shield:'items3d/shield.png',stinger:'icon_stinger.png',staff:'items3d/staff.png',book:'items3d/book_blue.png',book2:'items3d/book_red.png',potion:'items3d/potion.png',mana:'icon_mana.png',crystal:'items3d/crystal.png',gem:'items3d/gem.png',dagger:'items3d/dagger.png',bow:'items3d/bow.png',torch:'items3d/torch.png',coin:'items3d/coin.png'})){fxIcons[k]=new Image;fxIcons[k].src=AS+f}
+const ghostFrames=['ghost_anim/ghost_1.png','ghost_anim/ghost_2.png','ghost_anim/ghost_3.png','ghost_anim/ghost_4.png','ghost_anim/ghost_5.png','ghost_anim/ghost_6.png'].map(f=>{let im=new Image;im.src=AS+f;return im});
+const golemFrames=['golem_anim/golem_1.png','golem_anim/golem_2.png','golem_anim/golem_3.png','golem_anim/golem_4.png','golem_anim/golem_5.png','golem_anim/golem_6.png'].map(f=>{let im=new Image;im.src=AS+f;return im});
+const megaAranhaFrames=['mega_aranha_anim/mega_1.png','mega_aranha_anim/mega_2.png','mega_aranha_anim/mega_3.png','mega_aranha_anim/mega_4.png','mega_aranha_anim/mega_5.png','mega_aranha_anim/mega_6.png'].map(f=>{let im=new Image;im.src=AS+f;return im});
+const florPresasFrames=['flor_presas_anim/flor_1.png','flor_presas_anim/flor_2.png','flor_presas_anim/flor_3.png','flor_presas_anim/flor_4.png','flor_presas_anim/flor_5.png','flor_presas_anim/flor_6.png'].map(f=>{let im=new Image;im.src=AS+f;return im});
+const mestreColmeiaFrames=['mestre_colmeia_anim/colmeia_1.png','mestre_colmeia_anim/colmeia_2.png','mestre_colmeia_anim/colmeia_3.png','mestre_colmeia_anim/colmeia_4.png','mestre_colmeia_anim/colmeia_5.png','mestre_colmeia_anim/colmeia_6.png'].map(f=>{let im=new Image;im.src=AS+f;return im});
+const duquesaAranhaFrames=['duquesa_aranha_anim/duquesa_1.png','duquesa_aranha_anim/duquesa_2.png','duquesa_aranha_anim/duquesa_3.png','duquesa_aranha_anim/duquesa_4.png','duquesa_aranha_anim/duquesa_5.png','duquesa_aranha_anim/duquesa_6.png'].map(f=>{let im=new Image;im.src=AS+f;return im});
+const morcegoVampiroFrames=['morcego_vampiro_anim/morcego_1.png','morcego_vampiro_anim/morcego_2.png','morcego_vampiro_anim/morcego_3.png','morcego_vampiro_anim/morcego_4.png','morcego_vampiro_anim/morcego_5.png','morcego_vampiro_anim/morcego_6.png'].map(f=>{let im=new Image;im.src=AS+f;return im});
+const hydraFrames=['hydra_anim/hydra_1.png','hydra_anim/hydra_2.png','hydra_anim/hydra_3.png','hydra_anim/hydra_4.png','hydra_anim/hydra_5.png','hydra_anim/hydra_6.png'].map(f=>{let im=new Image;im.src=AS+f;return im});
+const rainhaAranhaFrames=['rainha_aranha_anim/rainha_1.png','rainha_aranha_anim/rainha_2.png','rainha_aranha_anim/rainha_3.png','rainha_aranha_anim/rainha_4.png','rainha_aranha_anim/rainha_5.png','rainha_aranha_anim/rainha_6.png'].map(f=>{let im=new Image;im.src=AS+f;return im});
+let enemyAttackCount=0;
+const questions=[
+{q:'Quanto é 2 × 2?',a:["6", "4", "2", "9"],ok:1},
+{q:'Quanto é 2 × 3?',a:["6", "8", "3", "4"],ok:0},
+{q:'Quanto é 2 × 4?',a:["6", "10", "8", "4"],ok:2},
+{q:'Quanto é 2 × 5?',a:["12", "8", "5", "10"],ok:3},
+{q:'Quanto é 2 × 6?',a:["14", "12", "10", "6"],ok:1},
+{q:'Quanto é 2 × 7?',a:["7", "12", "16", "14"],ok:3},
+{q:'Quanto é 2 × 8?',a:["8", "16", "18", "14"],ok:1},
+{q:'Quanto é 2 × 9?',a:["9", "16", "20", "18"],ok:3},
+{q:'Quanto é 2 × 10?',a:["20", "18", "22", "10"],ok:0},
+{q:'Quanto é 3 × 2?',a:["6", "9", "4", "3"],ok:0},
+{q:'Quanto é 3 × 3?',a:["14", "12", "9", "6"],ok:2},
+{q:'Quanto é 3 × 4?',a:["15", "12", "8", "9"],ok:1},
+{q:'Quanto é 3 × 5?',a:["18", "12", "15", "10"],ok:2},
+{q:'Quanto é 3 × 6?',a:["18", "15", "21", "12"],ok:0},
+{q:'Quanto é 3 × 7?',a:["18", "24", "21", "14"],ok:2},
+{q:'Quanto é 3 × 8?',a:["21", "27", "16", "24"],ok:3},
+{q:'Quanto é 3 × 9?',a:["18", "27", "24", "30"],ok:1},
+{q:'Quanto é 3 × 10?',a:["27", "30", "20", "33"],ok:1},
+{q:'Quanto é 4 × 2?',a:["6", "12", "8", "4"],ok:2},
+{q:'Quanto é 4 × 3?',a:["9", "12", "8", "16"],ok:1},
+{q:'Quanto é 4 × 4?',a:["20", "12", "16", "21"],ok:2},
+{q:'Quanto é 4 × 5?',a:["16", "20", "24", "15"],ok:1},
+{q:'Quanto é 4 × 6?',a:["18", "24", "20", "28"],ok:1},
+{q:'Quanto é 4 × 7?',a:["24", "32", "28", "21"],ok:2},
+{q:'Quanto é 4 × 8?',a:["24", "36", "28", "32"],ok:3},
+{q:'Quanto é 4 × 9?',a:["32", "27", "40", "36"],ok:3},
+{q:'Quanto é 4 × 10?',a:["40", "36", "30", "44"],ok:0},
+{q:'Quanto é 5 × 2?',a:["10", "15", "5", "8"],ok:0},
+{q:'Quanto é 5 × 3?',a:["10", "15", "12", "20"],ok:1},
+{q:'Quanto é 5 × 4?',a:["20", "16", "15", "25"],ok:0},
+{q:'Quanto é 5 × 5?',a:["25", "30", "30", "20"],ok:0},
+{q:'Quanto é 5 × 6?',a:["35", "24", "25", "30"],ok:3},
+{q:'Quanto é 5 × 7?',a:["28", "30", "40", "35"],ok:3},
+{q:'Quanto é 5 × 8?',a:["45", "40", "32", "35"],ok:1},
+{q:'Quanto é 5 × 9?',a:["50", "36", "45", "40"],ok:2},
+{q:'Quanto é 5 × 10?',a:["50", "55", "40", "45"],ok:0},
+{q:'Quanto é 6 × 2?',a:["6", "10", "12", "18"],ok:2},
+{q:'Quanto é 6 × 3?',a:["12", "24", "15", "18"],ok:3},
+{q:'Quanto é 6 × 4?',a:["30", "20", "18", "24"],ok:3},
+{q:'Quanto é 6 × 5?',a:["36", "30", "24", "25"],ok:1},
+{q:'Quanto é 6 × 6?',a:["41", "42", "36", "30"],ok:2},
+{q:'Quanto é 6 × 7?',a:["35", "48", "36", "42"],ok:3},
+{q:'Quanto é 6 × 8?',a:["42", "54", "48", "40"],ok:2},
+{q:'Quanto é 6 × 9?',a:["45", "48", "54", "60"],ok:2},
+{q:'Quanto é 6 × 10?',a:["66", "60", "54", "50"],ok:1},
+{q:'Quanto é 7 × 2?',a:["7", "12", "14", "21"],ok:2},
+{q:'Quanto é 7 × 3?',a:["28", "18", "21", "14"],ok:2},
+{q:'Quanto é 7 × 4?',a:["24", "35", "21", "28"],ok:3},
+{q:'Quanto é 7 × 5?',a:["42", "28", "30", "35"],ok:3},
+{q:'Quanto é 7 × 6?',a:["35", "49", "36", "42"],ok:3},
+{q:'Quanto é 7 × 7?',a:["54", "49", "56", "42"],ok:1},
+{q:'Quanto é 7 × 8?',a:["48", "56", "63", "49"],ok:1},
+{q:'Quanto é 7 × 9?',a:["56", "54", "70", "63"],ok:3},
+{q:'Quanto é 7 × 10?',a:["77", "70", "63", "60"],ok:1},
+{q:'Quanto é 8 × 2?',a:["8", "16", "24", "14"],ok:1},
+{q:'Quanto é 8 × 3?',a:["21", "32", "16", "24"],ok:3},
+{q:'Quanto é 8 × 4?',a:["24", "40", "28", "32"],ok:3},
+{q:'Quanto é 8 × 5?',a:["32", "35", "48", "40"],ok:3},
+{q:'Quanto é 8 × 6?',a:["56", "48", "42", "40"],ok:1},
+{q:'Quanto é 8 × 7?',a:["64", "49", "48", "56"],ok:3},
+{q:'Quanto é 8 × 8?',a:["72", "69", "64", "56"],ok:2},
+{q:'Quanto é 8 × 9?',a:["63", "64", "80", "72"],ok:3},
+{q:'Quanto é 8 × 10?',a:["80", "72", "70", "88"],ok:0},
+{q:'Quanto é 9 × 2?',a:["16", "18", "9", "27"],ok:1},
+{q:'Quanto é 9 × 3?',a:["27", "18", "24", "36"],ok:0},
+{q:'Quanto é 9 × 4?',a:["45", "36", "32", "27"],ok:1},
+{q:'Quanto é 9 × 5?',a:["45", "54", "36", "40"],ok:0},
+{q:'Quanto é 9 × 6?',a:["54", "48", "45", "63"],ok:0},
+{q:'Quanto é 9 × 7?',a:["63", "72", "54", "56"],ok:0},
+{q:'Quanto é 9 × 8?',a:["72", "81", "63", "64"],ok:0},
+{q:'Quanto é 9 × 9?',a:["81", "72", "86", "90"],ok:0},
+{q:'Quanto é 9 × 10?',a:["80", "81", "90", "99"],ok:2},
+{q:'Quanto é 10 × 2?',a:["10", "20", "18", "30"],ok:1},
+{q:'Quanto é 10 × 3?',a:["40", "30", "20", "27"],ok:1},
+{q:'Quanto é 10 × 4?',a:["36", "30", "40", "50"],ok:2},
+{q:'Quanto é 10 × 5?',a:["40", "45", "50", "60"],ok:2},
+{q:'Quanto é 10 × 6?',a:["50", "54", "70", "60"],ok:3},
+{q:'Quanto é 10 × 7?',a:["63", "70", "60", "80"],ok:1},
+{q:'Quanto é 10 × 8?',a:["80", "70", "90", "72"],ok:0},
+{q:'Quanto é 10 × 9?',a:["100", "81", "90", "80"],ok:2},
+{q:'Quanto é 10 × 10?',a:["100", "90", "105", "110"],ok:0},
+{q:'Quanto é 4 ÷ 2?',a:["3", "2", "7", "1"],ok:1},
+{q:'Quanto é 6 ÷ 2?',a:["8", "4", "2", "3"],ok:3},
+{q:'Quanto é 8 ÷ 2?',a:["3", "2", "5", "4"],ok:3},
+{q:'Quanto é 10 ÷ 2?',a:["2", "6", "4", "5"],ok:3},
+{q:'Quanto é 20 ÷ 2?',a:["11", "2", "10", "9"],ok:2},
+{q:'Quanto é 6 ÷ 3?',a:["7", "3", "2", "1"],ok:2},
+{q:'Quanto é 9 ÷ 3?',a:["2", "4", "3", "8"],ok:2},
+{q:'Quanto é 12 ÷ 3?',a:["3", "5", "9", "4"],ok:3},
+{q:'Quanto é 15 ÷ 3?',a:["5", "3", "6", "4"],ok:0},
+{q:'Quanto é 30 ÷ 3?',a:["9", "11", "10", "3"],ok:2},
+{q:'Quanto é 8 ÷ 4?',a:["4", "2", "3", "1"],ok:1},
+{q:'Quanto é 12 ÷ 4?',a:["4", "3", "8", "2"],ok:1},
+{q:'Quanto é 16 ÷ 4?',a:["4", "9", "3", "5"],ok:0},
+{q:'Quanto é 20 ÷ 4?',a:["6", "5", "10", "4"],ok:1},
+{q:'Quanto é 40 ÷ 4?',a:["9", "11", "4", "10"],ok:3},
+{q:'Quanto é 10 ÷ 5?',a:["2", "3", "5", "1"],ok:0},
+{q:'Quanto é 15 ÷ 5?',a:["4", "2", "5", "3"],ok:3},
+{q:'Quanto é 20 ÷ 5?',a:["4", "9", "5", "3"],ok:0},
+{q:'Quanto é 25 ÷ 5?',a:["4", "5", "6", "10"],ok:1},
+{q:'Quanto é 50 ÷ 5?',a:["5", "9", "11", "10"],ok:3},
+{q:'Quanto é 12 ÷ 6?',a:["3", "2", "1", "6"],ok:1},
+{q:'Quanto é 18 ÷ 6?',a:["3", "4", "6", "2"],ok:0},
+{q:'Quanto é 24 ÷ 6?',a:["3", "4", "5", "6"],ok:1},
+{q:'Quanto é 30 ÷ 6?',a:["10", "5", "4", "6"],ok:1},
+{q:'Quanto é 60 ÷ 6?',a:["10", "11", "6", "9"],ok:0},
+{q:'Quanto é 14 ÷ 7?',a:["3", "1", "2", "7"],ok:2},
+{q:'Quanto é 21 ÷ 7?',a:["3", "2", "4", "7"],ok:0},
+{q:'Quanto é 28 ÷ 7?',a:["3", "5", "7", "4"],ok:3},
+{q:'Quanto é 35 ÷ 7?',a:["7", "4", "5", "6"],ok:2},
+{q:'Quanto é 70 ÷ 7?',a:["11", "7", "10", "9"],ok:2},
+{q:'Quanto é 16 ÷ 8?',a:["8", "1", "2", "3"],ok:2},
+{q:'Quanto é 24 ÷ 8?',a:["3", "2", "4", "8"],ok:0},
+{q:'Quanto é 32 ÷ 8?',a:["4", "8", "3", "5"],ok:0},
+{q:'Quanto é 40 ÷ 8?',a:["4", "6", "8", "5"],ok:3},
+{q:'Quanto é 80 ÷ 8?',a:["8", "11", "9", "10"],ok:3},
+{q:'Quanto é 18 ÷ 9?',a:["9", "3", "1", "2"],ok:3},
+{q:'Quanto é 27 ÷ 9?',a:["9", "2", "4", "3"],ok:3},
+{q:'Quanto é 36 ÷ 9?',a:["5", "9", "4", "3"],ok:2},
+{q:'Quanto é 45 ÷ 9?',a:["9", "6", "4", "5"],ok:3},
+{q:'Quanto é 90 ÷ 9?',a:["9", "15", "10", "11"],ok:2},
+{q:'Quanto é 20 ÷ 10?',a:["10", "1", "3", "2"],ok:3},
+{q:'Quanto é 30 ÷ 10?',a:["4", "3", "10", "2"],ok:1},
+{q:'Quanto é 40 ÷ 10?',a:["5", "3", "10", "4"],ok:3},
+{q:'Quanto é 50 ÷ 10?',a:["10", "5", "6", "4"],ok:1},
+{q:'Quanto é 100 ÷ 10?',a:["10", "11", "15", "9"],ok:0},
+{q:'Qual é a metade de 10?',a:["10", "0", "5", "10"],ok:2},
+{q:'Qual é a metade de 20?',a:["15", "20", "10", "5"],ok:2},
+{q:'Qual é a metade de 30?',a:["10", "15", "20", "30"],ok:1},
+{q:'Qual é a metade de 40?',a:["40", "20", "25", "15"],ok:1},
+{q:'Qual é a metade de 50?',a:["25", "50", "30", "20"],ok:0},
+{q:'Qual é a metade de 60?',a:["35", "60", "30", "25"],ok:2},
+{q:'Qual é a metade de 70?',a:["35", "70", "30", "40"],ok:0},
+{q:'Qual é a metade de 80?',a:["40", "80", "45", "35"],ok:0},
+{q:'Qual é a metade de 90?',a:["40", "90", "50", "45"],ok:3},
+{q:'Qual é a metade de 100?',a:["50", "100", "55", "45"],ok:0},
+{q:'Qual é o dobro de 5?',a:["5", "0", "20", "10"],ok:3},
+{q:'Qual é o dobro de 10?',a:["10", "20", "30", "25"],ok:1},
+{q:'Qual é o dobro de 15?',a:["30", "40", "20", "15"],ok:0},
+{q:'Qual é o dobro de 20?',a:["30", "20", "40", "50"],ok:2},
+{q:'Qual é o dobro de 25?',a:["60", "25", "50", "40"],ok:2},
+{q:'Qual é o dobro de 30?',a:["30", "60", "70", "50"],ok:1},
+{q:'Qual é o dobro de 35?',a:["60", "80", "70", "35"],ok:2},
+{q:'Qual é o dobro de 40?',a:["80", "70", "90", "40"],ok:0},
+{q:'Qual é o dobro de 45?',a:["80", "45", "90", "100"],ok:2},
+{q:'Qual é o dobro de 50?',a:["110", "50", "90", "100"],ok:3},
+{q:'Quanto é 20 + 10?',a:["35", "20", "30", "40"],ok:2},
+{q:'Quanto é 30 + 20?',a:["60", "50", "40", "30"],ok:1},
+{q:'Quanto é 40 + 30?',a:["60", "70", "80", "40"],ok:1},
+{q:'Quanto é 50 + 20?',a:["50", "70", "80", "60"],ok:1},
+{q:'Quanto é 60 + 30?',a:["100", "60", "80", "90"],ok:3},
+{q:'Quanto é 70 + 20?',a:["100", "90", "70", "80"],ok:1},
+{q:'Quanto é 80 + 10?',a:["80", "100", "95", "90"],ok:3},
+{q:'Quanto é 25 + 25?',a:["50", "40", "25", "60"],ok:0},
+{q:'Quanto é 45 + 5?',a:["45", "60", "50", "40"],ok:2},
+{q:'Quanto é 55 + 5?',a:["55", "70", "60", "50"],ok:2},
+{q:'Quanto é 72 + 8?',a:["80", "70", "90", "72"],ok:0},
+{q:'Quanto é 92 + 8?',a:["90", "92", "110", "100"],ok:3},
+{q:'Quanto é 36 + 4?',a:["30", "50", "40", "36"],ok:2},
+{q:'Quanto é 64 + 6?',a:["64", "80", "70", "60"],ok:2},
+{q:'Quanto é 81 + 9?',a:["81", "100", "80", "90"],ok:3},
+{q:'Quanto é 54 − 14?',a:["14", "30", "50", "40"],ok:3},
+{q:'Quanto é 55 − 5?',a:["50", "40", "5", "60"],ok:0},
+{q:'Quanto é 72 − 2?',a:["80", "60", "70", "2"],ok:2},
+{q:'Quanto é 92 − 90?',a:["2", "12", "0", "90"],ok:0},
+{q:'Quanto é 80 − 20?',a:["50", "70", "60", "20"],ok:2},
+{q:'Quanto é 70 − 30?',a:["40", "50", "45", "30"],ok:0},
+{q:'Quanto é 65 − 5?',a:["50", "70", "5", "60"],ok:3},
+{q:'Quanto é 48 − 8?',a:["40", "30", "50", "8"],ok:0},
+{q:'Quanto é 100 − 50?',a:["55", "40", "60", "50"],ok:3},
+{q:'Quanto é 90 − 10?',a:["10", "80", "90", "70"],ok:1},
+{q:'Quanto é 63 − 3?',a:["60", "70", "3", "50"],ok:0},
+{q:'Quanto é 44 − 4?',a:["30", "50", "4", "40"],ok:3},
+{q:'Quanto é 35 − 5?',a:["20", "40", "30", "5"],ok:2},
+{q:'Quanto é 27 − 7?',a:["30", "7", "10", "20"],ok:3},
+{q:'Quanto é 60 − 40?',a:["20", "40", "10", "30"],ok:0},
+{q:'Quanto é 5 × 4 + 10?',a:["20", "30", "25", "40"],ok:1},
+{q:'Quanto é 6 × 5 − 10?',a:["15", "25", "20", "30"],ok:2},
+{q:'Quanto é 4 × 5 + 5?',a:["25", "30", "20", "15"],ok:0},
+{q:'Quanto é 3 × 8 − 4?',a:["28", "20", "16", "24"],ok:1},
+{q:'Quanto é 20 + 5 × 2?',a:["25", "35", "30", "50"],ok:2},
+{q:'Quanto é 40 − 5 × 4?',a:["25", "15", "20", "35"],ok:2},
+{q:'Quanto é 10 + 6 × 5?',a:["35", "40", "45", "80"],ok:1},
+{q:'Quanto é 50 − 8 × 5?',a:["18", "20", "42", "10"],ok:3}
+];
+function resize(){DPR=Math.min(2,devicePixelRatio||1);c.width=innerWidth*DPR;c.height=innerHeight*DPR;W=innerWidth;H=innerHeight;ctx.setTransform(DPR,0,0,DPR,0,0)}addEventListener('resize',resize);resize();
+let p={x:200,y:520,hp:100,mana:100,inv:0,shield:0,shieldCd:0},boss={x:1000,y:350,hp:1,max:1,cool:1,vx:0,vy:0,moveT:0,dash:0},shots=[],bad=[],parts=[],keys={},joy={x:0,y:0};
+function say(s,d=1.5){$('#msg').textContent=s;msgUntil=T+d}function tone(f=500,d=.1,type='sine',v=.05){if(!audio||!soundOn)return;let o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=f;g.gain.value=Math.min(.14,v*1.4);o.connect(g).connect(audio.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+d);o.stop(audio.currentTime+d)}
+setInterval(()=>{if(!playing||paused||gameEnded||bossDefeated||defeatPending||!soundOn)return;const current=stages[stage];if(current)monsterSfx(current.kind,false);},10000);
+function monsterSfx(kind,special=false){if(!audio||!soundOn)return;let seq={ghost:[[760,.12,'sine'],[430,.22,'sine'],[620,.28,'triangle']],lava:[[95,.18,'sawtooth'],[65,.32,'square']],spider:[[1250,.045,'square'],[930,.06,'triangle'],[1450,.04,'square']],plant:[[180,.08,'sawtooth'],[110,.16,'triangle']],bee:[[185,.18,'sawtooth'],[225,.18,'sawtooth'],[165,.22,'sawtooth']],bat:[[1550,.05,'sine'],[1150,.06,'sine'],[1780,.05,'sine']],hydra:[[125,.2,'sawtooth'],[82,.3,'square'],[160,.16,'triangle']],dragon:[[78,.28,'sawtooth'],[55,.4,'square'],[115,.25,'sawtooth']]}[kind]||[[220,.2,'triangle']];seq.forEach((x,i)=>setTimeout(()=>tone(x[0]*(special?0.9:1),x[1]*(special?1.5:1),x[2],special?.085:.045),i*(special?85:55)))}
+function fmtTime(ms){let t=Math.floor(ms/1000),m=Math.floor(t/60),ss=t%60;return String(m).padStart(2,'0')+':'+String(ss).padStart(2,'0')}
+function startMusic(){clearInterval(musicTimer);musicTimer=null}
+function burst(px,py,col,n=18){for(let i=0;i<n;i++){let a=Math.random()*6.283,v=40+Math.random()*220;parts.push({x:px,y:py,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:.35+Math.random()*.7,r:2+Math.random()*5,col})}}
+function resetStage(){defeatPending=false;defeatDelay=0;defeatStage=-1;stage=Math.max(0,Math.min(expectedStage,stages.length-1));let s=stages[stage];stageAudio();p.x=W*.18;p.y=H*.70;p.hp=100;p.mana=100;p.shield=0;p.shieldCd=0;enemyAttackCount=0;superUses=0;superCooldown=0;manaAutoCountdown=null;rechargeRound=null;bossDefeated=false;furyUsed=false;bestStageReached=Math.max(bestStageReached,stage+1);boss={x:W*.78,y:H*.48,hp:s.hp,max:s.hp,cool:3.4,vx:0,vy:0,moveT:.2,dash:0,baseY:H*.48};shots=[];bad=[];$('#ename').textContent=s.name;$('#round').textContent=stage===9?'FASE 10 / 10 • CHEFÃO':`FASE ${stage+1} / 10`;$('#stageText').textContent=s.realm;$('#difficulty').textContent='DIFICULDADE ⭐ '+String(s.difficulty).replace('.',',');say('⚔ Prepare-se!',1.8)}
+function superLimit(){return stage>=8?5:stage>=5?4:3}
+const cmHeroSoundKinds=['fairy','ice','dagger','sword','arcane','fire'];
+function cmHeroSound(suprema=false){
+ if(!soundOn||paused||!playing)return;
+ const tipo=cmHeroSoundKinds[heroIdx]||'arcane';
+ const arquivo=AS+'sons/cm_hero_'+tipo+'_'+(suprema?'suprema':'disparo')+'.mp3';
+ try{
+  window.cmHeroAudioAtivos=window.cmHeroAudioAtivos||new Set();
+  if(window.cmHeroAudioAtivos.size>=2)return;
+  const a=new Audio(arquivo);a.volume=suprema?.40:.30;
+  window.cmHeroAudioAtivos.add(a);
+  const liberar=()=>{window.cmHeroAudioAtivos.delete(a);a.removeAttribute('src');a.load();};
+  a.addEventListener('ended',liberar,{once:true});a.addEventListener('error',liberar,{once:true});
+  a.play().catch(liberar);
+ }catch(e){console.warn('Som do heroi indisponivel',e)}
+}
+function fire(power=false){if(!playing||paused||bossDefeated||defeatPending||transitionBusy||gameEnded)return;let h=heroes[heroIdx],maxSuper=superLimit();if(power&&superUses>=maxSuper){say('✨ SUPER ESGOTADO • use Z para atacar!',1.8);tone(130,.18,'square',.04);return}if(power&&superCooldown>0){say('⏳ SUPER RECARREGANDO • '+Math.ceil(superCooldown)+'s',1.2);tone(150,.12,'square',.035);return}let cost=power?25:6;if(p.mana<cost){startManaAutoRecharge();say('🧪 Mana insuficiente • R para recarregar!',2);return}p.mana-=cost;if(p.mana<7)startManaAutoRecharge();if(power){superUses++;superCooldown=5}let a=Math.atan2(boss.y-p.y,boss.x-p.x),n=power?5:1;for(let i=0;i<n;i++){let q=a+(i-(n-1)/2)*(power?.11:0);shots.push({x:p.x+35,y:p.y-35,vx:Math.cos(q)*(power?540:620),vy:Math.sin(q)*(power?540:620),life:2.5,r:power?18:12,dmg:power?42:22,col:h.col,fx:h.fx,power,variant:((h.fx==='ice'||h.fx==='fairy')?(iceAlt++%3):(h.fx==='fire'?(iceAlt++%4):0))})}burst(p.x+30,p.y-35,h.col,power?65:22);cmHeroSound(false);if(power){efeitoClassMana('raio_eletrico',1,400);setTimeout(()=>efeitoClassMana('magia_nova',1,350),160);shake=12;say('💥 SUPER '+superUses+'/'+maxSuper+' • '+h.special+' • recarga 5s',1.4)}else{tone(520+heroIdx*55,.09,'square',.035);setTimeout(()=>tone(760+heroIdx*35,.11,'triangle',.035),35);shake=3;say('⚔ '+h.basic,.75)}}
+function defend(){if(!playing||paused)return;if(p.shieldCd>0){say('🛡 Escudo recarregando...',1);return}let queen=stage===8;p.shield=queen?7.0:5.0;p.shieldCd=queen?4.5:6.5;shieldUses++;score=Math.max(0,score-(queen?65:50));tone(880,.35,'sine',.06);burst(p.x,p.y,heroes[heroIdx].col,30);say('🛡 ESCUDO ATIVADO • -'+(stage===8?65:50)+' PONTOS',1.3)}
+function startManaAutoRecharge(){if(!playing||paused||gameEnded||bossDefeated||defeatPending||transitionBusy||manaAutoCountdown!==null)return;manaAutoCountdown=3;say('🧪 MANA ESGOTADA • R para recarregar • automático em 3...',1.1)}
+let cmBankReady=false,cmBankError='';
+const cmBankPromise=fetch('banco_questoes.json?v=20261014sorteio-unico',{cache:'no-store'}).then(async r=>{
+ if(!r.ok)throw Error('HTTP '+r.status);
+ const b=await r.json();if(!Array.isArray(b.questoes)||b.questoes.length<1)throw Error('Banco vazio');
+ const valid=b.questoes.filter(x=>x&&x.ativo!==false&&x.id&&x.enunciado&&x.tipo_resposta==='multipla_escolha'&&Array.isArray(x.alternativas)&&x.alternativas.length===4&&Number.isInteger(x.indice_correto)&&x.indice_correto>=0&&x.indice_correto<4);
+ if(!valid.length)throw Error('Nenhuma questão elegível');
+ questions.splice(0,questions.length,...valid.map(x=>({...x,q:x.enunciado,a:x.alternativas||[],ok:x.indice_correto,image:x.imagem||'',reference:x.texto_base||x.texto_referencia||'',priority:x.prioridade_sorteio||'normal',hint:x.dica||''})));
+ questionDeck=[];lastQuestionIndex=-1;cmQuestionQueues=null;cmQuestionPick=0;cmBankReady=true;
+ console.info('ClassMana: banco externo carregado:',questions.length,'questões');
+ return true;
+}).catch(e=>{cmBankError=String(e.message||e);console.error('ClassMana: banco externo indisponível:',e);return false;});
+let questionDeck=[],lastQuestionIndex=-1,cmQuestionQueues=null,cmQuestionPick=0;
+function cmShuffle(items){
+ for(let i=items.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[items[i],items[j]]=[items[j],items[i]];}
+ return items;
+}
+function refillQuestionDeck(){
+ const common=[],reserve=[];
+ questions.forEach((q,i)=>{
+  if(q.priority==='reserva')reserve.push(i);
+  else common.push(i);
+ });
+ questionDeck=[...cmShuffle(reserve),...cmShuffle(common)];
+ cmQuestionQueues=null;
+ cmQuestionPick=0;
+}
+function nextRechargeQuestion(){
+ if(!questionDeck.length)refillQuestionDeck();
+ const index=questionDeck.pop();
+ cmQuestionPick++;lastQuestionIndex=index;
+ return questions[index];
+}
+let cmBonusCountAudio=null,cmBonusCashAudio=null;
+function cmBonusStartSound(){
+ try{
+  if(!cmBonusCountAudio){cmBonusCountAudio=new Audio('assets/audio/bonus_moedas_loop.mp3');cmBonusCountAudio.preload='auto';cmBonusCountAudio.loop=true;}
+  cmBonusCountAudio.pause();cmBonusCountAudio.currentTime=0;cmBonusCountAudio.volume=0.48;
+  cmBonusCountAudio.play().catch(()=>{});
+ }catch(e){console.warn('Áudio de moedas:',e);}
+}
+function cmBonusFinishSound(){
+ try{
+  if(cmBonusCountAudio){cmBonusCountAudio.pause();cmBonusCountAudio.currentTime=0;}
+  if(!cmBonusCashAudio){cmBonusCashAudio=new Audio('assets/audio/bonus_cash.wav');cmBonusCashAudio.preload='auto';}
+  cmBonusCashAudio.pause();cmBonusCashAudio.currentTime=0;cmBonusCashAudio.volume=0.60;
+  cmBonusCashAudio.play().catch(()=>{});
+ }catch(e){console.warn('Áudio de recompensa:',e);}
+}
+let cmBonusTotal=0,cmBonusFirstTry=0,cmBonusApplied=false;
+function cmBonusRecord(round,correct){
+ if(round.cmBonusRecorded)return;
+ round.cmBonusRecorded=true;cmBonusTotal++;
+ if(correct&&round.wrong===0)cmBonusFirstTry++;
+}
+function cmBonusValue(){
+ const accuracy=cmBonusTotal?cmBonusFirstTry/cmBonusTotal*100:0;
+ const proposed=accuracy>=90?1000:accuracy>=80?750:accuracy>=70?500:accuracy>=60?300:0;
+ const faseAlcancada=Math.max(1,Math.min(10,bestStageReached));
+ const proporcional=Math.floor(proposed*faseAlcancada/10);
+ return Math.min(proporcional,Math.max(0,Math.floor(score)));
+}
+function cmShowBonus(fromDefeat=false){
+ const base=Math.round(score),bonus=cmBonusValue(),accuracy=cmBonusTotal?cmBonusFirstTry/cmBonusTotal*100:0;
+ if(!cmBonusApplied){score+=bonus;cmBonusApplied=true;}
+ const overlay=$('#bonusOverlay'),count=$('#bonusCounter'),coins=$('#bonusCoins');
+ $('#bonusAccuracy').textContent=`${cmBonusFirstTry} acertos na primeira tentativa de ${cmBonusTotal} questões • ${accuracy.toFixed(1).replace('.',',')}% de precisão • Fase ${Math.max(1,Math.min(10,bestStageReached))}/10`;
+ $('#bonusDetails').textContent=`Pontuação da batalha: ${base.toLocaleString('pt-BR')} • Bônus: +${bonus.toLocaleString('pt-BR')} • Total: ${Math.round(score).toLocaleString('pt-BR')} pontos`;
+ overlay.classList.remove('hidden');coins.innerHTML='';count.textContent='+0000';$('#bonusViewRanking').disabled=true;$('#bonusViewRanking').textContent='⏳ CONTANDO PONTOS...';overlay.dataset.fromDefeat=fromDefeat?'1':'0';
+ cmBonusStartSound();
+ const start=performance.now(),duration=6000;let lastCoin=0;
+ function animate(now){if(overlay.classList.contains('hidden'))return;const t=Math.min(1,(now-start)/duration),ease=1-(1-t)**3,current=Math.round(bonus*ease);count.textContent='+'+String(current).padStart(4,'0');
+ if(t<1&&now-lastCoin>160&&bonus){lastCoin=now;const c=document.createElement('i');c.className='bonusCoin';c.style.left=(20+Math.random()*60)+'%';coins.appendChild(c);setTimeout(()=>c.remove(),1500)}
+ if(t<1)requestAnimationFrame(animate);else {cmBonusFinishSound();const btn=$('#bonusViewRanking');btn.disabled=false;btn.textContent='🏆 VER PLACAR FINAL';}}
+ requestAnimationFrame(animate);
+}
+function askQuestion(){
+  if(!playing||paused||gameEnded||bossDefeated||defeatPending||transitionBusy||rechargeRound)return;
+  cmRecarga();
+  if(mediaTrack){mediaTrack.volume=.75*.9*.25;window.cmQuestionPausedTrack=mediaTrack;}else{window.cmQuestionPausedTrack=null;}
+  manaAutoCountdown=null;paused=true;keys={};joy.x=0;joy.y=0;boss.vx=0;boss.vy=0;
+  rechargeRound={number:1,total:0,wrong:0,stage,token:sessionToken,locked:false,hintUsed:false};
+  const arenaHero=$('#arenaHero');if(heroImgs[heroIdx]){arenaHero.src=heroImgs[heroIdx].src;arenaHero.alt='Herói selecionado: '+heroes[heroIdx].name;}$('#question').classList.remove('hidden');
+  showRechargeQuestion();
+}
+function showRechargeQuestion(){
+  if(!rechargeRound)return;
+  if(gameEnded||bossDefeated||defeatPending||transitionBusy||rechargeRound.stage!==stage||rechargeRound.token!==sessionToken)return;
+  const round=rechargeRound;round.locked=false;let q=nextRechargeQuestion();round.currentQuestion=q;let value=(round.number===1?34:33);round.wrong=0;
+  $('#arenaImageModal').classList.add('hidden');
+  $('#arenaProgress').textContent=`Questão ${rechargeRound.number} de 3 • ${'● '.repeat(rechargeRound.number).trim()} ${'○ '.repeat(3-rechargeRound.number).trim()}`;
+  $('#qtext').textContent=q.q||'';
+  const ref=q.reference||'';
+  window.cmQuestionFullText=ref||null;
+  const modal=$('#arenaImageModal');modal.classList.remove('cm-text');
+  let preview=document.getElementById('cmTextPreview');
+  if(!preview){preview=document.createElement('div');preview.id='cmTextPreview';$('#arenaQuestionImage').parentNode.appendChild(preview);}
+  preview.style.display=ref?'block':'none';
+  preview.textContent=ref?'📖 CLIQUE PARA LER O TEXTO COMPLETO':'';
+  const img=$('#arenaQuestionImage');
+  img.style.display=ref&&!q.image?'none':'';
+  img.src=q.image||'assets/logo.png';
+  img.onerror=()=>{img.onerror=null;if(q.image){$('#qfeedback').textContent='Imagem obrigatória indisponível. Outra questão será apresentada.';round.locked=true;setTimeout(()=>{if(rechargeRound!==round)return;showRechargeQuestion()},350);}else img.src='assets/logo.png';};
+  $('#answers').innerHTML='';$('#qfeedback').textContent='Cada erro reduz o valor desta questão.';
+  if(q.tipo_resposta&&q.tipo_resposta!=='multipla_escolha'){renderSpecialQuestion(q,round,()=>value,()=>{value=Math.max(0,value-10)});return;}
+  q.a.forEach((a,i)=>{let b=document.createElement('button');b.className='ans';b.textContent=a;b.onclick=()=>{
+    if(b.disabled||round.locked||rechargeRound!==round||gameEnded||defeatPending||bossDefeated)return;
+    if(i===q.ok){
+      cmBonusRecord(round,true);round.locked=true;b.classList.add('correct');efeitoClassMana('moedas',.85,0);
+      rechargeRound.total+=value;score+=Math.round(value*2);
+      $('#qfeedback').textContent=`✅ Correto! Esta questão valeu ${value}% de recarga.`;
+      document.querySelectorAll('#answers .ans').forEach(x=>x.disabled=true);
+      setTimeout(()=>{if(rechargeRound!==round||round.stage!==stage||round.token!==sessionToken||gameEnded||bossDefeated||defeatPending)return;if(round.number<3){round.number++;showRechargeQuestion()}else finishRechargeRound()},650);
+    }else{
+      b.classList.add('wrong');efeitoClassMana('erro',.28);
+      b.disabled=true;rechargeRound.wrong++;value=Math.max(0,value-[5,10,15,99][Math.min(rechargeRound.wrong-1,3)]);tone(160,.25,'sawtooth',.05);
+      $('#qfeedback').textContent=`❌ Erro: esta questão agora vale no máximo ${value}%.`;
+      if(rechargeRound.wrong>=4||value<=0){cmBonusRecord(round,false);round.locked=true;document.querySelectorAll('#answers .ans').forEach((x,j)=>{x.disabled=true;if(j===q.ok)x.classList.add('correct')});setTimeout(()=>{if(rechargeRound!==round||round.stage!==stage||round.token!==sessionToken||gameEnded||bossDefeated||defeatPending)return;if(round.number<3){round.number++;showRechargeQuestion()}else finishRechargeRound()},650)}
+    }
+  };$('#answers').appendChild(b)})
+}
+function renderSpecialQuestion(q,round,getValue,penalize){
+ const host=$('#answers');let choices=[],answer=[],selection=[];
+ if(q.tipo_resposta==='ordenar_itens'){
+  choices=[...q.itens].sort(()=>Math.random()-.5);answer=[...q.ordem_correta];
+ }else if(q.tipo_resposta==='associar_pares'){
+  choices=q.pares.map(p=>p.item);answer=q.pares.map(p=>p.correspondencia);
+ }else if(q.tipo_resposta==='digitar_numero'){
+  const inp=document.createElement('input');inp.type='number';inp.inputMode='numeric';inp.placeholder='Digite o número';inp.style.cssText='font-size:20px;max-width:95%;padding:12px;border-radius:8px';host.appendChild(inp);
+  const submit=document.createElement('button');submit.className='ans';submit.textContent='CONFIRMAR RESPOSTA';host.appendChild(submit);
+  submit.onclick=()=>{if(round.locked||!inp.value.trim())return;check((q.respostas_aceitas||[q.resposta_correta]).map(String).includes(inp.value.trim()));};return;
+ }
+ if(q.tipo_resposta==='ordenar_itens'){
+  const info=document.createElement('div');info.textContent='Toque nos comandos na ordem correta:';host.appendChild(info);
+  const progress=document.createElement('div');host.appendChild(progress);
+  choices.forEach(v=>{const b=document.createElement('button');b.className='ans';b.textContent=v;host.appendChild(b);b.onclick=()=>{if(round.locked||b.disabled)return;selection.push(v);b.disabled=true;progress.textContent=selection.join(' → ');if(selection.length===answer.length)check(selection.every((v,i)=>v===answer[i]),()=>{selection=[];progress.textContent='';host.querySelectorAll('.ans').forEach(x=>x.disabled=false);});};});
+ }else{
+  const shuffled=[...answer].sort(()=>Math.random()-.5);
+  choices.forEach((v,i)=>{const line=document.createElement('div');line.textContent=v+' → ';const sel=document.createElement('select');sel.style.cssText='padding:8px;max-width:100%';sel.innerHTML='<option value="">Selecione a função</option>';shuffled.forEach(t=>{const opt=document.createElement('option');opt.value=t;opt.textContent=t;sel.appendChild(opt)});line.appendChild(sel);host.appendChild(line);selection.push(sel);});
+  const b=document.createElement('button');b.className='ans';b.textContent='CONFIRMAR ASSOCIAÇÕES';host.appendChild(b);b.onclick=()=>{if(round.locked||selection.some(x=>!x.value))return;check(selection.every((x,i)=>x.value===answer[i]));};
+ }
+ function check(correct,reset){
+  if(round.locked||rechargeRound!==round||gameEnded||bossDefeated)return;
+  if(correct){cmBonusRecord(round,true);round.locked=true;const value=getValue();efeitoClassMana('moedas',.65,0);rechargeRound.total+=value;score+=Math.round(value*2);$('#qfeedback').textContent='✅ Correto! Esta questão valeu '+value+'% de recarga.';setTimeout(next,650);}
+  else{efeitoClassMana('erro',.28);round.wrong++;penalize();$('#qfeedback').textContent='❌ Tente novamente. Valor máximo: '+getValue()+'%.';if(round.wrong>=4||getValue()<=0){cmBonusRecord(round,false);round.locked=true;$('#qfeedback').textContent='❌ Tentativas encerradas. Próxima questão.';setTimeout(next,650);}else if(reset)reset();}
+ }
+ function next(){if(rechargeRound!==round||round.stage!==stage||round.token!==sessionToken||gameEnded||bossDefeated||defeatPending)return;if(round.number<3){round.number++;showRechargeQuestion()}else finishRechargeRound();}
+}
+document.getElementById('arenaZoom').addEventListener('click',()=>{const modal=$('#arenaImageModal');if(window.cmQuestionFullText){let full=document.getElementById('cmFullText');if(!full){full=document.createElement('div');full.id='cmFullText';modal.appendChild(full);}full.textContent=window.cmQuestionFullText;modal.classList.add('cm-text');}else{modal.classList.remove('cm-text');const src=$('#arenaQuestionImage').currentSrc||$('#arenaQuestionImage').src;$('#arenaImageExpanded').src=src;}modal.classList.remove('hidden');});
+document.getElementById('arenaImageClose').addEventListener('click',()=>$('#arenaImageModal').classList.add('hidden'));
+document.getElementById('arenaImageModal').addEventListener('click',e=>{if(e.target.id==='arenaImageModal')e.currentTarget.classList.add('hidden');});
+document.getElementById('arenaHint').addEventListener('click',()=>{const r=rechargeRound;if(!r)return;if(r.hintUsed){$('#qfeedback').textContent='DICA já utilizada nesta recarga.';return;}const q=r.currentQuestion;if(q.tipo_resposta==='multipla_escolha'){const buttons=[...document.querySelectorAll('#answers .ans')];const wrong=buttons.map((b,i)=>({b,i})).filter(x=>x.i!==q.ok&&!x.b.disabled);if(!wrong.length)return;const chosen=wrong[Math.floor(Math.random()*wrong.length)];chosen.b.disabled=true;chosen.b.style.opacity='.35';chosen.b.style.textDecoration='line-through';$('#qfeedback').textContent='💡 DICA: alternativa '+String.fromCharCode(65+chosen.i)+' eliminada.';}else{$('#qfeedback').textContent=q.hint||'Observe as relações entre os elementos.';}r.hintUsed=true;});
+function finishRechargeRound(){
+  if(!rechargeRound||gameEnded||bossDefeated||defeatPending||transitionBusy||rechargeRound.stage!==stage||rechargeRound.token!==sessionToken)return;
+  const rechargeStage=stage;let gain=Math.max(0,Math.min(100,rechargeRound.total));p.mana=gain;rechargeRound=null;if(gain>0)efeitoClassMana('confirmar',.28);
+  $('#qfeedback').textContent=`🔷 RECARGA FINAL: ${gain}%`;
+  const token=sessionToken;setTimeout(()=>{if(gameEnded||token!==sessionToken||stage!==rechargeStage||bossDefeated||defeatPending||transitionBusy)return;$('#question').classList.add('hidden');paused=false;if(window.cmQuestionPausedTrack&&mediaTrack===window.cmQuestionPausedTrack&&soundOn){mediaTrack.volume=.75*.9;if(mediaTrack.paused)mediaTrack.play().catch(()=>{});}window.cmQuestionPausedTrack=null;restoreGameFocus();say('🔷 Mana recarregada: '+gain+'%',1.4);if(p.mana<7)startManaAutoRecharge()},850)
+}
+function enemyAttack(){let s=stages[stage],a=Math.atan2(p.y-boss.y,p.x-boss.x);enemyAttackCount++;let special=enemyAttackCount%4===0,n=1;if(s.kind==='hydra')n=special?5:2;if(s.kind==='dragon')n=special?7:2;if(s.kind==='spider')n=special?5:1;if(s.kind==='bee')n=special?9:1;if(s.kind==='bat')n=special?9:1;if(s.kind==='ghost')n=special?6:1;if(s.kind==='lava')n=special?6:1;if(s.kind==='plant')n=special?6:1;let speed=(special?195:180)+stage*6;for(let i=0;i<n;i++){let spread=(i-(n-1)/2)*(special?.145:.10),q=a+spread;bad.push({x:boss.x-35,y:boss.y,vx:Math.cos(q)*speed,vy:Math.sin(q)*speed,life:(s.kind==='bee'&&special)?20:10,r:special?28:17,kind:s.kind,col:s.kind==='bee'?'#ffd339':s.kind==='ghost'?'#63f7ff':s.kind==='spider'?'#ffffff':s.kind==='plant'?'#77ff79':s.kind==='lava'?'#ff6a19':s.kind==='bat'?'#c34cff':s.kind==='hydra'?'#65e676':'#ff5b3f',special,spin:(Math.random()-.5)*2})}if(['ghost','bee','bat','dragon'].includes(s.kind)&&special){boss.dash=.38;boss.vx=-210-stage*5}monsterSfx(s.kind,special);if(special)efeitoClassMana('raio_eletrico',1,350);if(special){setTimeout(()=>efeitoClassMana('magia_nova',1,350),170);burst(boss.x-45,boss.y,s.kind==='spider'?'#ffffff':s.kind==='bee'?'#ffd339':s.kind==='bat'?'#c34cff':s.kind==='ghost'?'#63f7ff':s.kind==='lava'||s.kind==='dragon'?'#ff5b28':s.kind==='plant'?'#77ff79':'#65e676',55);tone(95+stage*8,.48,'sawtooth',.075);setTimeout(()=>tone(190+stage*12,.28,'square',.05),90);shake=10}else{tone(180+stage*10,.2,'triangle',.04);shake=2}let normal={ghost:'👻 Pulso espectral!',lava:'🌋 Lava!',spider:'🕸 Teia!',plant:'🌿 Espinhos!',bee:'🐝 Ferrão!',bat:'🦇 Ataque vampírico!',hydra:'🐲 Rajada!',dragon:'🔥 Bola de fogo!'}[s.kind],sup={ghost:'👻✨ TEMPESTADE ESPECTRAL!',lava:'🌋🔥 ERUPÇÃO!',spider:'🕸️🕸️ CHUVA DE TEIAS!',plant:'🌿💥 RAJADA DE ESPINHOS!',bee:'🐝🐝🐝 ENXAME DA COLMEIA!',bat:'🦇🦇🦇 NUVEM DE MORCEGOS!',hydra:'🐲🐲🐲 ATAQUE DAS CABEÇAS!',dragon:'🔥🔥🔥 INFERNO DO DRAGÃO!'}[s.kind];say(special?'⚠ SUPER DO MONSTRO • '+sup:normal,special?1.7:.8)}
+function bossFury(){
+  if(furyUsed||bossDefeated||gameEnded)return;
+  furyUsed=true;let s=stages[stage],im=monsters[s.img],token=sessionToken;
+  say('⚠ MODO DESESPERO • '+s.name+' invoca miniaturas!',2.2);monsterSfx(s.kind,true);shake=16;burst(boss.x,boss.y,'#ffd34f',85);
+  let n=Math.min(14,7+Math.floor(stage/2));
+  function spawnMini(i){
+    if(gameEnded||bossDefeated||token!==sessionToken)return;
+    if(paused||!playing){let id=setTimeout(()=>spawnMini(i),120);furyTimers.push(id);return}
+    let yy=H*(.22+.56*Math.random()),xx=boss.x-20-Math.random()*100,a=Math.atan2(p.y-yy,p.x-xx),sp=300+stage*10;
+    bad.push({x:xx,y:yy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:9,r:26,kind:s.kind,col:'#ffd34f',special:true,mini:true,img:im,miniDamage:Math.round(s.atk*(1.35+stage*.035))});
+  }
+  for(let i=0;i<n;i++){let id=setTimeout(()=>spawnMini(i),i*90);furyTimers.push(id)}
+}
+
+let gameOverFireTimer=null;function startGameOverDragon(){clearInterval(gameOverFireTimer);const layer=$('#goFireLayer');if(!layer)return;layer.innerHTML='';const shoot=()=>{if($('#gameOverOverlay').classList.contains('hidden'))return;const f=document.createElement('i');f.className='goFireball';f.style.top=(72+Math.random()*35)+'px';layer.appendChild(f);setTimeout(()=>f.remove(),1200)};setTimeout(shoot,900);gameOverFireTimer=setInterval(shoot,1450)}function stopGameOverDragon(){clearInterval(gameOverFireTimer);gameOverFireTimer=null;const layer=$('#goFireLayer');if(layer)layer.innerHTML=''}
+function endGameDefeat(){
+  if(gameEnded)return;
+  gameEnded=true;defeatPending=false;sessionToken++;playing=false;paused=true;bossDefeated=true;manaAutoCountdown=null;rechargeRound=null;
+  furyTimers.forEach(clearTimeout);furyTimers=[];clearInterval(tutorialTimer);tutorialTimer=null;transitionBusy=false;$('#question').classList.add('hidden');$('#transition').classList.add('hidden');
+  shots.forEach(z=>z.life=0);bad.forEach(z=>z.life=0);shots=[];bad=[];
+  stopMediaAudio();clearInterval(musicTimer);tone(220,.35,'sawtooth',.09);setTimeout(()=>tone(150,.45,'sawtooth',.09),260);setTimeout(()=>tone(85,.7,'square',.08),580);
+  $('#gameOverDetails').innerHTML=`<b>${playerName}</b> • ${playerClass}<br>${heroes[heroIdx].name}<br>Derrotado por <b>${stages[stage].name}</b><br>${score.toLocaleString('pt-BR')} pontos • ⏳ ${fmtTime(elapsedMs)}`;
+  $('#gameOverOverlay').classList.remove('hidden');playMediaAudio(cmAudio.gameover,false,.46);efeitoClassMana('derrota',.9,1500);startGameOverDragon();
+  const defeatToken=sessionToken;setTimeout(()=>{if(defeatToken!==sessionToken||$('#gameOverOverlay').classList.contains('hidden'))return;stopGameOverDragon();$('#gameOverOverlay').classList.add('hidden');stopMediaAudio();cmShowBonus(true);},5500);
+}
+function hitPlayer(q){if(paused||!playing||gameEnded)return;q.life=0;if(p.inv>0)return;if(p.shield>0){burst(p.x,p.y,'#75eaff',16);tone(620,.12,'square',.04);return}let dist=Math.hypot(boss.x-p.x,boss.y-(p.y-45)),near=dist<260?1.55:dist<430?1.28:1;let baseDamage=q.mini?(q.miniDamage||Math.round(stages[stage].atk*1.5)):Math.round(stages[stage].atk*(q.special?1.65:1));let incomingDamage=Math.round(baseDamage*near);p.hp=Math.max(0,p.hp-incomingDamage);if(near>1.5)say('⚠ MUITO PERTO! DANO +55%',.9);else if(near>1)say('⚠ PROXIMIDADE! DANO +28%',.8);p.inv=.55;shake=10;burst(p.x,p.y,'#ff566d',18);efeitoClassMana('impacto_golpe',1,95);if(p.hp<=0)endGameDefeat()}
+function showTransition(text,cb){if(transitionBusy||gameEnded)return;const token=sessionToken;transitionBusy=true;const box=$('#transitionText');const defeated=stages.find(s=>String(text).includes(s.name)&&String(text).includes('DERROTADO'));if(defeated){const lines=String(text).split('\n'),bonus=lines.slice(1).join(' • ');box.innerHTML=`<div class="defeatedSkull">☠️</div><div class="defeatedBadge"><img src="${AS+defeated.img}" alt="${defeated.name}"></div><div class="defeatedMain">${defeated.name}<br>DERROTADO!</div>${bonus?`<div class="defeatedBonus">${bonus}</div>`:''}<div class="defeatedNext">PREPARE-SE • O PRÓXIMO DESAFIO ESTÁ CHEGANDO`}else{box.innerText=text}$('#transition').classList.remove('hidden');setTimeout(()=>{if(gameEnded||token!==sessionToken){$('#transition').classList.add('hidden');transitionBusy=false;return}$('#transition').classList.add('hidden');transitionBusy=false;superUses=0;iceAlt=0;tutorialTimer=null;restoreGameFocus();cb&&cb()},3600)}
+function sprite(crop,x,y,w,h,flip=false){if(!sprites.complete)return;ctx.save();ctx.translate(x,y);if(flip)ctx.scale(-1,1);ctx.drawImage(sprites,...crop,-w/2,-h/2,w,h);ctx.restore()}
+const shieldGradientCache=new Map();
+function drawHero(){let im=heroImgs[heroIdx];let seq=[0,1,2,3,4,5,4,3,2,1];if(heroIdx===0&&fadaFrames.length){let fi=seq[Math.floor((T*1000)/FADA_FRAME_MS)%seq.length],fm=fadaFrames[fi];if(fm&&fm.complete&&fm.naturalWidth)im=fm}else if(heroIdx===1&&chamaFrames.length){let fi=seq[Math.floor((T*1000)/CHAMA_FRAME_MS)%seq.length],fm=chamaFrames[fi];if(fm&&fm.complete&&fm.naturalWidth)im=fm}else if(heroIdx===2&&loboFrames.length){let fi=seq[Math.floor((T*1000)/LOBO_FRAME_MS)%seq.length],fm=loboFrames[fi];if(fm&&fm.complete&&fm.naturalWidth)im=fm}else if(heroIdx===3&&cavaleiroFrames.length){let fi=seq[Math.floor((T*1000)/CAVALEIRO_FRAME_MS)%seq.length],fm=cavaleiroFrames[fi];if(fm&&fm.complete&&fm.naturalWidth)im=fm}else if(heroIdx===4&&magaFrames.length){let fi=seq[Math.floor((T*1000)/MAGA_FRAME_MS)%seq.length],fm=magaFrames[fi];if(fm&&fm.complete&&fm.naturalWidth)im=fm}else if(heroIdx===5&&dragaoCombateFrames.length){let fi=Math.floor((T*1000)/DRAGAO_FRAME_MS)%dragaoCombateFrames.length,fm=dragaoCombateFrames[fi];if(fm&&fm.complete&&fm.naturalWidth)im=fm}let hh=Math.min(210,H*.32),ratio=(im&&im.naturalWidth&&im.naturalHeight)?im.naturalWidth/im.naturalHeight:.88,ww=hh*ratio;ctx.save();ctx.translate(p.x,p.y-45);if(heroIdx===3)ctx.scale(-1,1);if(im&&im.complete&&im.naturalWidth)ctx.drawImage(im,-ww/2,-hh/2,ww,hh);ctx.restore();if(p.shield>0){
+  const h=heroes[heroIdx],R=Math.max(ww*.62,hh*.62),pulse=1+Math.sin(T*4)*.012;
+  ctx.save();ctx.translate(p.x,p.y-45);
+  ctx.beginPath();ctx.arc(0,0,R*pulse,0,Math.PI*2);
+  ctx.fillStyle='rgba(110,225,255,.075)';ctx.fill();
+  ctx.lineWidth=3;ctx.strokeStyle=h.col;ctx.globalAlpha=.82;ctx.stroke();
+  ctx.beginPath();ctx.arc(0,0,R*.89,Math.PI*.15,Math.PI*.90);
+  ctx.lineWidth=1.5;ctx.strokeStyle='rgba(255,255,255,.65)';ctx.stroke();
+  ctx.restore();
+}}
+function drawEnemy(){let s=stages[stage],im=monsters[s.img];if(s.kind==='ghost'&&ghostFrames.length){let ghostSeq=[0,1,2,3,4,5,4,3,2,1],gi=ghostSeq[Math.floor(T*5)%ghostSeq.length],g=ghostFrames[gi];if(g.complete&&g.naturalWidth)im=g}if(s.kind==='lava'&&golemFrames.length){let golemSeq=[0,1,2,3,4,5,4,3,2,1],gi=golemSeq[Math.floor(T*4)%golemSeq.length],g=golemFrames[gi];if(g.complete&&g.naturalWidth)im=g}if(stage===2&&megaAranhaFrames.length){let megaSeq=[0,1,2,3,4,5,4,3,2,1],mi=megaSeq[Math.floor(T*4)%megaSeq.length],m=megaAranhaFrames[mi];if(m.complete&&m.naturalWidth)im=m}if(stage===3&&florPresasFrames.length){let florSeq=[0,1,2,3,4,5,4,3,2,1],fi=florSeq[Math.floor(T*3.5)%florSeq.length],f=florPresasFrames[fi];if(f.complete&&f.naturalWidth)im=f}if(s.kind==='bee'&&mestreColmeiaFrames.length){let beeSeq=[0,1,2,3,4,5,4,3,2,1],bi=beeSeq[Math.floor(T*3.2)%beeSeq.length],b=mestreColmeiaFrames[bi];if(b.complete&&b.naturalWidth)im=b}if(stage===5&&duquesaAranhaFrames.length){let duchessSeq=[0,1,2,3,4,5,4,3,2,1],di=duchessSeq[Math.floor(T*4)%duchessSeq.length],d=duquesaAranhaFrames[di];if(d.complete&&d.naturalWidth)im=d}if(stage===6&&morcegoVampiroFrames.length){let batSeq=[0,1,2,3,4,5,4,3,2,1],bti=batSeq[Math.floor(T*4)%batSeq.length],bt=morcegoVampiroFrames[bti];if(bt.complete&&bt.naturalWidth)im=bt}if(s.kind==='hydra'&&hydraFrames.length){let hydraSeq=[0,1,2,3,4,5,4,3,2,1],hi=hydraSeq[Math.floor(T*3.8)%hydraSeq.length],h=hydraFrames[hi];if(h.complete&&h.naturalWidth)im=h}if(stage===8&&rainhaAranhaFrames.length){let queenSeq=[0,1,2,3,4,5,4,3,2,1],qi=queenSeq[Math.floor(T*4)%queenSeq.length],q=rainhaAranhaFrames[qi];if(q.complete&&q.naturalWidth)im=q}if(stage===9&&dragaoFogoFrames.length){let dragonSeq=[0,1,2,3,4,5,6,7,8,9,10,11,10,9,8,7,6,5,4,3,2,1],dri=dragonSeq[Math.floor(T*3.2)%dragonSeq.length],dr=dragaoFogoFrames[dri];if(dr&&dr.complete&&dr.naturalWidth)im=dr}let hh=stage===9?Math.min(360,H*.52):Math.min(235,H*.40);if(!im||!im.complete||!im.naturalWidth)return;let ww=hh*(im.naturalWidth/im.naturalHeight);ctx.save();ctx.shadowColor=s.kind==='bee'?'#ffc92f':s.kind==='ghost'?'#64f7ff':s.kind==='lava'||s.kind==='dragon'?'#ff542e':'#e45cff';ctx.shadowBlur=28;ctx.translate(boss.x,boss.y+Math.sin(T*2.1+stage)*10);if(stage!==9)ctx.scale(-1,1);ctx.drawImage(im,-ww/2,-hh/2,ww,hh);ctx.restore()}
+function drawProjectile(q){ctx.save();ctx.translate(q.x,q.y);let ang=Math.atan2(q.vy,q.vx);ctx.shadowColor=q.col;ctx.shadowBlur=q.power?34:20;ctx.globalAlpha=1;let emoji='',icon=null;if(q.power){if(q.fx==='fairy')icon=(superUses%2?fxIcons.potion:fxIcons.gem);else if(q.fx==='ice')icon=(superUses%2?fxIcons.crystal:fxIcons.torch);else if(q.fx==='dagger')icon=(superUses%2?fxIcons.dagger:fxIcons.bow);else if(q.fx==='sword')icon=fxIcons.shield;else if(q.fx==='arcane')icon=(superUses%2?fxIcons.book:fxIcons.book2);else if(q.fx==='fire')icon=([fxIcons.bow,fxIcons.dagger,fxIcons.stinger,fxIcons.torch][q.variant%4])}else{if(q.fx==='fairy')icon=q.variant===0?fxIcons.potion:(q.variant===1?fxIcons.gem:fxIcons.crystal);else if(q.fx==='ice')icon=q.variant===1?fxIcons.gem:fxIcons.crystal;else if(q.fx==='dagger')icon=fxIcons.dagger;else if(q.fx==='sword')icon=fxIcons.sword;else if(q.fx==='arcane')icon=fxIcons.staff;else if(q.fx==='fire')icon=fxIcons.torch}if(icon&&icon.complete&&icon.naturalWidth){ctx.rotate(ang);let z=q.power?68:42,ratio=icon.naturalWidth/icon.naturalHeight,dw=z,dh=z;if(ratio>1)dh=z/ratio;else dw=z*ratio;ctx.drawImage(icon,-dw/2,-dh/2,dw,dh)}else if(emoji){ctx.font=(q.power?54:38)+'px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(emoji,0,0)}else{ctx.fillStyle=q.col;ctx.beginPath();ctx.arc(0,0,q.r*1.5,0,7);ctx.fill()}if(q.power){ctx.strokeStyle=q.col;ctx.lineWidth=4;ctx.globalAlpha=.75;ctx.beginPath();ctx.arc(0,0,q.r*2.5+Math.sin(T*12)*4,0,7);ctx.stroke()}ctx.restore()}
+function finishBossDefeat(){
+  if(!defeatPending||gameEnded)return;
+  defeatPending=false;manaAutoCountdown=null;rechargeRound=null;shots=[];bad=[];
+  const defeatedStage=defeatStage;
+  playing=false;paused=true;
+  showTransition(`🏆 ${stages[defeatedStage].name} DERROTADO!\n+${1000+defeatedStage*250} PONTOS`,()=>{
+    if(defeatedStage!==expectedStage)return;
+    expectedStage=defeatedStage+1;stage=expectedStage;
+    if(expectedStage<stages.length){playing=true;paused=false;resetStage()}
+    else{
+      tone(660,.25,'sine',.08);
+      setTimeout(()=>tone(880,.28,'sine',.09),220);
+      setTimeout(()=>tone(1100,.55,'triangle',.09),470);
+      showTransition('🏆 CAMPANHA CONCLUÍDA!\nDRAGÃO DE FOGO DERROTADO!',()=>{
+        efeitoClassMana('moedas',.40,1500);cmShowBonus();
+      });
+    }
+  });
+}
+function update(dt){
+  if(defeatPending){
+    defeatDelay-=dt;
+    for(const q of bad){q.x+=q.vx*dt;q.y+=q.vy*dt;q.life-=dt}
+    for(const q of parts){q.x+=q.vx*dt;q.y+=q.vy*dt;q.vy+=80*dt;q.life-=dt}
+    shots=shots.filter(q=>q.life>0);bad=bad.filter(q=>q.life>0);
+    parts=parts.filter(q=>q.life>0);
+    if(defeatDelay<=0)finishBossDefeat();
+    return;
+  }
+  if(!playing||paused){lastTimerStamp=performance.now();return;}elapsedMs+=dt*1000;$('#timerHud').textContent='⏳ '+fmtTime(elapsedMs);if(manaAutoCountdown!==null&&!bossDefeated&&!defeatPending&&!transitionBusy){manaAutoCountdown-=dt;if(manaAutoCountdown<=0){manaAutoCountdown=null;askQuestion();return}else{let sec=Math.ceil(manaAutoCountdown);if($('#msg').textContent.indexOf('MANA ESGOTADA')<0||Math.ceil(manaAutoCountdown+.15)!==sec)say('🧪 MANA ESGOTADA • R para recarregar • automático em '+sec+'...',.35)}}let dx=(keys.ArrowRight||keys.d?1:0)-(keys.ArrowLeft||keys.a?1:0)+joy.x,dy=(keys.ArrowDown||keys.s?1:0)-(keys.ArrowUp||keys.w?1:0)+joy.y,l=Math.hypot(dx,dy);if(l){p.x+=dx/l*275*dt;p.y+=dy/l*275*dt}p.x=Math.max(70,Math.min(W*.56,p.x));p.y=Math.max(190,Math.min(H-80,p.y));p.inv-=dt;p.shield-=dt;p.shieldCd-=dt;superCooldown=Math.max(0,superCooldown-dt);boss.cool-=dt;boss.moveT-=dt;if(boss.dash>0){boss.dash-=dt;boss.x+=boss.vx*dt;if(boss.dash<=0)boss.vx=0}else{if(boss.moveT<=0){boss.moveT=.55+Math.random()*.9;let pressure=.28+stage*.025+(furyUsed?.12:0);if(Math.random()<pressure){let a=Math.atan2((p.y-45)-boss.y,p.x-boss.x);boss.vx=Math.cos(a)*(105+stage*8);boss.vy=Math.sin(a)*(80+stage*6)}else{boss.vx=(Math.random()-.5)*(150+stage*9);boss.vy=(Math.random()-.5)*(105+stage*7)}}boss.x+=boss.vx*dt;boss.y+=boss.vy*dt}boss.x=Math.max(W*.38,Math.min(W*.91,boss.x));boss.y=Math.max(H*.22,Math.min(H*.78,boss.y));if(boss.cool<=0){enemyAttack();boss.cool=stages[stage].rate}
+for(const q of shots){q.x+=q.vx*dt;q.y+=q.vy*dt;q.life-=dt;if(q.life>0&&!bossDefeated&&Math.hypot(q.x-boss.x,q.y-boss.y)<100){q.life=0;boss.hp=Math.max(0,boss.hp-q.dmg);$('#ehp').style.width=(boss.hp/boss.max*100)+'%';score+=q.dmg;efeitoClassMana(q.power?'magia_nova':'impacto_golpe',1,90);burst(q.x,q.y,q.col,9);shake=4;if(boss.hp>0&&!furyUsed&&boss.hp/boss.max<=.30)bossFury();if(boss.hp<=0){
+  boss.hp=0;$('#ehp').style.width='0%';bossDefeated=true;defeatPending=true;manaAutoCountdown=null;rechargeRound=null;shots=[];defeatDelay=3.4;defeatStage=stage;defeatScore=score+1000+stage*250;defeatHp=p.hp;
+  boss.cool=Infinity;boss.vx=0;boss.vy=0;boss.dash=0;
+  furyTimers.forEach(clearTimeout);furyTimers=[];
+  score+=1000+(stage*250);efeitoClassMana('vitoria',.9,1500);
+  burst(boss.x,boss.y,'#ffe06a',80);tone(980,.6,'sine',.12);
+}}}
+for(const q of bad){q.x+=q.vx*dt;q.y+=q.vy*dt;q.life-=dt;if(!defeatPending&&Math.hypot(q.x-p.x,q.y-p.y+35)<34)hitPlayer(q)}shots=shots.filter(q=>q.life>0);bad=bad.filter(q=>q.life>0);for(const q of parts){q.x+=q.vx*dt;q.y+=q.vy*dt;q.vy+=80*dt;q.life-=dt}parts=parts.filter(q=>q.life>0)}
+const projectileAuraCache=new Map();
+let backgroundCache=null,backgroundCacheKey='';
+function drawBackgroundCached(s,bg){
+  const key=stage+'|'+W+'|'+H+'|'+(bg&&bg.complete&&bg.naturalWidth?bg.src:'none');
+  if(key!==backgroundCacheKey){
+    backgroundCacheKey=key;
+    backgroundCache=document.createElement('canvas');backgroundCache.width=W;backgroundCache.height=H;
+    const c=backgroundCache.getContext('2d',{alpha:false});
+    if(bg&&bg.complete&&bg.naturalWidth){
+      const ir=bg.naturalWidth/bg.naturalHeight,cr=W/H;
+      let dw,dh,ox,oy;
+      if(ir>cr){dh=H;dw=H*ir;ox=(W-dw)/2;oy=0}
+      else{dw=W;dh=W/ir;ox=0;oy=(H-dh)/2}
+      c.drawImage(bg,ox,oy,dw,dh);
+    }else{
+      const g=c.createLinearGradient(0,0,W,H);
+      const pal={lava:['#2a0804','#7b1d08'],plant:['#071b0b','#24572a'],hydra:['#071c19','#174b42'],dragon:['#2a0703','#7b1705']}[s.kind]||['#10243c','#07111e'];
+      g.addColorStop(0,pal[0]);g.addColorStop(1,pal[1]);c.fillStyle=g;c.fillRect(0,0,W,H);
+    }
+    if(s.tint){c.fillStyle=s.tint+'55';c.fillRect(0,0,W,H)}
+    c.fillStyle='#00101a35';c.fillRect(0,0,W,H);
+  }
+  ctx.drawImage(backgroundCache,0,0);
+}
+
+const enemySpriteCache=new Map();
+function enemySprite(q){
+  const key=q.kind+'|'+q.col+'|'+(q.special?1:0)+'|'+(q.mini?'mini':'normal');
+  if(enemySpriteCache.has(key))return enemySpriteCache.get(key);
+  const c=document.createElement('canvas');c.width=240;c.height=240;
+  const g=c.getContext('2d');g.translate(120,120);
+  const z=q.special?78:50;
+  g.save();g.globalCompositeOperation='screen';
+  const aura=g.createRadialGradient(0,0,2,0,0,z*.72);
+  aura.addColorStop(0,'rgba(255,255,255,.98)');aura.addColorStop(.20,q.col);
+  aura.addColorStop(.58,q.col);aura.addColorStop(1,'rgba(0,0,0,0)');
+  g.globalAlpha=q.special?.98:.88;g.fillStyle=aura;
+  g.beginPath();g.arc(0,0,z*.74,0,Math.PI*2);g.fill();g.restore();
+  const em={ghost:q.special?'👻✨':'👻',spider:'🕸️',bee:'🐝',bat:'🦇',lava:q.special?'🌋🔥':'🔥',dragon:q.special?'🔥🔥':'🔥',plant:q.special?'🌿💥':'🌿',hydra:q.special?'🐲⚡':'🐲'}[q.kind]||'✦';
+  g.shadowColor=q.col;g.shadowBlur=q.special?62:42;
+  g.textAlign='center';g.textBaseline='middle';g.font=z+'px sans-serif';g.fillText(em,0,0);
+  enemySpriteCache.set(key,c);return c;
+}
+function draw(){let s=stages[stage],bg=s.bg?bgs[s.bg]:null;ctx.save();if(shake){ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake*=.84}drawBackgroundCached(s,bg);
+if(defeatPending){
+  ctx.save();ctx.globalAlpha=Math.min(1,Math.max(0,(defeatDelay-.6)/2.2));
+  drawEnemy();ctx.restore();
+}else drawEnemy();
+drawHero();shots.forEach(drawProjectile);for(const q of bad){ctx.save();ctx.translate(q.x,q.y);let ang=Math.atan2(q.vy,q.vx),pulse=1+Math.sin(T*12+q.x*.01)*.10,z=q.special?78:50;ctx.globalAlpha=1;if(q.mini&&q.img&&q.img.complete){ctx.shadowColor='#ffd34f';ctx.shadowBlur=28;ctx.scale(-1,1);ctx.drawImage(q.img,-42,-42,84,84);ctx.restore();continue;}if(q.special){ctx.globalCompositeOperation='screen';ctx.strokeStyle=q.col;ctx.lineWidth=4;ctx.beginPath();ctx.arc(0,0,q.r*1.45*pulse,0,Math.PI*2);ctx.stroke();ctx.globalCompositeOperation='source-over'}
+if(q.kind==='bee'&&!q.special&&fxIcons.stinger.complete&&fxIcons.stinger.naturalWidth){
+  ctx.shadowColor=q.col;ctx.shadowBlur=24;ctx.rotate(ang-Math.PI*.75);
+  ctx.drawImage(fxIcons.stinger,-z/2,-z/2,z,z);
+}else{
+  const sprite=enemySprite(q);ctx.drawImage(sprite,-120,-120);
+}
+if(q.special){ctx.globalAlpha=.72;ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,q.r*2.05+Math.sin(T*16)*5,0,Math.PI*2);ctx.stroke()}ctx.restore()}for(const q of parts){if(q.life<=0||q.x<-10||q.x>W+10||q.y<-10||q.y>H+10)continue;ctx.globalAlpha=Math.max(0,Math.min(1,q.life));ctx.fillStyle=q.col;ctx.beginPath();ctx.arc(q.x,q.y,q.r,0,7);ctx.fill();ctx.globalAlpha=1}if(defeatPending){
+  const t=3.4-defeatDelay;
+  ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillStyle='rgba(3,12,30,.64)';ctx.fillRect(W*.29,H*.39,W*.42,H*.18);
+  ctx.font='bold '+Math.round(Math.min(38,W*.033))+'px sans-serif';
+  ctx.fillStyle='#ffe9a0';ctx.fillText(t<1.0?'GOLPE FINAL!':t<2.35?'MONSTRO DERROTADO!':'VITÓRIA!',W*.5,H*.45);
+  ctx.font=Math.round(Math.min(19,W*.017))+'px sans-serif';ctx.fillStyle='#ffffff';
+  ctx.fillText('Vida restante: '+Math.ceil(defeatHp)+'%   •   Pontuação: '+Math.floor(defeatScore),W*.5,H*.515);
+  ctx.restore();
+}
+ctx.restore();}
+function updateHUD(){$('#php').style.width=p.hp+'%';$('#pmana').style.width=p.mana+'%';$('#ehp').style.width=(boss.hp/boss.max*100)+'%';$('#score').textContent=score;let maxSuper=superLimit();$('#special').textContent=superUses>=maxSuper?'[X/ENTER] ✨ SUPER ESGOTADO':superCooldown>0?'[X/ENTER] ⏳ SUPER '+Math.ceil(superCooldown)+'s':'[X/ENTER] ✨ SUPER '+superUses+'/'+maxSuper+' • '+heroes[heroIdx].special.toUpperCase();$('#special').disabled=superUses>=maxSuper||superCooldown>0;$('#hearts').textContent=Math.max(0,Math.ceil(p.hp/20))+'/5';$('#shieldTxt').textContent=p.shield>0?'ATIVO':p.shieldCd>0?Math.ceil(p.shieldCd)+'s':'PRONTO';if(T>msgUntil)$('#msg').textContent=''}
+let lastHudUpdate=-1;
+function loop(ms){let dt=Math.min(.033,(ms-last)/1000||.016);last=ms;T+=dt;update(dt);draw();if(lastHudUpdate<0||ms-lastHudUpdate>=90){updateHUD();lastHudUpdate=ms}requestAnimationFrame(loop)}requestAnimationFrame(loop);
+
+function normalizeName(v){return v.trim().replace(/\s+/g,' ').toLocaleLowerCase('pt-BR').replace(/(^|[\s'-])([\p{L}])/gu,(m,a,b)=>a+b.toLocaleUpperCase('pt-BR'))}
+function playerKey(v){return normalizeName(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR')}
+const RANKING_API='https://script.google.com/macros/s/AKfycbxCi6XuFy0OfXEZ43U3JyRvacopJqBjnyN3cZu--qLEBwPKmAI0yiKFgtsACXIkaIgZ/exec';
+let cmConsultaSeq=0;
+function cmConsultarAPI(params){return new Promise((resolve,reject)=>{
+ const callback='cmApiCallback_'+(++cmConsultaSeq);
+ const script=document.createElement('script');let done=false;
+ const timer=setTimeout(()=>finish(new Error('Tempo esgotado ao receber o retorno JSONP.')),15000);
+ function finish(error,data){if(done)return;done=true;clearTimeout(timer);script.remove();try{delete window[callback]}catch(_){window[callback]=undefined}if(error)reject(error);else resolve(data)}
+ window[callback]=data=>finish(null,data);
+ script.onerror=()=>finish(new Error('Não foi possível carregar o script JSONP do Apps Script.'));
+ const query=new URLSearchParams({...params,callback,_:String(Date.now())});
+ script.src=RANKING_API+'?'+query.toString();document.head.appendChild(script);
+})}
+function loadRanking(){try{return JSON.parse(localStorage.getItem('classmana_batalha_ranking_v2')||'[]')}catch(e){return []}}
+function saveLocalBest(){if(!playerName)return;let r=loadRanking(),key=playerId||playerKey(playerName)+'|'+playerClass,entry={key,name:playerName,turma:playerClass,score:Math.round(score),hero:heroes[heroIdx].name,stage:Math.min(bestStageReached,10),time:Math.round(elapsedMs),date:new Date().toISOString()},old=r.find(x=>x.key===key);let better=!old||entry.score>old.score||(entry.score===old.score&&entry.stage>old.stage)||(entry.score===old.score&&entry.stage===old.stage&&entry.time<old.time);if(!old)r.push(entry);else if(better)Object.assign(old,entry);r.sort(sortRankingPontosFaseTempo);localStorage.setItem('classmana_batalha_ranking_v2',JSON.stringify(r.slice(0,150)))}
+async function saveBestScore(){if(!playerName)return false;saveLocalBest();const payload={id_aluno:playerId,nome:playerName,turma:playerClass,personagem:heroes[heroIdx].name,fase:Math.min(bestStageReached,10),pontuacao:Math.round(score),tempo:Math.round(elapsedMs)};const res=await fetch(RANKING_API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),redirect:'follow'});if(!res.ok)throw new Error('Falha no envio: HTTP '+res.status);const data=await res.json();if(data.success!==true&&data.sucesso!==true)throw new Error(data.erro||'Pontuação não confirmada pelo servidor');return true}
+function sortRankingPontosFaseTempo(a,b){return (b.score||0)-(a.score||0)||(b.stage||0)-(a.stage||0)||(a.time||9e15)-(b.time||9e15)||(a.name||'').localeCompare(b.name||'','pt-BR')}
+function rankingLocalNormalizado(){return loadRanking().sort(sortRankingPontosFaseTempo).slice(0,50)}
+async function fetchOnlineRanking(){const data=await cmConsultarAPI({acao:'ranking'});if((data.success!==true&&data.sucesso!==true)||!Array.isArray(data.ranking))throw new Error(data.erro||'Ranking inválido');return data.ranking.map(x=>({key:x.id_aluno||playerKey(x.nome)+'|'+x.turma,name:x.nome,turma:x.turma,hero:x.personagem,stage:Number(x.fase)||0,score:Number(x.pontuacao)||0,time:Number(x.tempo)||0}))}
+function renderRanking(all,final=false,defeat=false,online=true){all=[...all].sort(sortRankingPontosFaseTempo);let r=all.slice(0,50),me=playerId||playerKey(playerName)+'|'+playerClass;$('#rankingTable').innerHTML=r.length?'<div class="rankingScroll"><table class="ranking"><thead><tr><th>#</th><th>Aluno</th><th>Turma</th><th>Herói</th><th>Fase</th><th>Pontos</th><th>Tempo</th></tr></thead><tbody>'+r.map((x,i)=>`<tr class="${x.key===me?'rankMe':''}"><td>${i<3?['🥇','🥈','🥉'][i]:i+1}</td><td>${x.name}</td><td>${x.turma||'—'}</td><td>${x.hero}</td><td>${x.stage||1}/10</td><td>${x.score.toLocaleString('pt-BR')}</td><td>⏳ ${fmtTime(x.time||0)}</td></tr>`).join('')+'</tbody></table></div><p style="margin:8px 0 0"><b>TOP 50</b> • '+(online?'ranking online ClassMana':'modo local • conexão indisponível')+'</p>':'<p>Ainda não há pontuações registradas.</p>';let pos=all.findIndex(x=>x.key===me);if(defeat){$('#rankSummary').textContent=`💀 FIM DE PARTIDA • ${playerName} • ${playerClass} • ${heroes[heroIdx].name} • derrotado por ${stages[stage].name} • ${score.toLocaleString('pt-BR')} pontos • ⏳ ${fmtTime(elapsedMs)}`;$('#closeRanking').textContent='↩ VOLTAR AO INÍCIO'}else{$('#rankSummary').textContent=final&&pos>=0?`${playerName} • ${playerClass} • ${heroes[heroIdx].name} • ${score.toLocaleString('pt-BR')} pontos • ⏳ ${fmtTime(elapsedMs)} • posição ${pos+1}º`:'Classificação: maior pontuação, maior fase e, em caso de empate, menor tempo.';$('#closeRanking').textContent='VOLTAR'}$('#rankingOverlay').dataset.defeat=defeat?'1':'0';$('#rankingOverlay').dataset.final=final?'1':'0';if(final)$('#closeRanking').textContent='↩ VOLTAR AO INÍCIO';$('#rankingOverlay').classList.remove('hidden')}
+let cmRankingRequestId=0;
+function cmRankingMatchesCurrentGame(ranking){
+ const me=playerId||(playerKey(playerName)+'|'+playerClass);
+ const record=ranking.find(x=>x.key===me);
+ if(!record)return false;
+ const expectedScore=Math.round(score),expectedStage=Math.min(bestStageReached,10),expectedTime=Math.round(elapsedMs);
+ return record.score>expectedScore || (record.score===expectedScore && (record.stage>expectedStage || (record.stage===expectedStage && record.time<=expectedTime)));
+}
+async function showRanking(final=false,defeat=false){
+ const requestId=++cmRankingRequestId;
+ playMediaAudio(cmAudio.placar,true,.29);
+ $('#rankingTable').innerHTML='<p>🌐 Atualizando classificação...</p>';
+ $('#rankingOverlay').dataset.defeat=defeat?'1':'0';
+ $('#rankingOverlay').dataset.final=final?'1':'0';
+ $('#rankingOverlay').classList.remove('hidden');
+ try{
+  let ranking;
+  for(let tentativa=1;tentativa<=(final?7:1);tentativa++){
+   if(requestId!==cmRankingRequestId)return;
+   ranking=await fetchOnlineRanking();
+   if(!final || cmRankingMatchesCurrentGame(ranking))break;
+   if(tentativa===7)throw new Error('O servidor ainda não retornou a pontuação desta partida.');
+   $('#rankingTable').innerHTML='<p>🌐 Confirmando pontuação no ranking... tentativa '+tentativa+'/7</p>';
+   await new Promise(resolve=>setTimeout(resolve,650*tentativa));
+  }
+  if(requestId===cmRankingRequestId)renderRanking(ranking,final,defeat,true);
+ }catch(e){
+  console.error('ClassMana: ranking não confirmed:',e);
+  if(requestId!==cmRankingRequestId)return;
+  if(final){
+   $('#rankingTable').innerHTML='<p>⚠️ Sua pontuação desta partida ainda não foi confirmada na classificação online. Não exibiremos um placar antigo como se estivesse atualizado.</p><button class="rankBtn" id="cmRetryRanking" type="button">🔄 TENTAR ATUALIZAR PLACAR</button>';
+   $('#cmRetryRanking').onclick=()=>showRanking(true,defeat);
+   $('#rankSummary').textContent=playerName+' • '+playerClass+' • '+Math.round(score).toLocaleString('pt-BR')+' pontos • aguardando confirmação online';
+   $('#closeRanking').textContent='↩ VOLTAR AO INÍCIO';
+  }else renderRanking(rankingLocalNormalizado(),false,defeat,false);
+ }
+}
+function buildHeroes(){let box=$('#heroes');heroes.forEach((h,i)=>{let d=document.createElement('button');d.className='heroPick'+(i===0?' sel':'');let cv=document.createElement('canvas');cv.width=160;cv.height=150;cv.className='heroCanvas';let nm=document.createElement('div');nm.innerHTML='<b>'+h.name+'</b><br><small>'+h.special+'</small>';d.append(cv,nm);d.onclick=()=>{heroIdx=i;document.querySelectorAll('.heroPick').forEach(z=>z.classList.remove('sel'));d.classList.add('sel')};box.appendChild(d);let draw=()=>{let im=heroImgs[i];if(!im.complete||!im.naturalWidth)return setTimeout(draw,80);let q=cv.getContext('2d');q.clearRect(0,0,160,150);let sc=Math.min(150/im.naturalWidth,145/im.naturalHeight);let dw=im.naturalWidth*sc,dh=im.naturalHeight*sc;q.drawImage(im,(160-dw)/2,(150-dh)/2,dw,dh)};draw()})}buildHeroes();document.querySelectorAll('.classBtn').forEach(b=>b.onclick=()=>{playerClass=b.dataset.class;document.querySelectorAll('.classBtn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');cmLimparAluno();});
+function beginBattle(){clearInterval(tutorialTimer);$('#tutorial').classList.add('hidden');playing=true;paused=false;resetStage();restoreGameFocus()}
+document.getElementById('menu').addEventListener('pointerdown',()=>{if(!playing && document.getElementById('openingVideo').hidden)playMediaAudio(cmAudio.selecao,true,.48)},{once:true});
+function showTutorial(){playMediaAudio(cmAudio.tutorial,true,.34);let n=12;$('#tutorial').classList.remove('hidden');$('#tutorialCount').textContent='A batalha começa em '+n+'...';$('#tutorialBar').style.width='100%';setTimeout(()=>$('#tutorialBar').style.width='0%',50);clearInterval(tutorialTimer);tutorialTimer=setInterval(()=>{n--;$('#tutorialCount').textContent=n>0?'A batalha começa em '+n+'...':'⚔ BATALHA!';if(n<=0)beginBattle()},1000)}
+$('#skipTutorial').onclick=beginBattle;
+
+let cmBuscaSequencia=0;
+function cmLimparAluno(){cmBuscaSequencia++;playerId='';$('#playerName').value='';$('#cmAlunoOpcoes').replaceChildren();$('#cmAlunoAviso').textContent='Digite pelo menos 2 letras do seu nome.';}
+function cmTextoAluno(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim()}
+const cmAlunoInput=$('#playerName');
+cmAlunoInput.addEventListener('input',async()=>{
+ playerId='';const n=++cmBuscaSequencia, q=cmAlunoInput.value.trim(), lista=$('#cmAlunoOpcoes'), aviso=$('#cmAlunoAviso');lista.replaceChildren();
+ if(q.length<2){aviso.textContent='Digite pelo menos 2 letras do seu nome.';return;}
+ aviso.textContent='🔎 Procurando no cadastro...';
+ try{const j=await cmConsultarAPI({acao:'alunos',turma:playerClass,q});if(n!==cmBuscaSequencia)return;if(!j.success||!Array.isArray(j.alunos))throw Error(j.erro||'Cadastro indisponível');aviso.textContent=j.alunos.length?'Toque no seu nome completo para confirmar.':'Nenhum aluno encontrado nessa turma.';
+ j.alunos.forEach(a=>{const b=document.createElement('button');b.type='button';b.textContent=a.nome;b.style.cssText='display:block;width:100%;padding:10px;margin:3px 0;border:1px solid #568fbd;border-radius:8px;background:#e4f3ff;color:#123653;font-weight:bold;cursor:pointer';b.onclick=()=>{playerId=a.id;playerName=a.nome;playerClass=a.turma;cmAlunoInput.value=a.nome;lista.replaceChildren();aviso.textContent='✓ Aluno confirmado: '+a.nome+' • '+a.turma;cmBuscaSequencia++};lista.appendChild(b)});
+ }catch(e){if(n===cmBuscaSequencia){console.error('ClassMana cadastro:',e);aviso.textContent='⚠ Falha na consulta: '+String(e.message||e).slice(0,170);}}
+});
+
+$('#start').onclick=()=>{if(!cmBankReady){alert('Banco de questões não carregado. Verifique banco_questoes.json na raiz do GitHub e recarregue a página. '+cmBankError);return;}if(!playerId){$('#playerName').focus();alert('Selecione seu nome na lista de alunos cadastrados.');return;}playerName=normalizeName($('#playerName').value);$('#playerName').value=playerName;cmBonusTotal=0;cmBonusFirstTry=0;cmBonusApplied=false;shieldUses=0;questionDeck=[];lastQuestionIndex=-1;cmQuestionQueues=null;cmQuestionPick=0;elapsedMs=0;bestStageReached=0;$('#timerHud').textContent='⏳ 00:00';audio=audio||new(window.AudioContext||window.webkitAudioContext)();audio.resume();efeitoClassMana('confirmar',.28);playMediaAudio(cmAudio.tutorial,true,.32);$('#menu').style.display='none';$('#menu').classList.add('hidden');restoreGameFocus();$('#hname').textContent=playerName+' • '+playerClass+' • '+heroes[heroIdx].name;$('#magic').textContent='[ESPAÇO/Z] ⚔ '+heroes[heroIdx].basic.toUpperCase();$('#special').textContent='[X/ENTER] ✨ SUPER 0/'+superLimit()+' • '+heroes[heroIdx].special.toUpperCase();$('#defend').textContent='[E/SHIFT] 🛡 ESCUDO';$('#charge').textContent='[R/CTRL] 🧪 RECARREGAR';stage=0;expectedStage=0;score=0;p.hp=100;sessionToken++;gameEnded=false;furyTimers.forEach(clearTimeout);furyTimers=[];manaAutoCountdown=null;playing=false;paused=true;showTutorial();startMusic()};$('#magic').onclick=()=>fire(false);$('#special').onclick=()=>fire(true);$('#defend').onclick=defend;$('#charge').onclick=askQuestion;$('#sound').onclick=()=>{soundOn=!soundOn;$('#sound').textContent=soundOn?'🔊':'🔇';if(soundOn){startMusic();if(!$('#rankingOverlay').classList.contains('hidden'))playMediaAudio(cmAudio.placar,true,.29);else if(!$('#gameOverOverlay').classList.contains('hidden'))playMediaAudio(cmAudio.gameover,false,.46);else if(!$('#tutorial').classList.contains('hidden'))playMediaAudio(cmAudio.tutorial,true,.34);else if(!$('#menu').classList.contains('hidden'))playMediaAudio(cmAudio.selecao,true,.48);else if(!$('#question').classList.contains('hidden')){playMediaAudio(trilhaFases[stage]||mediaAudio.avatar,true,.50);window.cmQuestionPausedTrack=mediaTrack;}else stageAudio()}else{clearInterval(musicTimer);stopMediaAudio();Object.values(cacheEfeitos).forEach(a=>{a.pause();a.currentTime=0})}};$('#openRanking').onclick=()=>showRanking(false);$('#bonusViewRanking').onclick=async()=>{const btn=$('#bonusViewRanking');if(btn.disabled)return;btn.disabled=true;const bonus=$('#bonusOverlay');const fromDefeat=bonus.dataset.fromDefeat==='1';btn.textContent='🌐 SALVANDO PONTUAÇÃO...';try{await saveBestScore();bonus.classList.add('hidden');await showRanking(true,fromDefeat)}catch(err){console.error('ClassMana: falha ao salvar pontuação:',err);btn.textContent='⚠ FALHA NO ENVIO • TENTAR NOVAMENTE';alert('Não foi possível confirmar a pontuação no ranking online. Verifique a conexão e clique novamente para tentar.');}finally{btn.disabled=false;if(bonus.classList.contains('hidden'))btn.textContent='🏆 VER PLACAR FINAL'}};$('#closeRanking').onclick=()=>{const wasFinal=$('#rankingOverlay').dataset.final==='1';$('#rankingOverlay').classList.add('hidden');$('#rankingOverlay').dataset.defeat='0';$('#rankingOverlay').dataset.final='0';if(wasFinal){$('#menu').classList.remove('hidden');$('#menu').style.display='grid';playMediaAudio(cmAudio.selecao,true,.48);$('#start').textContent='↻ JOGAR NOVAMENTE';stage=0;expectedStage=0;restoreGameFocus();}};
+window.ClassManaUltimateAPI={
+ getState:()=>({playing,paused,gameEnded,stage,heroIdx,score,playerHp:p.hp,playerShield:p.shield,bossHp:boss.hp,bossMax:boss.max,hero:heroes[heroIdx],monster:stages[stage],sessionToken}),
+ heroUltimate:(pointCost,hpCostPct,bossDamagePct)=>{
+   if(!playing||paused||gameEnded||bossDefeated||defeatPending)return {ok:false,reason:'indisponivel'};
+   if(score<pointCost){say('⚡ MAGIA SUPREMA • faltam pontos!',1.4);return {ok:false,reason:'pontos'}}
+   if(p.hp<=20){say('⚡ MAGIA SUPREMA • vida muito baixa!',1.4);return {ok:false,reason:'vida'}}
+   const token=sessionToken,castStage=stage;
+   score=Math.max(0,score-pointCost);
+   p.hp=Math.max(1,p.hp-p.hp*hpCostPct);
+   $('#php').style.width=p.hp+'%';
+   updateHUD();
+   say('⚡ MAGIA SUPREMA • -'+pointCost+' PONTOS • -'+Math.round(hpCostPct*100)+'% VIDA',2);
+   cmHeroSound(true);
+   setTimeout(()=>{
+     if(token!==sessionToken||stage!==castStage||!playing||gameEnded||bossDefeated||defeatPending)return;
+     if(paused)return;
+     const dmg=Math.max(1,boss.max*bossDamagePct);
+     boss.hp=Math.max(1,boss.hp-dmg);
+     $('#ehp').style.width=(boss.hp/boss.max*100)+'%';
+     burst(boss.x,boss.y,heroes[heroIdx].col,95);
+     shake=20;tone(155,.28,'sawtooth',.08);
+     setTimeout(()=>tone(520,.4,'sine',.08),100);
+     if(boss.hp>0&&!furyUsed&&boss.hp/boss.max<=.30)bossFury();
+   },420);
+   return {ok:true,color:heroes[heroIdx].col};
+ },
+ monsterSpectral:(damagePct)=>{
+   if(!playing||paused||gameEnded||bossDefeated||defeatPending)return {ok:false};
+   const col=stages[stage].kind==='ghost'?'#eaffff':stages[stage].kind==='lava'||stages[stage].kind==='dragon'?'#ff5a24':stages[stage].kind==='bee'?'#ffd43b':stages[stage].kind==='plant'||stages[stage].kind==='hydra'?'#5dff87':stages[stage].kind==='bat'?'#b94cff':'#dc72ff';
+   const token=sessionToken,castStage=stage;
+   setTimeout(()=>{
+     if(token!==sessionToken||stage!==castStage||!playing||paused||gameEnded||bossDefeated||defeatPending)return;
+     if(p.shield>0){
+       burst(p.x,p.y,'#8ff7ff',45);
+       say('🛡 ESCUDO BLOQUEOU O MODO ESPECTRAL!',1.7);
+       return;
+     }
+     p.hp=Math.max(1,p.hp-p.hp*damagePct);
+     $('#php').style.width=p.hp+'%';
+     p.inv=Math.max(p.inv,1.1);
+     burst(p.x,p.y,col,60);
+     shake=18;tone(90,.45,'sawtooth',.08);
+     say('⚠ MODO ESPECTRAL • '+stages[stage].name+' REAGIU!',2);
+   },420);
+   return {ok:true,color:col,blocked:false};
+ },
+ say:(m,d)=>say(m,d),
+ resetVisual:()=>{shake=0}
+};
+function restoreGameFocus(){
+  const a=document.activeElement;
+  if(a && typeof a.blur==='function') a.blur();
+}
+window.addEventListener('keydown',e=>{
+  const tag=document.activeElement?.tagName;
+  if(['INPUT','TEXTAREA','SELECT'].includes(tag)){const menuVisible=!$('#menu').classList.contains('hidden');if(menuVisible)return;document.activeElement?.blur();}
+  const k=(e.key||'').toLowerCase(), code=e.code||'';
+  keys[e.key]=true; keys[k]=true;
+  if(!$('#gameOverOverlay').classList.contains('hidden')){
+    if(['ArrowDown','ArrowUp','PageDown','PageUp','Home','End'].includes(code)){e.preventDefault();const step=code==='ArrowDown'?80:code==='ArrowUp'?-80:code==='PageDown'?innerHeight*.7:code==='PageUp'?-innerHeight*.7:0;if(code==='Home')$('#gameOverOverlay').scrollTo({top:0,behavior:'smooth'});else if(code==='End')$('#gameOverOverlay').scrollTo({top:$('#gameOverOverlay').scrollHeight,behavior:'smooth'});else $('#gameOverOverlay').scrollBy({top:step,behavior:'smooth'});}return;
+  }
+  const basic=code==='Space'||code==='KeyZ'||k==='z';
+  const superKey=code==='KeyX'||code==='Enter'||code==='NumpadEnter'||k==='x';
+  const shieldKey=code==='KeyE'||code==='ShiftRight'||code==='ShiftLeft'||k==='e';
+  const rechargeKey=code==='KeyR'||code==='ControlRight'||code==='ControlLeft'||k==='r';
+  const action=basic||superKey||shieldKey||rechargeKey;
+  if(action) e.preventDefault();
+  if(e.repeat) return;
+  if(basic) fire(false);
+  else if(superKey) fire(true);
+  else if(shieldKey) defend();
+  else if(rechargeKey) askQuestion();
+},{capture:true});
+window.addEventListener('keyup',e=>{keys[e.key]=false;keys[(e.key||'').toLowerCase()]=false},{capture:true});
+document.querySelectorAll('.controls button,#sound').forEach(b=>{
+  b.addEventListener('pointerup',()=>setTimeout(restoreGameFocus,0));
+});
+let joyEl=$('#joy'),knob=$('#knob');function jm(e){let b=joyEl.getBoundingClientRect(),dx=e.clientX-(b.left+b.width/2),dy=e.clientY-(b.top+b.height/2),d=Math.max(1,Math.hypot(dx,dy)),m=Math.min(34,d);joy.x=dx/d*m/34;joy.y=dy/d*m/34;knob.style.transform=`translate(${joy.x*34}px,${joy.y*34}px)`}joyEl.onpointerdown=e=>{joyEl.setPointerCapture(e.pointerId);jm(e)};joyEl.onpointermove=e=>{if(e.buttons)jm(e)};joyEl.onpointerup=joyEl.onpointercancel=()=>{joy.x=joy.y=0;knob.style.transform=''};
+(function(){
+const wrap=document.getElementById('openingVideo');
+const movie=document.getElementById('openingMovie');
+const sound=document.getElementById('openingSound');
+const skip=document.getElementById('openingSkip');
+let finished=false;
+if(window.matchMedia('(max-width: 700px) and (orientation: portrait)').matches){
+ movie.querySelectorAll('source')[0].removeAttribute('media');
+ movie.querySelectorAll('source')[1].remove();
+ movie.load();
+}
+movie.muted=false;
+movie.volume=0.85;
+function finish(){
+ if(finished)return;
+ finished=true;
+ movie.pause();
+ wrap.hidden=true;
+ playMediaAudio(cmAudio.selecao,true,.48);
+}
+function startWithSound(){
+ if(finished)return;
+ movie.pause();
+ wrap.hidden=false;
+ wrap.style.display="flex";
+ wrap.style.visibility="visible";
+ movie.muted=false;
+ if(movie.currentTime>0.1 && !wrap.classList.contains('playing'))movie.currentTime=0;
+ const play=movie.play();
+ if(play&&play.then){
+  play.then(()=>{wrap.classList.add('playing');sound.hidden=true;}).catch(()=>{
+   movie.pause();movie.muted=false;
+   wrap.classList.remove('playing');
+   sound.hidden=false;sound.style.display='';
+   sound.textContent='▶ TOQUE PARA ASSISTIR COM SOM';
+  });
+ }
+}
+skip.addEventListener('click',finish);
+sound.addEventListener('click',startWithSound);
+movie.addEventListener('ended',finish);
+movie.addEventListener('error',()=>{
+ wrap.hidden=false;wrap.style.display='flex';wrap.style.visibility='visible';
+ sound.textContent='▶ TENTAR VÍDEO NOVAMENTE';
+});
+window.startClassManaOpening=startWithSound;
+window.cmOpeningMovie=movie;
+})();;</script><script src="assets/magia-config.js"></script><script src="assets/magia-suprema.js"></script><script>
+(function(){
+  const b=document.getElementById('ultimate');
+  if(b)b.addEventListener('click',()=>{if(false)efeitoClassMana('raio_eletrico',1,500)}, {capture:true});
+})();
+</script><script>
+(function(){
+  const btn=document.getElementById('ultimate');if(!btn)return;
+  function compact(){
+    const original=btn.textContent;
+    if(!original)return;
+    const shorter=original.replace(/\s*[•·]\s*-?\d+\s*pts\s*\/\s*-?\d+%\s*HP/ig,'').replace(/\s*[•·]\s*-?\d+\s*pontos\s*\/\s*-?\d+%\s*vida/ig,'');
+    if(shorter!==original)btn.textContent=shorter;
+  }
+  new MutationObserver(compact).observe(btn,{childList:true,characterData:true,subtree:true});
+  compact();
+})();
+</script><script>
+(function(){
+ const splash=document.getElementById('classmanaSplash');
+ const movie=document.getElementById('openingMovie');
+ const overlay=document.getElementById('openingVideo');
+ const fill=document.getElementById('cmLoadFill');
+ const percent=document.getElementById('cmLoadPercent');
+ const track=document.getElementById('cmLoadTrack');
+ const required=["assets/arena/botoes/medalhao-a.png","assets/arena/botoes/medalhao-b.png","assets/arena/botoes/medalhao-c.png","assets/arena/botoes/medalhao-d.png","assets/arena/botoes/pedir-dica.png","assets/arena/fundos/arena-medieval-original.png","assets/arena/fundos/arena-medieval-vermelha.png","assets/arena/fundos/tutorial-esmeralda.png","assets/arena/molduras/barra-resposta.png","assets/arena/molduras/moldura-principal.png","assets/bg_bat.png","assets/bg_bee.png","assets/bg_dragon.png","assets/bg_duchess.png","assets/bg_ghost.png","assets/bg_hive.png","assets/bg_hydra.png","assets/bg_lava.png","assets/bg_mega.png","assets/bg_plant.png","assets/bg_queen.png","assets/cavaleiro_anim/cavaleiro_1.png","assets/cavaleiro_anim/cavaleiro_2.png","assets/cavaleiro_anim/cavaleiro_3.png","assets/cavaleiro_anim/cavaleiro_4.png","assets/cavaleiro_anim/cavaleiro_5.png","assets/cavaleiro_anim/cavaleiro_6.png","assets/chama_anim/chama_1.png","assets/chama_anim/chama_2.png","assets/chama_anim/chama_3.png","assets/chama_anim/chama_4.png","assets/chama_anim/chama_5.png","assets/chama_anim/chama_6.png","assets/dragao_combate_anim/dragao_1.png","assets/dragao_combate_anim/dragao_2.png","assets/dragao_combate_anim/dragao_3.png","assets/dragao_combate_anim/dragao_4.png","assets/dragao_combate_anim/dragao_5.png","assets/dragao_combate_anim/dragao_6.png","assets/dragao_fogo_anim/dragao_1.png","assets/dragao_fogo_anim/dragao_10.png","assets/dragao_fogo_anim/dragao_11.png","assets/dragao_fogo_anim/dragao_12.png","assets/dragao_fogo_anim/dragao_2.png","assets/dragao_fogo_anim/dragao_3.png","assets/dragao_fogo_anim/dragao_4.png","assets/dragao_fogo_anim/dragao_5.png","assets/dragao_fogo_anim/dragao_6.png","assets/dragao_fogo_anim/dragao_7.png","assets/dragao_fogo_anim/dragao_8.png","assets/dragao_fogo_anim/dragao_9.png","assets/duquesa_aranha_anim/duquesa_1.png","assets/duquesa_aranha_anim/duquesa_2.png","assets/duquesa_aranha_anim/duquesa_3.png","assets/duquesa_aranha_anim/duquesa_4.png","assets/duquesa_aranha_anim/duquesa_5.png","assets/duquesa_aranha_anim/duquesa_6.png","assets/fada_anim/fada_1.png","assets/fada_anim/fada_2.png","assets/fada_anim/fada_3.png","assets/fada_anim/fada_4.png","assets/fada_anim/fada_5.png","assets/fada_anim/fada_6.png","assets/flor_presas_anim/flor_1.png","assets/flor_presas_anim/flor_2.png","assets/flor_presas_anim/flor_3.png","assets/flor_presas_anim/flor_4.png","assets/flor_presas_anim/flor_5.png","assets/flor_presas_anim/flor_6.png","assets/ghost_anim/ghost_1.png","assets/ghost_anim/ghost_2.png","assets/ghost_anim/ghost_3.png","assets/ghost_anim/ghost_4.png","assets/ghost_anim/ghost_5.png","assets/ghost_anim/ghost_6.png","assets/golem_anim/golem_1.png","assets/golem_anim/golem_2.png","assets/golem_anim/golem_3.png","assets/golem_anim/golem_4.png","assets/golem_anim/golem_5.png","assets/golem_anim/golem_6.png","assets/hero_cavaleiro.png","assets/hero_chama.png","assets/hero_dragao.png","assets/hero_fada.png","assets/hero_lobo.png","assets/hero_maga.png","assets/hydra_anim/hydra_1.png","assets/hydra_anim/hydra_2.png","assets/hydra_anim/hydra_3.png","assets/hydra_anim/hydra_4.png","assets/hydra_anim/hydra_5.png","assets/hydra_anim/hydra_6.png","assets/icon_mana.png","assets/icon_shield.png","assets/icon_stinger.png","assets/icon_sword.png","assets/items3d/book_blue.png","assets/items3d/chest.png","assets/items3d/compass.png","assets/items3d/crystal.png","assets/items3d/dagger.png","assets/items3d/heart.png","assets/items3d/potion.png","assets/items3d/rocks.png","assets/items3d/scroll.png","assets/items3d/shield.png","assets/items3d/sign.png","assets/lobo_anim/lobo_1.png","assets/lobo_anim/lobo_2.png","assets/lobo_anim/lobo_3.png","assets/lobo_anim/lobo_4.png","assets/lobo_anim/lobo_5.png","assets/lobo_anim/lobo_6.png","assets/logo.png","assets/maga_anim/maga_1.png","assets/maga_anim/maga_2.png","assets/maga_anim/maga_3.png","assets/maga_anim/maga_4.png","assets/maga_anim/maga_5.png","assets/maga_anim/maga_6.png","assets/mega_aranha_anim/mega_1.png","assets/mega_aranha_anim/mega_2.png","assets/mega_aranha_anim/mega_3.png","assets/mega_aranha_anim/mega_4.png","assets/mega_aranha_anim/mega_5.png","assets/mega_aranha_anim/mega_6.png","assets/mestre_colmeia_anim/colmeia_1.png","assets/mestre_colmeia_anim/colmeia_2.png","assets/mestre_colmeia_anim/colmeia_3.png","assets/mestre_colmeia_anim/colmeia_4.png","assets/mestre_colmeia_anim/colmeia_5.png","assets/mestre_colmeia_anim/colmeia_6.png","assets/monster_bat.png","assets/monster_bee.png","assets/monster_dragon.png","assets/monster_duchess.png","assets/monster_ghost.png","assets/monster_golem.png","assets/monster_hydra.png","assets/monster_mega.png","assets/monster_plant.png","assets/monster_queen.png","assets/morcego_vampiro_anim/morcego_1.png","assets/morcego_vampiro_anim/morcego_2.png","assets/morcego_vampiro_anim/morcego_3.png","assets/morcego_vampiro_anim/morcego_4.png","assets/morcego_vampiro_anim/morcego_5.png","assets/morcego_vampiro_anim/morcego_6.png","assets/rainha_aranha_anim/rainha_1.png","assets/rainha_aranha_anim/rainha_2.png","assets/rainha_aranha_anim/rainha_3.png","assets/rainha_aranha_anim/rainha_4.png","assets/rainha_aranha_anim/rainha_5.png","assets/rainha_aranha_anim/rainha_6.png","assets/sons/acerto.mp3","assets/sons/ataque_especial.mp3","assets/sons/cm_colmeia.mp3","assets/sons/cm_como_comecar.mp3","assets/sons/cm_como_jogar.mp3","assets/sons/cm_fantasma.mp3","assets/sons/cm_flor.mp3","assets/sons/cm_gameover.mp3","assets/sons/cm_golem.mp3","assets/sons/cm_golpe_monstro.mp3","assets/sons/cm_hidra.mp3","assets/sons/cm_mega_aranha.mp3","assets/sons/cm_morcego.mp3","assets/sons/cm_peaks_pass.mp3","assets/sons/cm_placar.mp3","assets/sons/cm_preparing_for_battle.mp3","assets/sons/cm_raio_supremo.mp3","assets/sons/cm_recarga.mp3","assets/sons/cm_selecao_herois.mp3","assets/sons/confirmar.mp3","assets/sons/derrota.mp3","assets/sons/erro.mp3","assets/sons/moedas.mp3","assets/sons/selecao.mp3","assets/sons/vitoria.mp3","assets/splash_classmana.png","assets/titulo_batalha_monstros.png","assets/ui_ranking_bg.jpg"];
+ const reportKey='classmana_v3_diagnostico_arquivos';
+ const failures=[];
+ function record(url,type,detail){
+  const item={arquivo:url,tipo:type,detalhe:String(detail||''),data:new Date().toISOString()};
+  failures.push(item);
+  try{const list=JSON.parse(localStorage.getItem(reportKey)||'[]');list.push(item);localStorage.setItem(reportKey,JSON.stringify(list.slice(-1200)));}catch(e){console.warn('ClassMana: falha ao salvar log',e);}
+ }
+ window.classManaExportarDiagnostico=function(){
+  let data='[]';try{data=localStorage.getItem(reportKey)||'[]';}catch(e){}
+  const url=URL.createObjectURL(new Blob([data],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='classmana-diagnostico-arquivos.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ };
+ let shown=0,goal=0,ready=false,revealed=false;
+ const splashStarted=performance.now(),minimumSplashMs=6500;
+ let videoFraction=0,selectionReady=false,videoReady=false,videoError=false,selectionFraction=0,audioFraction=0,audioReady=false,bankReady=false,firstBattleFraction=0,firstBattleReady=false;
+ const loadingMusic=new Audio(new URL('../../assets/sons/cm_preparing_for_battle.mp3',location.href).href);loadingMusic.loop=true;loadingMusic.volume=.35;
+ function playLoadingMusic(){if(!revealed)loadingMusic.play().catch(()=>{});}
+ document.addEventListener('pointerdown',playLoadingMusic,{capture:true});
+ document.addEventListener('keydown',playLoadingMusic,{capture:true});playLoadingMusic();
+ function draw(v){shown=Math.max(shown,Math.min(100,v));const n=Math.floor(shown);fill.style.width=shown+'%';percent.textContent=n+'%';track.setAttribute('aria-valuenow',String(n));}
+ function refreshGoal(){goal=Math.min(99,Math.floor(videoFraction*45+selectionFraction*18+audioFraction*12+firstBattleFraction*20+(bankReady?5:0)));if(videoReady&&selectionReady&&audioReady&&bankReady&&firstBattleReady)goal=100;}
+ const animation=setInterval(()=>{
+  refreshGoal();
+  if(shown<goal)draw(Math.min(goal,shown+Math.max(.12,(goal-shown)*.09)));
+  if(ready&&shown>=99.7&&performance.now()-splashStarted>=minimumSplashMs){draw(100);clearInterval(animation);startOpening();}
+ },80);
+ const urls=[...new Set(required)];
+ if(urls.length!==required.length)record('(lista)','duplicado',required.length-urls.length);
+ async function checkFile(url){
+  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),4500);
+  try{const r=await fetch(url,{cache:'force-cache',signal:ctrl.signal});if(!r.ok)throw Error('HTTP '+r.status);const blob=await r.blob();if(!blob.size)throw Error('vazio');
+   if(/\.(png|jpg|jpeg|webp|gif)$/i.test(url)){const u=URL.createObjectURL(blob);try{const i=new Image();i.src=u;if(i.decode)await i.decode();else await new Promise((ok,no)=>{i.onload=ok;i.onerror=no;});}finally{URL.revokeObjectURL(u);}}
+  }catch(e){record(url,'falha',e.message||e);}finally{clearTimeout(timer);}
+ }
+ async function diagnostics(){let cursor=0,done=0;const count=urls.length;
+  async function worker(){while(cursor<count){const url=urls[cursor++];await checkFile(url);done++;}}
+  await Promise.all(Array.from({length:Math.min(10,count)},worker));console.info('ClassMana: diagnóstico concluído. Exporte: classManaExportarDiagnostico()');
+ }
+ function prepareSelection(){
+  const selection=['assets/logo.png','assets/titulo_batalha_monstros.png',
+   ...Array.from(document.querySelectorAll('#menu img')).map(i=>i.getAttribute('src')).filter(Boolean),
+   ...Array.from(document.querySelectorAll('img[data-hero]')).map(i=>i.getAttribute('src')).filter(Boolean),
+   ...['hero_fada.png','hero_chama.png','hero_lobo.png','hero_cavaleiro.png','hero_maga.png','hero_dragao.png'].map(f=>'assets/'+f)];
+  const images=[...new Set(selection.filter(Boolean))];
+  let imagesDone=0;
+  return Promise.all(images.map(async url=>{
+   const img=new Image();img.src=url;
+   try{
+    if(img.decode)await img.decode();
+    else await new Promise((resolve,reject)=>{if(img.complete){img.naturalWidth?resolve():reject(Error('Imagem inválida'));return;}img.onload=resolve;img.onerror=reject;});
+    if(!img.naturalWidth)throw Error('Imagem vazia');
+    imagesDone++;selectionFraction=imagesDone/images.length;refreshGoal();
+   }catch(e){record(url,'selecao','falha: '+(e.message||e));throw Error('Personagem ou imagem não carregou: '+url);}
+  })).then(()=>{selectionReady=true;refreshGoal();});
+ }
+ async function prepareSelectionAudio(){
+  const source=new URL('../../assets/sons/cm_selecao_herois.mp3',location.href).href;
+  const response=await fetch(source,{cache:'force-cache'});
+  if(!response.ok)throw Error('Trilha de herois HTTP '+response.status);
+  const total=Number(response.headers.get('content-length'))||0;
+  let blob;
+  if(response.body&&total>0){
+   const reader=response.body.getReader(),chunks=[];let received=0;
+   while(true){const {done,value}=await reader.read();if(done)break;chunks.push(value);received+=value.byteLength;
+    audioFraction=Math.min(.99,received/total);refreshGoal();}
+   if(received!==total)throw Error('Trilha de herois incompleta: '+received+'/'+total);
+   blob=new Blob(chunks,{type:'audio/mpeg'});
+  }else{blob=await response.blob();audioFraction=.99;refreshGoal();}
+  if(!blob.size)throw Error('Trilha de herois vazia');
+  const blobUrl=URL.createObjectURL(blob);
+  const test=new Audio();test.preload='auto';test.src=blobUrl;
+  await new Promise((resolve,reject)=>{
+   if(test.readyState>=2){resolve();return;}
+   const timeout=setTimeout(()=>{cleanup();reject(Error('Trilha de herois nao preparada'));},30000);
+   function cleanup(){clearTimeout(timeout);test.removeEventListener('loadeddata',done);test.removeEventListener('error',fail);}
+   function done(){cleanup();resolve();}
+   function fail(){cleanup();reject(Error('Erro ao preparar trilha de herois'));}
+   test.addEventListener('loadeddata',done);test.addEventListener('error',fail);test.load();
+  });
+  window.cmPreloadedAudio=window.cmPreloadedAudio||{};
+  window.cmPreloadedAudio[source]=blobUrl;
+  audioFraction=1;audioReady=true;refreshGoal();
+ }
+ async function prepareFirstBattle(){
+  const images=[
+   'assets/bg_ghost.png','assets/monster_ghost.png','assets/splash_classmana.png',
+   'assets/arena/fundos/tutorial-esmeralda.png','assets/arena/fundos/arena-medieval-original.png',
+   'assets/arena/molduras/moldura-principal.png','assets/arena/molduras/barra-resposta.png',
+   'assets/arena/botoes/medalhao-a.png','assets/arena/botoes/medalhao-b.png',
+   'assets/arena/botoes/medalhao-c.png','assets/arena/botoes/medalhao-d.png',
+   'assets/arena/botoes/pedir-dica.png',
+   ...Array.from({length:6},(_,i)=>'assets/ghost_anim/ghost_'+(i+1)+'.png'),
+   ...Array.from({length:6},(_,i)=>'assets/fada_anim/fada_'+(i+1)+'.png'),
+   ...Array.from({length:6},(_,i)=>'assets/chama_anim/chama_'+(i+1)+'.png'),
+   ...Array.from({length:6},(_,i)=>'assets/lobo_anim/lobo_'+(i+1)+'.png'),
+   ...Array.from({length:6},(_,i)=>'assets/cavaleiro_anim/cavaleiro_'+(i+1)+'.png'),
+   ...Array.from({length:6},(_,i)=>'assets/maga_anim/maga_'+(i+1)+'.png'),
+   ...Array.from({length:6},(_,i)=>'assets/dragao_combate_anim/dragao_'+(i+1)+'.png')
+  ];
+  const sounds=['assets/sons/cm_como_jogar.mp3','assets/sons/cm_fantasma.mp3','assets/sons/cm_recarga.mp3','assets/sons/acerto.mp3','assets/sons/erro.mp3'];
+  let done=0;const total=images.length+sounds.length;
+  async function imageReady(url){const im=new Image();im.src=url;
+   if(im.decode)await im.decode();else await new Promise((ok,fail)=>{im.onload=ok;im.onerror=fail;});
+   if(!im.naturalWidth)throw Error('Imagem sem dimensões: '+url);
+  }
+  async function soundReady(url){const r=await fetch(url,{cache:'force-cache'});if(!r.ok)throw Error('HTTP '+r.status+' '+url);
+   const blob=await r.blob();if(!blob.size)throw Error('Áudio vazio: '+url);
+   const u=URL.createObjectURL(blob);const a=new Audio(u);a.preload='auto';
+   try{await new Promise((ok,fail)=>{if(a.readyState>=2)return ok();const t=setTimeout(()=>{clean();fail(Error('Áudio não decodificado: '+url));},30000);
+    function clean(){clearTimeout(t);a.removeEventListener('loadeddata',loaded);a.removeEventListener('error',error);}
+    function loaded(){clean();ok();}function error(){clean();fail(Error('Erro no áudio: '+url));}
+    a.addEventListener('loadeddata',loaded);a.addEventListener('error',error);a.load();});
+   }finally{URL.revokeObjectURL(u);}
+  }
+  const tasks=[...images.map(url=>()=>imageReady(url)),...sounds.map(url=>()=>soundReady(url))];let cursor=0;
+  async function worker(){while(cursor<tasks.length){const i=cursor++;await tasks[i]();done++;firstBattleFraction=done/total;refreshGoal();}}
+  await Promise.all(Array.from({length:Math.min(5,tasks.length)},worker));
+  firstBattleReady=true;refreshGoal();
+ }
+ async function prepareVideo(){
+  const original=movie.currentSrc || (()=>{
+   const sources=[...movie.querySelectorAll('source')];
+   const match=sources.find(el=>!el.media||matchMedia(el.media).matches);
+   return match?.getAttribute('src')||sources[0]?.getAttribute('src');
+  })();
+  if(!original)throw Error('Fonte do video nao encontrada');
+  const response=await fetch(original,{cache:'force-cache'});
+  if(!response.ok)throw Error('Video HTTP '+response.status);
+  const total=Number(response.headers.get('content-length'))||0;
+  let blob;
+  if(response.body && total>0){
+   const reader=response.body.getReader(),chunks=[];let received=0;
+   while(true){const {done,value}=await reader.read();if(done)break;chunks.push(value);received+=value.byteLength;videoFraction=Math.min(.99,received/total);refreshGoal();}
+   if(received!==total)throw Error('Video incompleto: '+received+'/'+total+' bytes');
+   blob=new Blob(chunks,{type:'video/mp4'});
+  }else{
+   blob=await response.blob();videoFraction=.99;refreshGoal();
+  }
+  if(!blob.size)throw Error('Video vazio');
+  const url=URL.createObjectURL(blob);
+  movie.pause();movie.removeAttribute('src');movie.querySelectorAll('source').forEach(el=>el.remove());
+  movie.src=url;movie.preload='auto';movie.load();
+  await new Promise((resolve,reject)=>{
+   if(movie.readyState>=2&&movie.videoWidth>0){resolve();return;}
+   const timeout=setTimeout(()=>{cleanup();reject(Error('Video baixado mas nao decodificado'));},30000);
+   function cleanup(){clearTimeout(timeout);movie.removeEventListener('loadeddata',done);movie.removeEventListener('error',fail);}
+   function done(){if(movie.readyState<2||!movie.videoWidth)return;cleanup();resolve();}
+   function fail(){cleanup();reject(Error('Erro na decodificacao do video'));}
+   movie.addEventListener('loadeddata',done);movie.addEventListener('error',fail);
+  });
+  videoFraction=1;videoReady=true;refreshGoal();
+ }
+ function reveal(){if(revealed)return;revealed=true;loadingMusic.pause();loadingMusic.currentTime=0;
+  overlay.hidden=false;overlay.style.display='flex';overlay.style.visibility='visible';overlay.style.zIndex='130';
+  splash.classList.add('hide');setTimeout(()=>splash.remove(),650);
+ }
+ function startOpening(){
+  if(!ready||revealed)return;
+  overlay.hidden=false;overlay.style.display='flex';overlay.style.visibility='visible';overlay.style.zIndex='130';
+  movie.addEventListener('playing',reveal,{once:true});
+  window.startClassManaOpening?.();
+ }
+ splash.addEventListener('pointerdown',()=>{if(ready&&!revealed)window.startClassManaOpening?.();});
+ Promise.all([prepareVideo(),prepareSelection(),prepareSelectionAudio(),prepareFirstBattle(),cmBankPromise.then(ok=>{if(!ok)throw Error("Banco de questões: "+cmBankError);bankReady=true;refreshGoal();})]).then(()=>{
+  ready=true;refreshGoal();
+ }).catch(e=>{
+  videoError=true;record('(preparacao)','erro',e.message||e);
+  document.getElementById('cmLoadText').textContent='Falha ao carregar a abertura. Toque para tentar novamente.';
+  splash.addEventListener('pointerdown',()=>location.reload(),{once:true});
+ });
+ diagnostics().catch(e=>record('(diagnostico)','erro',e.message||e));
+})();
+</script></body></html>

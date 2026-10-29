@@ -1,0 +1,92 @@
+[
+  {
+    "id": 1,
+    "name": "Fantasma",
+    "difficulty": 6.0,
+    "territories": 4,
+    "src": "ClassMana_V2.5_Fantasma_Mira_Super_Magia_12_Ataques.zip",
+    "module": "fase_fantasma.js",
+    "files": 21
+  },
+  {
+    "id": 2,
+    "name": "Golem de Lava",
+    "difficulty": 6.5,
+    "territories": 5,
+    "src": "ClassMana_V2.5_Golem_Distribuicao_Continua_18_Inimigos.zip",
+    "module": "fase_fantasma.js",
+    "files": 28
+  },
+  {
+    "id": 3,
+    "name": "Mega-Aranha",
+    "difficulty": 7.0,
+    "territories": 5,
+    "src": "ClassMana_V2.5_MegaAranha_Teias_e_Magias_Corrigidas.zip",
+    "module": "fase_fantasma.js",
+    "files": 36
+  },
+  {
+    "id": 4,
+    "name": "Flor das Presas",
+    "difficulty": 7.0,
+    "territories": 5,
+    "src": "ClassMana_V2.5_Reino4_Arena_Chefona_Profundidade_Corrigida_TESTE.zip",
+    "module": "fase_fantasma.js",
+    "files": 45
+  },
+  {
+    "id": 5,
+    "name": "Mestre da Colmeia",
+    "difficulty": 7.5,
+    "territories": 5,
+    "src": "ClassMana_V2.5_Reino5_Dano_Por_Contato_Armado_TESTE.zip",
+    "module": "fase_fantasma.js",
+    "files": 45
+  },
+  {
+    "id": 6,
+    "name": "Duquesa Aranha",
+    "difficulty": 8.0,
+    "territories": 5,
+    "src": "ClassMana_V2.5_Reino6_Duquesa_Aranha_Base_Corrigida_Dano_Armado_TESTE.zip",
+    "module": "fase_fantasma.js",
+    "files": 36
+  },
+  {
+    "id": 7,
+    "name": "Morcego Vampiro",
+    "difficulty": 8.0,
+    "territories": 5,
+    "src": "ClassMana_V2.5_Reino7_Hordas40_Pes_Passarela_Ajustado_TESTE.zip",
+    "module": "fase_fantasma.js",
+    "files": 31
+  },
+  {
+    "id": 8,
+    "name": "Hidra",
+    "difficulty": 9.0,
+    "territories": 5,
+    "src": "ClassMana_V2.5_Reino8_Hidra_CERCO_REVEZAMENTO_JATO_ACIDO_TESTE.zip",
+    "module": "fase_fantasma.js",
+    "files": 33
+  },
+  {
+    "id": 9,
+    "name": "Rainha Aranha",
+    "difficulty": 9.5,
+    "territories": 5,
+    "src": "ClassMana_V2.5_Reino9_Rainha_SEM_BOLHA_CORRECAO_PONTUAL_TESTE.zip",
+    "module": "fase_fantasma.js",
+    "files": 36
+  },
+  {
+    "id": 10,
+    "name": "Dragão de Fogo",
+    "difficulty": 10.0,
+    "territories": 5,
+    "src": "ClassMana_V25_Reino10_VERSAO_FINAL.zip",
+    "module": "fase_dragao.js",
+    "files": 42
+  }
+]

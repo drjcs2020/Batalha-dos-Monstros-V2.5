@@ -1,0 +1,636 @@
+/* ClassMana V2.5 — fase experimental do Fantasma, revisão de câmera e combate.
+   EXTENSÃO da V2.4: preserva seu menu, vídeos, acesso, 6 heróis, recarga e chefão.
+   Teste isolado: nenhum salvamento e nenhuma submissão ao ranking.
+*/
+(function(){
+'use strict';
+const S={area:0,active:false,transition:false,mobs:[],fx:[],camera:0,lastCamera:0,world:0,
+ names:['PORTÕES ESPECTRAIS','RUÍNAS DA NECRÓPOLE','FORTALEZA DO FANTASMA','ARENA DO FANTASMA'],
+ // TODOS os 8 personagens selecionados são utilizados ao longo das três hordas.
+ // Cinco grupos de quatro por território, apresentados por famílias.
+ // Cada sprite aparece em mais de uma ocasião, sem perder as 12 variantes aprovadas.
+ waves:[
+  [0,4,8,0, 2,6,9,2, 1,5,10,1, 3,7,11,3, 0,8,4,11],
+  [2,6,9,6, 1,5,10,5, 0,3,4,8, 2,9,6,2, 7,11,3,7],
+  [1,5,10,1, 0,4,8,11, 2,6,9,2, 3,7,0,4, 11,8,10,9]
+ ],
+ files:['01_fantasma_encantado.png','02_bruxinha_fantasma.png','03_zumbizinho_espectral.png','04_fantasma_lanterna.png','05_fantasma_ataque.png','06_bruxinha_ataque.png','07_zumbizinho_ataque.png','08_fantasma_lanterna_ataque.png','09_fantasma_gelatinoso.png','10_zumbi_mago.png','11_bruxinha_fantasma_nova.png','12_fantasma_azul_investida.png'],
+ bg:[],imgs:[],facing:1,total:0,clock:0,advanceReady:false,idleSeconds:0,arrowPulse:0,vy:0,jumpWasDown:false,shotDirection:1,shotHits:0,loot:null,lootClock:0,lootNext:14,lootCount:0,lootHeartUsed:false,lootChestUsed:false,lootPhaseChest:false,lootBuffs:{},lootNotice:"",lootNoticeTime:0,lootMapUntil:0,bossMovement:0,bossFace:1,bossHealthAtStart:0,previousBossHP:0,lootGuarantees:{},spriteFeet:0
+};
+const getAsset=f=>new URL('assets_v25/'+f,location.href).href;
+for(let i=1;i<=4;i++){const im=new Image(); im.src=getAsset('cenarios/cenario_'+i+'.jpg');S.bg.push(im)}
+for(const f of S.files){const im=new Image();im.src=getAsset('inimigos/'+f);S.imgs.push(im)}
+const orig={reset:resetStage,update,draw,fire,defeat:finishBossDefeat,hero:drawHero,bg:drawBackgroundCached};
+window.cm25Facing=1;
+window.addEventListener('keydown',e=>{if(e.code==='ArrowLeft'||e.code==='KeyA')window.cm25Facing=-1;if(e.code==='ArrowRight'||e.code==='KeyD')window.cm25Facing=1},true);
+let css=document.createElement('style');css.textContent=`
+ #openRanking,#bonusViewRanking{display:none!important}
+ #cm25stage-transition{position:fixed;inset:0;z-index:999999;display:none;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 42%,rgba(48,48,111,.88),rgba(8,12,34,.96));color:#f3f4ff;font-family:Georgia,'Trebuchet MS',sans-serif;text-align:center;pointer-events:none}
+ #cm25stage-transition .frame{width:min(88vw,720px);padding:24px 25px 30px;border:2px solid #9ce5f5;border-radius:18px;background:linear-gradient(145deg,rgba(27,52,88,.91),rgba(47,36,85,.92));box-shadow:0 0 0 5px #8a61a42d,0 18px 65px #000b, inset 0 0 55px #75a6ff24}
+ #cm25stage-transition .eyebrow{font-size:clamp(12px,1.5vw,17px);color:#b9eaff;letter-spacing:.2em;margin-bottom:14px}
+ #cm25stage-transition .heading{font-size:clamp(23px,4vw,43px);font-weight:900;color:#ffe8aa;text-shadow:0 4px 0 #52387a,0 0 20px #96cbec66;margin:8px 0}
+ #cm25stage-transition .desc{font-size:clamp(15px,1.7vw,22px);color:#dcf5ff;margin-top:10px}
+ #cm25stage-transition .meter{height:7px;border-radius:8px;background:#101d45;margin-top:24px;overflow:hidden}.meter span{display:block;height:100%;width:0%;background:linear-gradient(90deg,#6de8ff,#f9d484);transition:width 1.65s linear}
+ .controls{right:7px!important;bottom:9px!important;gap:5px!important;grid-template-columns:repeat(2,minmax(98px,135px))!important}
+ .controls .btn{font-size:11px!important;padding:8px 6px!important;border-radius:11px!important;min-height:39px!important;box-shadow:0 3px 0 #030914!important}
+ .hud .card{width:min(295px,32vw)!important;padding:5px 8px!important;border-radius:10px!important}
+ .hud .name{font-size:clamp(12px,1.3vw,16px)!important}
+ .hud .stats{font-size:11px!important;margin:2px 0!important}
+ .hud .bar{height:8px!important;margin-top:3px!important}
+ .hud .title{font-size:10px!important}
+ .hud .card:last-child{width:min(215px,26vw)!important;min-height:0!important;align-self:flex-start;padding:4px 7px!important}
+ .hud .card:last-child .name{font-size:clamp(11px,1.1vw,14px)!important;line-height:1.1!important}
+ .hud .card:last-child .stats{font-size:10px!important;line-height:1.15!important}
+ .hud .card:last-child .bar{height:6px!important;margin-top:3px!important}
+ .controls{grid-template-columns:repeat(2,minmax(105px,137px))!important;gap:7px!important;bottom:27px!important;right:24px!important}
+ .controls .btn{min-height:40px!important;font-size:11px!important;line-height:1.18!important;padding:7px 6px!important}
+ #ultimate{font-size:10px!important;min-height:36px!important}
+ @media(max-width:660px){.controls{right:11px!important;bottom:17px!important;grid-template-columns:repeat(2,minmax(82px,106px))!important;gap:4px!important}.controls .btn{font-size:9px!important;min-height:32px!important;padding:4px!important}}
+ #cm25stage-transition{background:rgba(8,12,33,.50)!important}
+ #cm25stage-transition .frame{position:relative;overflow:hidden;isolation:isolate;background:rgba(14,26,53,.55)!important;max-width:760px!important;border:2px solid #b3eaff!important;box-shadow:0 0 45px #6ac7e944,0 25px 60px #020918!important}
+ #cm25stage-transition .scene-art{position:absolute;inset:0;z-index:-2;background-position:center;background-size:cover;filter:brightness(.52) saturate(1.1)}
+ #cm25stage-transition .frame::before{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,#07152dba,#1a1b4c89,#07152dba)}
+ #cm25stage-transition .defeated{display:flex;justify-content:center;align-items:end;gap:10px;margin:13px auto;min-height:90px}
+ #cm25stage-transition .defeated img{height:clamp(70px,12vh,114px);max-width:27%;object-fit:contain;filter:drop-shadow(0 0 10px #78dafa)}
+
+
+ `;document.head.appendChild(css);
+const overlay=document.createElement('div');overlay.id='cm25stage-transition';overlay.innerHTML='<div class="frame"><div class="scene-art"></div><div class="eyebrow">✦ CLASSMANA · NECRÓPOLE ESPECTRAL ✦</div><div class="heading"></div><div class="defeated"></div><div class="desc"></div><div class="meter"><span></span></div></div>';
+(document.body||document.documentElement).appendChild(overlay);
+const say25=(s,t=2)=>say(s,t);
+const clamp=(a,l,r)=>Math.max(l,Math.min(r,a));
+// Alturas de piso calibradas individualmente de acordo com a área pavimentada de cada imagem.
+// Corrigir nesta tabela, sem voltar a alterar a gravidade dos personagens.
+// Pontos de contato do piso medidos na arte original após escala de 112%.
+// Todos os personagens terrestres usam exatamente ESTA tabela, nunca um ao outro.
+const platformRatios=[.705,.803,.744,.750];
+const platformY=()=>H*platformRatios[S.area];
+const heroHeight=()=>Math.min(142,H*.225);
+// O desenho dos heróis usa centro y-45; o limite é calculado pelos pés VISÍVEIS.
+// Ajuste apenas da margem transparente inferior de cada sprite (em fração da altura).
+const heroFootTrim=()=>[.015,.018,.018,.020,.016,.020][heroIdx]??.018;
+const ground=()=>platformY()+45-heroHeight()/2+heroHeight()*heroFootTrim();
+const gravity=()=>heroIdx===0?380:570; // salto amplo; fada flutua um pouco mais
+const heroCeiling=()=>Math.max(125,H*.24); // limite superior da faixa de voo/salto
+const worldLen=()=>W*4.25; // Permite rolagem longa e pelo menos uma repetição do cenário.
+
+// ITENS DE APOIO — somente assets existentes da V2.4; os PNGs são carregados uma vez.
+const lootDefs={
+ heart:{label:'CORAÇÃO',file:'heart.png',ttl:11},
+ chest:{label:'BAÚ DA MAGIA',file:'chest.png',ttl:12},
+ crystal:{label:'CRISTAL DE MANA',file:'crystal.png',ttl:10},
+ clock:{label:'TEMPO LENTO',file:null,emoji:'⏱️',ttl:9},
+ shield:{label:'ESCUDO',file:'shield.png',ttl:9},
+ sword:{label:'ESPADA',file:'dagger.png',ttl:9},
+ map:{label:'MAPA',file:'compass.png',ttl:11}
+};
+const lootImgs={};
+for(const [key,def] of Object.entries(lootDefs)){
+ if(def.file){const img=new Image();img.src=AS+'items3d/'+def.file;lootImgs[key]=img}
+}
+const cm25OrigSuperLimit=superLimit;
+superLimit=function(){const base=cm25OrigSuperLimit();return stage===0&&S.active&&S.lootPhaseChest?base*2:base};
+function lootMessage(message){S.lootNotice=message;S.lootNoticeTime=2.7;say25(message,2.7)}
+function lootResetTerritory(){
+ S.loot=null;S.lootClock=0;S.lootCount=0;S.lootNext=8+Math.random()*3;
+ S.lootHeartUsed=false;S.lootGuarantees={shield:false,chest:false};S.lootBuffs={};S.lootNotice='';S.lootNoticeTime=0;S.lootMapUntil=0;
+ // O baú dobra o número de usos do SUPER até terminar a fase, se foi coletado.
+}
+function lootPickType(){
+ // Preferências determinísticas em risco de vida: não permitir que cronômetros
+ // consumam todas as oportunidades de coração ou escudo.
+ if(p.hp<=40&&!S.lootHeartUsed)return 'heart';
+ if(!S.lootGuarantees.shield&&(p.hp<=70||S.lootCount>=1)){S.lootGuarantees.shield=true;return 'shield'}
+ if(!S.lootChestUsed&&!S.lootGuarantees.chest&&S.area>=1){S.lootGuarantees.chest=true;return 'chest'}
+ if(p.mana<=35)return 'crystal';
+ const choices=['shield','crystal','sword','map','clock'];
+ return choices[Math.floor(Math.random()*choices.length)];
+}
+function lootSpawn(key){
+ if(S.loot||!playing||paused||S.transition)return;
+ const def=lootDefs[key];if(!def)return;
+ const maxX=S.area===3?W*.52:S.world-W*.12;
+ const nearX=Math.max(W*.18,Math.min(maxX,p.x+W*(.17+Math.random()*.10)));
+ S.loot={key,x:nearX,y:platformY()-8,age:0,life:def.ttl};
+ S.lootCount++;if(key==='heart')S.lootHeartUsed=true;
+ lootMessage('✨ '+def.label+' APARECEU! ALCANCE A TEMPO!');
+}
+function lootCollect(){
+ if(!S.loot)return;
+ const key=S.loot.key;
+ S.loot=null;S.lootNext=12+Math.random()*5;S.lootClock=0;
+ if(key==='heart')p.hp=Math.min(100,p.hp+20);
+ if(key==='crystal')p.mana=Math.min(100,p.mana+25);
+ if(key==='chest'){S.lootChestUsed=true;S.lootPhaseChest=true;}
+ if(key==='clock')S.lootBuffs.clock=6;
+ if(key==='shield'){S.lootBuffs.shield=5;p.shield=Math.max(p.shield,5)}
+ if(key==='sword')S.lootBuffs.sword=8;
+ if(key==='map')S.lootMapUntil=8;
+ burst(p.x,p.y-75,key==='heart'?'#ff6189':'#83dfff',19);
+ const description={heart:'+1 CORAÇÃO',crystal:'+25 MANA',chest:'LIMITE DE SUPER x2 ATÉ O FIM DA FASE',clock:'INIMIGOS LENTOS POR 6s',shield:'PROTEÇÃO POR 5s',sword:'DANO AUMENTADO POR 8s',map:'PRÓXIMO ITEM SINALIZADO'}[key];
+ lootMessage('🎁 '+description);
+}
+function lootStep(dt){
+ if(!playing||paused||S.transition||gameEnded)return;
+ if(S.lootNoticeTime>0)S.lootNoticeTime=Math.max(0,S.lootNoticeTime-dt);
+ for(const key of Object.keys(S.lootBuffs))S.lootBuffs[key]=Math.max(0,S.lootBuffs[key]-dt);
+ S.lootMapUntil=Math.max(0,S.lootMapUntil-dt);
+ if(S.loot){
+  S.loot.age+=dt;S.loot.life-=dt;
+  const a=S.loot;
+  // Pegar por aproximação ou pulando sobre o objeto; não permite coleta à distância.
+  if(Math.abs(p.x-a.x)<Math.max(35,W*.033)&&Math.abs((p.y-45)- (a.y-33))<105){lootCollect()}
+  else if(a.life<=0){S.loot=null;S.lootClock=0;S.lootNext=13+Math.random()*9}
+  return;
+ }
+ if(S.lootCount>=3)return;
+ S.lootClock+=dt;
+ const critical=p.hp<=40&&!S.lootHeartUsed;
+ if(critical&&S.lootClock>2.0){lootSpawn('heart');return}
+ if(S.lootClock>=S.lootNext){lootSpawn(lootPickType())}
+}
+function lootDraw(worldSpace){
+ if(!S.loot)return;
+ const a=S.loot,def=lootDefs[a.key],img=lootImgs[a.key],size=Math.min(82,H*.12);
+ const y=a.y-38+Math.sin(a.age*4)*5;
+ ctx.save();
+ if(worldSpace)ctx.translate(-S.camera,0);
+ ctx.globalAlpha=Math.min(1,a.life/1.1);
+ ctx.shadowColor=a.key==='heart'?'#ff6e93':'#83edff';ctx.shadowBlur=18;
+ ctx.fillStyle='#b9eaff';ctx.beginPath();ctx.ellipse(a.x,a.y-5,31,7,0,0,Math.PI*2);ctx.fill();
+ if(img&&img.complete&&img.naturalWidth){
+  const w=size*img.naturalWidth/img.naturalHeight;
+  ctx.drawImage(img,a.x-w/2,y-size/2,w,size);
+ }else{ctx.font=Math.round(size*.85)+'px sans-serif';ctx.textAlign='center';ctx.fillText(def.emoji||'✦',a.x,y+19)}
+ ctx.shadowBlur=0;ctx.globalAlpha=1;
+ const seconds=Math.ceil(a.life);
+ ctx.font='bold 13px Trebuchet MS,Arial';ctx.textAlign='center';ctx.fillStyle='#ffffff';ctx.strokeStyle='#102445';ctx.lineWidth=3;
+ ctx.strokeText(seconds+'s',a.x,y-size*.55-5);ctx.fillText(seconds+'s',a.x,y-size*.55-5);
+ ctx.restore();
+}
+function lootHud(){
+ if(!S.lootNoticeTime&&!S.lootMapUntil&&!S.lootPhaseChest)return;
+ const labels=[];
+ if(S.lootNoticeTime>0)labels.push(S.lootNotice);
+ if(S.lootMapUntil>0)labels.push('🧭 PRÓXIMO ITEM EM '+Math.max(0,Math.ceil(S.lootNext-S.lootClock))+'s');
+ if(S.lootPhaseChest)labels.push('✨ SUPER x2');
+ ctx.save();ctx.textAlign='center';ctx.font='bold '+Math.round(Math.min(14,W*.012))+'px Trebuchet MS,Arial';
+ const text=labels.join('    ·    '),x=W*.50,y=H*.15;
+ ctx.fillStyle='rgba(8,22,52,.72)';ctx.fillRect(x-Math.min(W*.38,text.length*4),y-18,Math.min(W*.76,text.length*8),26);
+ ctx.fillStyle='#ffe4a0';ctx.fillText(text,x,y);ctx.restore();
+}
+
+// Efeitos visuais do território: emoji emitido PELO monstro em coordenadas de mundo.
+const mobEmojis=['🔥','♨️','❄️','☄️','💥','👻'];
+const mobFxColors=['#ff8649','#ffcf73','#a5ecff','#b6a0ff','#ffe36e','#8ff2ff'];
+function emitMobEffect(m,count=2,forced=-1){
+ if(S.fx.length>95)S.fx.splice(0,S.fx.length-75);
+ for(let i=0;i<count;i++){
+  const ix=forced>=0?forced:(m.id+i+Math.floor(Math.random()*mobEmojis.length))%mobEmojis.length;
+  S.fx.push({x:m.x+(Math.random()-.5)*m.size*.30,
+   y:m.y-m.size*(.45+Math.random()*.27),vx:(Math.random()-.5)*65,
+   vy:-42-Math.random()*80,life:.68+Math.random()*.42,max:1.10,
+   symbol:mobEmojis[ix],color:mobFxColors[ix],size:19+Math.random()*14});
+ }
+}
+function stepMobEffects(dt){
+ for(const fx of S.fx){fx.x+=fx.vx*dt;fx.y+=fx.vy*dt;fx.vy+=34*dt;fx.life-=dt;}
+ S.fx=S.fx.filter(fx=>fx.life>0);
+}
+function drawMobEffects(){
+ ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';
+ for(const fx of S.fx){ctx.globalAlpha=Math.min(1,fx.life/.35);ctx.shadowColor=fx.color;
+  ctx.shadowBlur=13;ctx.font=`${Math.round(fx.size)}px 'Segoe UI Emoji','Apple Color Emoji',sans-serif`;
+  ctx.fillStyle=fx.color;ctx.fillText(fx.symbol,fx.x,fx.y);
+ }
+ ctx.restore();
+}
+
+function changedArea(name,desc,cb,stayPaused=false,delay=1850){
+ S.transition=true;playing=false;paused=true;overlay.style.display='flex';
+ // Reaproveita as artes aprovadas do território derrotado; nenhuma geração nova.
+ overlay.querySelector('.scene-art').style.backgroundImage=`url('${S.bg[S.area]?.src||''}')`;
+ const used=[...new Set(S.waves[S.area]||[])].slice(0,3);
+ overlay.querySelector('.defeated').replaceChildren(...used.map(id=>{const im=document.createElement('img');im.src=S.imgs[id].src;im.alt='Subordinado derrotado';return im}));
+ overlay.querySelector('.heading').textContent=name;
+ overlay.querySelector('.desc').textContent=desc;
+ const bar=overlay.querySelector('.meter span');bar.style.transition='none';bar.style.width='0%';
+ requestAnimationFrame(()=>{bar.style.transition='width 1.65s linear';bar.style.width='100%'});
+ setTimeout(()=>{overlay.style.display='none';cb();S.transition=false;if(!stayPaused){playing=true;paused=false}},delay);
+}
+function createMob(id,i,n){
+ const group=Math.floor(i/4),position=i%4;
+ // Grupos compactos visíveis juntos; 12 variantes aparecem ao longo do percurso.
+ const x=W*(.43+group*.67+position*.115);
+ const isZombie=(id===2||id===6||id===9);
+ const size=(isZombie?126:94)*Math.min(1.20,H/650);
+ const laneOffset=isZombie?0:-36-(i%3)*17;
+ // Dano normal = 22. Pequenos resistem a 2 disparos; médios/grandes a 3.
+ const small=[0,3,4,8,11].includes(id);
+ const max=small?44:66;
+ return {id,isZombie,airborne:!isZombie,x,
+  y:platformY()+laneOffset,baseY:platformY()+laneOffset,
+  max,hp:max,size,
+  speed:63+S.area*6,phase:i*1.1,cool:4.0+(i%4)*.95+group*.25,contact:0,age:0,hit:0,step:0};
+}
+
+function setHud(){
+ $('#ename').textContent=S.area===3?'FANTASMA':S.names[S.area];
+ $('#round').textContent='FANTASMA · TERRITÓRIO '+(S.area+1)+'/4';
+ $('#stageText').textContent=S.area===3?'ARENA DO FANTASMA':'NECRÓPOLE ESPECTRAL · '+S.names[S.area];
+ $('#difficulty').textContent=S.area===3?'BATALHA FINAL':'DERROTE OS SUBORDINADOS · '+S.total+' RESTANTES';
+ $('#ehp').style.width=S.area===3?'100%':(S.total/S.mobs.length*100)+'%';
+}
+function startTerritory(){
+ lootResetTerritory();
+ S.mobs=[];S.fx=[];S.camera=0;S.lastCamera=0;S.advanceReady=false;S.world=worldLen();S.clock=0;S.idleSeconds=0;S.arrowPulse=0;S.fx=[];S.vy=0;S.jumpWasDown=false;
+ p.x=W*.19;p.y=ground();window.cm25HeroFeetOffset=0;p.hp=100;p.mana=100;p.inv=1.5;
+ shots=[];bad=[];parts=[];superCooldown=0;superUses=0;
+ if(S.area<3){let ids=S.waves[S.area];S.mobs=ids.map((id,i)=>createMob(id,i,ids.length));S.total=S.mobs.length}
+ else {boss.max=Math.round(stages[0].hp*4.1);boss.hp=boss.max;boss.x=W*.78;boss.y=H*.49;boss.cool=3.1;S.total=0;S.bossIntroTime=1.85;S.bossPhase=1;S.bossPhaseNotice=0;S.camera=0;S.bossMovement=0;S.bossFace=-1;S.bossHealthAtStart=boss.hp;S.previousBossHP=boss.hp}
+ setHud();say25('👻 '+S.names[S.area]+' — '+(S.area===3?'CHEFÃO!':'avance e vença a horda!'),3);
+}
+resetStage=function(){orig.reset();if(stage!==0)return;S.area=0;S.active=true;S.lootChestUsed=false;S.lootPhaseChest=false;startTerritory()};
+function updateFacing(dx){
+ if(dx>0.08)window.cm25Facing=1;
+ else if(dx<-.08)window.cm25Facing=-1;
+}
+// Mira assistida: considera o corpo real e a direção física de cada alvo.
+function mobAimPoint(m){return {x:m.x,y:m.y-m.size*.52}}
+function closestMob(){
+ let best=null,score=Infinity;
+ // Só prioriza o lado do jogador quando há alvos dos dois lados.
+ // Nunca usa o ângulo da animação como origem do disparo.
+ const facing=window.cm25Facing||1;
+ for(const m of S.mobs){
+  if(m.hp<=0)continue;
+  const point=mobAimPoint(m),dx=point.x-p.x,dy=point.y-(p.y-65);
+  const d=Math.hypot(dx,dy);
+  if(d>W*.76)continue;
+  const cost=d+(dx*facing<0?W*.50:0);
+  if(cost<score){best=m;score=cost}
+ }
+ return best;
+}
+function currentAim(){
+ const target=S.area===3?boss:closestMob(),facing=window.cm25Facing||1;
+ const tx=target?(S.area===3?boss.x:mobAimPoint(target).x):p.x+facing*350;
+ const ty=target?(S.area===3?boss.y:mobAimPoint(target).y):p.y-65;
+ const sign=tx>=p.x?1:-1;
+ const sx=p.x+sign*23,sy=p.y-65;
+ return {target,x:tx,y:ty,sx,sy,angle:Math.atan2(ty-sy,tx-sx),sign};
+}
+function retargetShots(first,power=false){
+ const qlist=shots.slice(first),a=currentAim();
+ if(a.target){window.cm25Facing=a.sign;S.shotDirection=a.sign}
+ for(let i=0;i<qlist.length;i++){
+  const q=qlist[i],speed=Math.max(180,Math.hypot(q.vx,q.vy));
+  // A rajada SUPER é convergente: todos os projéteis chegam ao corpo,
+  // mas com pequeno deslocamento inicial, sem subir aleatoriamente.
+  const n=qlist.length,offset=n>1?(i-(n-1)/2)*7:0;
+  q.x=a.sx;q.y=a.sy+offset;
+  const theta=Math.atan2(a.y-q.y,a.x-q.x);
+  q.vx=Math.cos(theta)*speed;q.vy=Math.sin(theta)*speed;
+  q.cmTarget=a.target;q.cmFromHero=true;
+ }
+}
+fire=function(power=false){
+ if(stage!==0||!S.active)return orig.fire(power);
+ if(S.area===3&&S.bossIntroTime>0)return;
+ if(!playing||paused||S.transition||defeatPending)return;
+ const first=shots.length;
+ // O motor original mantém gastos de mana, sons e recarga do SUPER.
+ // Apontamos o proxy do chefe apenas para que o disparo original exista.
+ const a=currentAim(),oldX=boss.x,oldY=boss.y;
+ if(S.area<3){boss.x=a.x;boss.y=a.y}
+ try{orig.fire(power)}finally{boss.x=oldX;boss.y=oldY}
+ retargetShots(first,power);
+};
+// A Magia Suprema da V2.4 afeta o chefe original. Nesta arena de hordas,
+// redirecionamos o dano ao subordinado selecionado, sem matar alvos invisíveis.
+const cm25OriginalUltimate=window.ClassManaUltimateAPI&&window.ClassManaUltimateAPI.heroUltimate;
+if(cm25OriginalUltimate){
+ window.ClassManaUltimateAPI.heroUltimate=function(pointCost,hpCostPct,bossDamagePct){
+  if(stage!==0||!S.active||S.area===3)return cm25OriginalUltimate(pointCost,hpCostPct,bossDamagePct);
+  if(!playing||paused||defeatPending||!S.active)return {ok:false,reason:'indisponivel'};
+  const target=closestMob();if(!target){say25('⚡ Nenhum monstro ao alcance!',1.4);return {ok:false,reason:'sem alvo'}}
+  if(score<pointCost){say25('⚡ Pontos insuficientes!',1.4);return {ok:false,reason:'pontos'}}
+  if(p.hp<=20){say25('⚡ Vida muito baixa!',1.4);return {ok:false,reason:'vida'}}
+  score=Math.max(0,score-pointCost);p.hp=Math.max(1,p.hp*(1-hpCostPct));
+  $('#php').style.width=p.hp+'%';
+  const aim=mobAimPoint(target);S.ultimateAimX=aim.x;S.ultimateAimY=aim.y;S.ultimateScreenX=aim.x-S.camera;
+  const damage=Math.max(1,Math.ceil(target.max*.84));
+  // O alvo mantém colisão e visibilidade: não há dano em monstros já derrotados.
+  setTimeout(()=>{if(!S.active||S.area>=3||target.hp<=0||!playing)return;
+   target.hp=Math.max(0,target.hp-damage);target.hit=.22;burst(aim.x,aim.y,'#a8f0ff',55);
+   if(target.hp===0){S.total--;setHud()}},420);
+  say25('⚡ MAGIA SUPREMA NO ALVO!',2);return {ok:true};
+ };
+}
+// Utilizada pela animação externa da Magia Suprema: centro real do alvo na tela.
+window.cm25UltimateTargetScreen=function(){
+ if(!S.active||stage!==0)return null;
+ if(S.area===3)return boss.x;
+ const m=closestMob();return m?m.x-S.camera:null;
+};
+function hurtHero(points,x,y){if(p.shield>0||p.inv>0)return;p.hp=Math.max(0,p.hp-points);p.inv=.7;burst(x,y,'#e7a9fb',15);shake=5}
+// Todos os 12 subordinados têm arma própria: o limite de projéteis não
+// cancela para sempre o turno de nenhum inimigo. Cada um reage à distância.
+const attackEmojiById=['👻','🔥','💚','💥','❄️','☄️','💚','♨️','👻','❄️','🔥','❄️'];
+const attackColorById=['#8ce7ff','#ff9654','#68ec89','#ffe384','#9ce8ff','#b8a4ff','#80ee99','#ffcc75','#a3f3ff','#a1eaff','#ff934c','#8bdfff'];
+function updateMobs(dt){
+ const slowdown=(S.lootBuffs.clock||0)>0?.48:1;
+ for(const m of S.mobs){if(m.hp<=0)continue;
+  m.age+=dt;m.phase+=dt*3.2;m.hit=Math.max(0,m.hit-dt);m.contact=Math.max(0,m.contact-dt);
+  const distance=p.x-m.x;
+  // Após detectar o jogador, persegue em ambos os sentidos até ser derrotado.
+  m.cm25Chasing ||= Math.abs(distance)<W*.85;
+  if(m.cm25Chasing){
+   const desire=clamp(distance,-1,1);
+   m.x=clamp(m.x+desire*m.speed*dt*slowdown,W*.09,S.world-W*.12);
+   if(Math.abs(distance)<m.size*.60&&Math.abs((p.y-45)-(m.y-m.size*.5))<m.size*.8&&m.contact<=0){hurtHero(3+S.area,p.x,p.y);m.contact=1.8}
+  }
+  // Tempo de recarga individual, inclusive para monstros à esquerda.
+  m.cool-=dt*slowdown;
+  if(m.cool<=0){
+   const sx=m.x,sy=m.y-m.size*.58;
+   const dx=p.x-sx,dy=(p.y-45)-sy;
+   const dist=Math.hypot(dx,dy);
+   if(dist<W*.95){
+    // Até 18 projéteis simultâneos. Se lotado, tentar novamente em 0,3 s,
+    // sem transformar o inimigo em personagem figurativo.
+    if(bad.length<18){
+     const speed=185+S.area*14;
+     const emoji=attackEmojiById[m.id],col=attackColorById[m.id];
+     bad.push({x:sx,y:sy,vx:dx/dist*speed,vy:dy/dist*speed,life:Math.max(3.0,dist/speed+1),r:13,kind:'ghost',col,emoji,ownerId:m.id,special:false});
+     m.attacks=(m.attacks||0)+1;
+     burst(sx,sy,col,3);
+     m.cool=2.45+(m.id%4)*.47+Math.random()*.65;
+    }else m.cool=.32;
+   }else m.cool=.6;
+  }
+  if(m.airborne)m.y=m.baseY+Math.sin(m.phase)*Math.min(13,m.size*.08);
+  else {m.step+=dt*7.5;m.baseY=platformY();m.y=m.baseY}
+ }
+}
+// V2.5: área ofensiva de armamento, não a hitbox corporal do herói.
+let cm25MeleeCooldown=0;
+function cm25ApplyHeroContact(dt,includeBoss=false){
+ if(!S.active||stage!==0||!playing||paused||S.transition||defeatPending||bossDefeated)return;
+ cm25MeleeCooldown=Math.max(0,cm25MeleeCooldown-dt);
+ if(cm25MeleeCooldown>0)return;
+ const hit=window.ClassManaNucleo.weapon.hitbox({heroIdx,p,H,facing:window.cm25Facing||1});
+ for(const m of S.mobs){
+  if(m.hp<=0)continue;
+  const cy=m.y-m.size*.52, radius=Math.max(13,m.size*.29);
+  if(Math.hypot(m.x-hit.x,cy-hit.y)>hit.radius+radius)continue;
+  m.hp=Math.max(0,m.hp-hit.damage);m.hit=.22;
+  burst(m.x,cy,'#ffe7ac',11);
+  cm25MeleeCooldown=window.ClassManaNucleo.weapon.interval;
+  if(m.hp===0){S.total=Math.max(0,S.total-1);burst(m.x,cy,'#d2f5ff',20);setHud()}
+  return;
+ }
+ if(includeBoss&&boss.hp>0&&Math.hypot(boss.x-hit.x,boss.y-hit.y)<hit.radius+Math.min(235,H*.40)*.34){
+  boss.hp=Math.max(0,boss.hp-Math.max(3,Math.round(hit.damage*.58)));
+  burst(hit.x,hit.y,'#ffe7ac',10);cm25MeleeCooldown=window.ClassManaNucleo.weapon.interval;
+  if(boss.hp===0){bossDefeated=true;defeatPending=true;defeatDelay=3.4;defeatStage=stage;}
+ }
+}
+function collision(dt){
+ for(const q of shots){const ox=q.x,oy=q.y;q.x+=q.vx*dt;q.y+=q.vy*dt;q.life-=dt;if(q.life<=0)continue;
+  for(const m of S.mobs){if(m.hp<=0)continue;
+   if((()=>{const cx=m.x,cy=m.y-m.size*.52,vx=q.x-ox,vy=q.y-oy,t=clamp(((cx-ox)*vx+(cy-oy)*vy)/(vx*vx+vy*vy||1),0,1);return Math.hypot(ox+vx*t-cx,oy+vy*t-cy)<m.size*.30+q.r*.55})()){q.life=0;m.hp=Math.max(0,m.hp-q.dmg*((S.lootBuffs.sword||0)>0?1.35:1));m.hit=.14;burst(m.x,m.y-m.size*.5,q.col,9);
+    if(m.hp===0){burst(m.x,m.y-m.size*.5,'#d2f5ff',25);S.total--;setHud()}break;
+   }
+  }
+ }
+ shots=shots.filter(q=>q.life>0&&q.x<S.world+90&&q.x>-90);
+ for(const q of bad){q.x+=q.vx*dt*((S.lootBuffs.clock||0)>0?.48:1);q.y+=q.vy*dt*((S.lootBuffs.clock||0)>0?.48:1);q.life-=dt;if(q.life>0&&Math.hypot(q.x-p.x,q.y-p.y+45)<42){hurtHero(3+S.area,p.x,p.y);q.life=0}}
+ bad=bad.filter(q=>q.life>0);
+ for(const q of parts){q.x+=q.vx*dt;q.y+=q.vy*dt;q.vy+=60*dt;q.life-=dt}
+ parts=parts.filter(q=>q.life>0);
+}
+function applyVerticalPhysics(dt){
+ if(window.ClassManaNucleo.flight.apply({dt,heroIdx,p,keys,joy,groundY:ground(),ceilingY:heroCeiling(),state:S,velocityKey:'vy'})){
+  S.jumpWasDown=!!(keys.ArrowUp||keys.w||joy.y<-.55);return;
+ }
+ const up=!!(keys.ArrowUp||keys.w||joy.y<-.55);
+ const down=!!(keys.ArrowDown||keys.s||joy.y>.55);
+ if(up&&!S.jumpWasDown&&(p.y>=ground()-2 || heroIdx===0))S.vy=heroIdx===0?-425:-480;
+ S.jumpWasDown=up;
+ S.vy+=gravity()*dt*(down?2.0:1);
+ S.vy=clamp(S.vy,-550,700);
+ p.y=clamp(p.y+S.vy*dt,heroCeiling(),ground());
+ window.cm25HeroFeetOffset=0;
+ if(p.y>=ground()&&S.vy>0)S.vy=0;
+ if(p.y<=heroCeiling()&&S.vy<0)S.vy=0;
+}
+function moveHorde(dt){
+ if(!playing||paused||S.transition)return;
+ S.clock+=dt;elapsedMs+=dt*1000;$('#timerHud').textContent='⏳ '+fmtTime(elapsedMs);
+ const dx=(keys.ArrowRight||keys.d?1:0)-(keys.ArrowLeft||keys.a?1:0)+joy.x;
+ updateFacing(dx);
+ const beforeX=p.x;
+ p.x=clamp(p.x+dx*265*dt,W*.09,S.world-W*.08);
+ // Indicador de direção apenas quando o herói fica sem avançar.
+ if(Math.abs(p.x-beforeX)>0.45){S.idleSeconds=0;S.arrowPulse=0}
+ else {S.idleSeconds+=dt;S.arrowPulse+=dt}
+ applyVerticalPhysics(dt);
+ p.inv=Math.max(0,p.inv-dt);p.shield=Math.max(0,p.shield-dt);p.shieldCd=Math.max(0,p.shieldCd-dt);
+ superCooldown=Math.max(0,superCooldown-dt);
+ if(manaAutoCountdown!==null){manaAutoCountdown-=dt;if(manaAutoCountdown<=0){manaAutoCountdown=null;askQuestion();return}}
+ updateMobs(dt);cm25ApplyHeroContact(dt,false);collision(dt);stepMobEffects(dt);lootStep(dt);
+ const wanted=clamp(p.x-W*.36,0,S.world-W);S.lastCamera=S.camera;S.camera+=(wanted-S.camera)*Math.min(1,dt*12);
+ if(p.hp<=0){p.hp=100;p.mana=Math.max(35,p.mana);startTerritory();say25('💖 Tente novamente este território!',3);return}
+ if(S.total===0){if(!S.advanceReady){S.advanceReady=true;say25('✨ Horda derrotada! Avance até o fim do caminho →',4)}
+ if(p.x>S.world-W*.16&&!S.transition){
+  const next=S.area+1;changedArea('TERRITÓRIO '+(S.area+1)+' CONCLUÍDO',
+   next===3?'⚠ O GUARDIÃO ESTÁ DESPERTANDO…':'Seguindo para '+S.names[next]+'…',
+   ()=>{S.area=next;startTerritory();if(next===3)playBossSignal()},false,next===3?2600:1850);
+ }}
+}
+update=function(dt){
+ if(stage===0&&S.active&&S.area<3)return moveHorde(dt);
+ if(stage===0&&S.active&&S.area===3){
+  if(S.bossIntroTime>0){
+   if(playing&&!paused){S.bossIntroTime=Math.max(0,S.bossIntroTime-dt);elapsedMs+=dt*1000;
+    if(S.bossIntroTime===0){say25('⚔ A BATALHA COMEÇOU! ENFRENTE O FANTASMA!',3);S.bossPhase=1;boss.cool=3.2}
+   }
+   return;
+  }
+  updateFacing((keys.ArrowRight||keys.d?1:0)-(keys.ArrowLeft||keys.a?1:0)+joy.x);
+  // Na arena do chefão, preservar o combate original mas substituir a física vertical.
+  const old=[keys.ArrowUp,keys.w,keys.ArrowDown,keys.s,joy.y];
+  keys.ArrowUp=keys.w=keys.ArrowDown=keys.s=false;joy.y=0;
+  try{orig.update(dt)}finally{[keys.ArrowUp,keys.w,keys.ArrowDown,keys.s,joy.y]=old}
+  if(playing&&!paused){
+   applyVerticalPhysics(dt);lootStep(dt);cm25ApplyHeroContact(dt,true);
+   // Chefe se move em arcos, alterna direção e persegue o jogador em toda a arena.
+   // Controla a velocidade para haver espaço de reação entre as investidas.
+   S.bossMovement+=dt;
+   const phaseSpeed=S.bossPhase===3?1.22:S.bossPhase===2?1.09:1;
+   const follow=Math.sin(S.bossMovement*.85)>-.30;
+   const targetX=follow?p.x+Math.cos(S.bossMovement*.82)*W*.25:W*.75;
+   const targetY=H*(.39+Math.sin(S.bossMovement*1.45)*.17);
+   const oldBossX=boss.x;
+   boss.x+=clamp(targetX-boss.x,-(235*phaseSpeed)*dt,(235*phaseSpeed)*dt);
+   boss.y+=clamp(targetY-boss.y,-(155*phaseSpeed)*dt,(155*phaseSpeed)*dt);
+   boss.x=clamp(boss.x,W*.12,W*.91);
+   boss.y=clamp(boss.y,H*.19,H*.69);
+   if(Math.abs(boss.x-oldBossX)>0.8)S.bossFace=Math.sign(boss.x-oldBossX);
+   // Sem aumentar o dano dos ataques. O jogador precisa mudar de lugar.
+
+   const newPhase=boss.hp<=boss.max*.35?3:(boss.hp<=boss.max*.70?2:1);
+   if(newPhase>S.bossPhase){S.bossPhase=newPhase;S.bossPhaseNotice=2.4;shake=9;
+    say25(newPhase===2?'❄ O FANTASMA DESPERTOU NOVOS PODERES!':'👻 ÚLTIMA RESISTÊNCIA DO FANTASMA!',2.6);
+    try{tone(newPhase===2?450:310,.40,'triangle',.06)}catch(e){}
+   }
+   S.bossPhaseNotice=Math.max(0,(S.bossPhaseNotice||0)-dt);
+   boss.cool=Math.max(boss.cool,.92); // Evita rajadas injustas na luta ampliada.
+  }
+  return;
+ }
+ orig.update(dt);
+};
+function drawBG(){
+ const im=S.bg[S.area];
+ if(!im||!im.complete||!im.naturalWidth){orig.bg(stages[0],bgs['bg_ghost.png']);return}
+ const ih=im.naturalHeight,iw=im.naturalWidth;
+ const targetHeight=H*1.12,period=iw*(targetHeight/ih),scroll=S.camera; // Fundo se move 1:1 com câmera, com repetição contínua da textura.
+ let left=-(scroll%period);
+ while(left<W){ctx.drawImage(im,left,-H*.06,period,targetHeight);left+=period}
+ ctx.fillStyle='rgba(5,15,38,.07)';ctx.fillRect(0,0,W,H);
+ // Neblina simples em camadas, deslocando-se bem mais lentamente do que o piso.
+ ctx.save();ctx.globalAlpha=.12;
+ const fog=ctx.createLinearGradient(0,H*.50,0,H*.93);fog.addColorStop(0,'rgba(130,185,255,0)');fog.addColorStop(.7,'#9dd5fc');fog.addColorStop(1,'rgba(70,108,169,0)');ctx.fillStyle=fog;ctx.fillRect(0,H*.50,W,H*.43);ctx.restore();
+}
+drawBackgroundCached=function(s,bg){if(stage===0&&S.active){drawBG();return}orig.bg(s,bg)};
+// Retângulos visíveis medidos nos PNGs aprovados; não recorta nenhum pixel do personagem.
+const mobBounds=[[138,377,883,1137],[111,227,975,1159],[81,159,973,1337],[119,349,901,1155],[0,20,1086,1424],[0,150,1086,1448],[0,21,1070,1432],[16,39,1078,1424],[0,17,1096,1435],[50,10,1097,1428],[0,0,1087,1447],[43,0,1526,1024]];
+function drawMob(m){
+ const im=S.imgs[m.id],z=m.size;
+ const visualSize=m.isZombie?z:z*(1+Math.sin(m.phase)*.018);
+ ctx.save();ctx.translate(m.x,m.y);ctx.scale(p.x<m.x?-1:1,1);
+ if(m.hit>0){ctx.shadowColor='#ffffff';ctx.shadowBlur=24}
+ if(im&&im.complete&&im.naturalWidth){
+  const b=mobBounds[m.id]||[0,0,im.naturalWidth,im.naturalHeight],sw=b[2]-b[0],sh=b[3]-b[1];
+  const dw=visualSize*sw/sh;
+  // Âncora inferior no piso: sprites sem sombra ou fundo e sem margem transparente.
+  ctx.drawImage(im,b[0],b[1],sw,sh,-dw/2,-visualSize,dw,visualSize);
+ }else{ctx.font=(z*.65)+'px Arial';ctx.fillText('👻',-z*.3,0)}
+ ctx.restore();
+ const barY=m.y-z-14;
+ ctx.fillStyle='rgba(3,15,34,.8)';ctx.fillRect(m.x-z*.37,barY,z*.74,6);
+ ctx.fillStyle='#ff9abb';ctx.fillRect(m.x-z*.37,barY,z*.74*(m.hp/m.max),6);
+}
+function drawHorde(){ctx.save();if(shake){ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake*=.84}
+ drawBG();
+ // Mundo usa coordenadas próprias. Apenas o desenho é deslocado pela câmera.
+ ctx.save();ctx.translate(-S.camera,0);
+ const bossImg=monsters['monster_ghost.png'];if(bossImg&&bossImg.complete&&bossImg.naturalWidth){
+  // Aparição surpresa ocasional do chefão — não participa da luta.
+  if(S.area===2&&p.x>S.world*.46&&p.x<S.world*.62){ctx.save();ctx.globalAlpha=.17;ctx.drawImage(bossImg,S.world*.80,H*.18,Math.min(W*.20,180),H*.27);ctx.restore()}
+ }
+ for(const m of S.mobs){if(m.hp>0)drawMob(m)}
+ orig.hero();lootDraw(false);shots.forEach(drawProjectile);
+ for(const q of bad){ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.shadowColor=q.col||'#90e9ff';ctx.shadowBlur=18;ctx.font='29px "Segoe UI Emoji","Apple Color Emoji",sans-serif';ctx.fillText(q.emoji||'👻',q.x,q.y);ctx.restore()}
+ for(const q of parts){ctx.globalAlpha=clamp(q.life,0,1);ctx.fillStyle=q.col;ctx.beginPath();ctx.arc(q.x,q.y,q.r,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
+ ctx.restore();
+ // Após 5 s parado, a seta luminosa indica o caminho a seguir.
+ // Não interfere com ataques nem exige imagens adicionais.
+ if(S.idleSeconds>=5 && p.x<S.world-W*.12){
+  const sx=clamp(p.x-S.camera+110,W*.18,W*.83);
+  const sy=platformY()-Math.max(90,H*.19);
+  const pulse=.70+.30*Math.sin(S.arrowPulse*5);
+  ctx.save();ctx.translate(sx,sy);
+  ctx.globalAlpha=.55+.45*pulse;
+  ctx.shadowColor='#80e9ff';ctx.shadowBlur=18+15*pulse;
+  ctx.lineWidth=7;ctx.strokeStyle='#fff2b1';ctx.fillStyle='#5edfff';
+  ctx.beginPath();ctx.moveTo(-24,-13);ctx.lineTo(6,-13);ctx.lineTo(6,-24);
+  ctx.lineTo(38,0);ctx.lineTo(6,24);ctx.lineTo(6,13);ctx.lineTo(-24,13);
+  ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+ }
+ // Guias de progresso leves, independentes da câmera.
+ ctx.save();const x=W*.37,y=H*.10,w=W*.25;ctx.fillStyle='#102449bb';ctx.fillRect(x,y,w,7);
+ ctx.fillStyle='#92d8f9';ctx.fillRect(x,y,w*clamp(p.x/S.world,0,1),7);
+ ctx.strokeStyle='#ffe49a';ctx.lineWidth=1;ctx.strokeRect(x,y,w,7);
+ ctx.textAlign='center';ctx.font='bold '+Math.round(Math.min(16,W*.015))+'px sans-serif';ctx.fillStyle='#f7f0dd';
+ ctx.fillText('TERRITÓRIO '+(S.area+1)+'/4  •  '+(S.total?'INIMIGOS RESTANTES: '+S.total:'CAMINHO LIBERADO →'),W*.5,y-12);
+ ctx.restore();lootHud();ctx.restore();
+}
+function drawBossEntrance(){
+ if(!(S.bossIntroTime>0))return;
+ const t=S.bossIntroTime;
+ ctx.save();ctx.fillStyle='rgba(5,17,43,.70)';ctx.fillRect(0,0,W,H);
+ const pulse=(1+Math.sin((5-t)*7)*.045);
+ ctx.translate(W*.5,H*.44);ctx.scale(pulse,pulse);ctx.textAlign='center';
+ ctx.shadowColor='#8bdeff';ctx.shadowBlur=25;ctx.lineWidth=5;ctx.strokeStyle='#124779';
+ ctx.fillStyle='#dafaff';ctx.font='900 '+Math.round(Math.min(58,W*.065))+'px Georgia,serif';
+ ctx.strokeText('❄ PREPARE-SE! ❄',0,-48);ctx.fillText('❄ PREPARE-SE! ❄',0,-48);
+ ctx.font='900 '+Math.round(Math.min(46,W*.047))+'px Georgia,serif';
+ ctx.strokeText('O FANTASMA ESTÁ CHEGANDO!',0,18);ctx.fillText('O FANTASMA ESTÁ CHEGANDO!',0,18);
+ ctx.shadowBlur=0;ctx.fillStyle='#ffe5a3';ctx.font='bold '+Math.round(Math.min(22,W*.03))+'px Arial';
+ ctx.fillText('O GUARDIÃO DA NECRÓPOLE DESPERTOU…',0,72);
+ ctx.restore();
+ // Pequeno tremor só no início e final da vinheta, sem alterar a física do herói.
+ if(t>4.6||t<.65)shake=Math.max(shake,3);
+}
+function playBossSignal(){
+ try{if(soundOn){tone(196,.45,'triangle',.09);setTimeout(()=>tone(247,.45,'triangle',.09),460);setTimeout(()=>tone(330,.68,'sawtooth',.07),900)}}catch(e){}
+}
+draw=function(){if(stage!==0||!S.active)return orig.draw();if(S.area===3){orig.draw();
+  // Chefão também lança emojis ofensivos, acompanhando os projéteis reais.
+  if(S.bossIntroTime<=0){ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='32px "Segoe UI Emoji","Apple Color Emoji",sans-serif';for(let i=0;i<bad.length;i++){const q=bad[i];if(q.life>0)ctx.fillText(mobEmojis[(i+Math.floor(S.bossMovement*0.6))%mobEmojis.length],q.x,q.y)}ctx.restore()}
+  lootDraw(false);lootHud();drawBossEntrance();return}drawHorde()};
+finishBossDefeat=function(){if(stage!==0||!S.active)return orig.defeat();
+ defeatPending=false;playing=false;paused=true;S.active=false;
+ changedArea('FANTASMA DERROTADO!', 'Fim do teste da primeira fase · V2.5',()=>{
+  $('#menu').classList.remove('hidden');$('#menu').style.display='grid';$('#start').textContent='↻ TESTAR NOVAMENTE';
+  stage=0;expectedStage=0;S.area=0;playing=false;paused=true;
+ });
+};
+saveBestScore=async function(){return false};
+window.ClassManaV25Test={getStatus:()=>({territorio:S.area+1,inimigos:S.total,ativo:S.active,hero:heroes[heroIdx]?.name,camera:S.camera,world:S.world,ground:platformY(),groundRatio:platformRatios[S.area],projectiles:bad.map(q=>({emoji:q.emoji,ownerId:q.ownerId,x:q.x,y:q.y,vx:q.vx,vy:q.vy})),heroBottom:p.y-45+heroHeight()/2-heroHeight()*heroFootTrim()+(window.cm25HeroFeetOffset||0),bossIntro:S.bossIntroTime||0,bossHP:boss.hp,bossMax:boss.max,bossFace:S.bossFace,loot:S.loot?{...S.loot}:null,lootBuffs:{...S.lootBuffs},chest:S.lootPhaseChest,mobs:S.mobs.map(m=>({id:m.id,feet:m.y,zombie:m.isZombie,size:m.size,attacks:m.attacks||0}))})};
+
+// == Ponte de integração com o núcleo compartilhado, Reino 1 ==
+// Avanço automático de reino após o chefão (quando o módulo realmente concluiu a luta).
+const cm25FinishLocal=finishBossDefeat;
+let cm25CompletionSent=false;
+finishBossDefeat=function(...args){
+ const lastArea=3;
+ const wasBoss=stage===0&&S.area===lastArea&&!!defeatPending;
+ const out=cm25FinishLocal(...args);
+ const completed=wasBoss&&(!S.active);
+ if(completed&&!cm25CompletionSent){
+   cm25CompletionSent=true;
+   window.parent!==window&&window.parent.postMessage({namespace:'CM25',action:'COMPLETE',token:new URLSearchParams(location.search).get('cm25'),realm:1},location.origin);
+ }
+ return out;
+};
+
+window.CM25RealmBridge={
+  realm:1,maxTerritories:4,
+  status:()=>({realm:1,territory:S.area+1,active:!!S.active,playing:!!playing,monstersLoaded:(S.mobs||[]).length,monstersRemaining:S.total??(S.mobs||[]).length,hero:heroIdx,name:playerName,className:playerClass,score:score}),
+  selectArea:(target,profile)=>{
+    const i=Math.max(0,Math.min(3,Number(target)||0));
+    if(profile){if(Number.isInteger(profile.hero))heroIdx=profile.hero; if(profile.name)playerName=profile.name;if(profile.className)playerClass=profile.className;}
+    // Atalhos técnicos: nenhuma pontuação é enviada ao ranking V2.4.
+    stage=0;expectedStage=0;
+    if(!S.active){orig.reset();}
+    // Abertura e vídeo não podem continuar tocando com combate ativo.
+    window.ClassManaNucleo?.sairDaAbertura();
+    stage=0;gameEnded=false;defeatPending=false;playing=true;paused=false;
+    document.body.classList.add('cm25-test-direct');
+    if(!document.getElementById('cm25-direct-style')){const st=document.createElement('style');st.id='cm25-direct-style';st.textContent='body.cm25-test-direct #classmanaSplash,body.cm25-test-direct #openingVideo{display:none!important;visibility:hidden!important;pointer-events:none!important;}';document.head.appendChild(st)}
+    S.area=i;S.active=true;
+    startTerritory();
+    try{window.ClassManaNucleo?.audio?.play();}catch(e){console.warn("Áudio do reino",e)}
+    if(S.area<3 && (!Array.isArray(S.mobs)||S.mobs.length===0))throw Error('Falha ao criar a horda do território '+(S.area+1));
+    for(const id of ['menu','question','tutorial','gameOverOverlay','transition','bonusOverlay','rankingOverlay']){const el=document.getElementById(id);if(el)el.classList.add('hidden')}
+    try{setHud()}catch(e){}
+    try{window.restoreGameFocus?.()}catch(e){}
+    return S.area+1;
+  }
+};
+
+})();

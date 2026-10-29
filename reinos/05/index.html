@@ -1,0 +1,141 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ClassMana V2.5 — Teste Mestre da Colmeia</title>
+<style>body{margin:0;display:grid;min-height:100vh;place-items:center;background:#09142c;color:white;font:17px Arial,sans-serif}.status{max-width:610px;padding:35px;text-align:center;line-height:1.65}h1{color:#a3e1ff}button{padding:12px 18px;background:#2164ab;color:white;border:1px solid #7addff;border-radius:10px;cursor:pointer}</style></head><body><div class="status" id="status"><h1>ClassMana V2.5 — Teste da Mestre da Colmeia</h1><p>Carregando a V2.4 original e o Reino 5 — Mestre da Colmeia…</p><p>É necessária conexão com a internet para carregar os recursos do jogo original.</p></div>
+<script>
+(async()=>{
+// Abre diretamente no Reino 4: a fase do Fantasma não é executada.
+const base='https://drjcs2020.github.io/classmana-batalha-dos-monstros-V2/';
+const sources=[new URL('../../motor/base_v24.html',location.href).href];
+try{
+ let original='';let error='';
+ for(const url of sources){try{const res=await fetch(url,{cache:'no-cache'});if(!res.ok)throw Error('HTTP '+res.status);original=await res.text();if(original.includes('function resetStage')&&original.includes('function drawHero'))break;original=''}catch(e){error=String(e)}}
+ if(!original)throw Error('Não foi possível recuperar o HTML original da V2.4. '+error);
+ const globalScript=await fetch('../../nucleo_global.js',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Núcleo global não encontrado');return r.text()});
+ const extension=await fetch('./fase_fantasma.js').then(r=>{if(!r.ok)throw Error('O arquivo da extensão não foi encontrado');return r.text()});
+ // Integra o módulo de Magia Suprema original ao alvo real da V2.5.
+ // Mantém a lógica, sons, botão e custo originais e desloca só a área visual.
+ try{
+  const magicUrl=base+'assets/magia-suprema.js';
+  const magicRes=await fetch(magicUrl,{cache:'no-cache'});
+  if(magicRes.ok){
+   let magicCode=await magicRes.text();
+   const fixed="let zoneMin=e.fromMonster?innerWidth*.08:innerWidth*.57,zoneMax=e.fromMonster?innerWidth*.47:innerWidth*.94;";
+   const aimed="let cmAim=!e.fromMonster&&window.cm25UltimateTargetScreen?.();let zoneMin=e.fromMonster?innerWidth*.08:(cmAim==null?innerWidth*.57:Math.max(20,cmAim-85)),zoneMax=e.fromMonster?innerWidth*.47:(cmAim==null?innerWidth*.94:Math.min(innerWidth-20,cmAim+85));";
+   if(magicCode.includes(fixed)) magicCode=magicCode.replace(fixed,aimed);
+   // Exporta APENAS a animacao original dos raios, sem executar
+   // novamente o pagamento de pontos, consumo de vida ou dano.
+   const exportedFlash='function flash(color,fromMonster=false){effects.push({start:performance.now(),duration:1500,color,fromMonster,seed:Math.random()*1000});}';
+   if(magicCode.includes(exportedFlash)){
+    magicCode=magicCode.replace(exportedFlash,exportedFlash+"\nwindow.cm25PlayUltimateFx=function(){const s=state();flash(heroColors[s.heroIdx]||s.hero.col,false);};");
+   }
+   const magicBlob=URL.createObjectURL(new Blob([magicCode],{type:'text/javascript'}));
+   original=original.replace(/src=["']assets\/magia-suprema\.js["']/i,'src="'+magicBlob+'"');
+  }
+ }catch(error){console.warn('Ajuste visual da Magia Suprema indisponível',error)}
+
+ // TESTE R4: a pre-carga completa da V2.4 pode ficar em 99% aguardando
+ // decodificacao de video/audio, mesmo quando a arena ja pode ser aberta.
+ // Somente neste pacote de teste, ignorar o bloqueio da tela de abertura.
+ const preloadRE=/<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
+ let loaderBypassed=false;
+ original=original.replace(preloadRE,(full,attrs,code)=>{
+   if(new URLSearchParams(location.search).get("direct")!=="1")return full;
+ if(!code.includes('function prepareFirstBattle')||!code.includes('function prepareVideo'))return full;
+   loaderBypassed=true;
+   return `<script${attrs}>
+ (function(){
+  function abrirTeste(){
+   const splash=document.getElementById('classmanaSplash');
+   if(splash)splash.remove();
+   const opening=document.getElementById('openingVideo');
+   if(opening){const video=opening.querySelector('video');if(video){video.pause();video.preload='none';video.removeAttribute('src');video.querySelectorAll('source').forEach(s=>s.remove());video.load();}opening.style.display='none';}
+   const menu=document.getElementById('menu');
+   if(menu){menu.hidden=false;menu.classList.remove('hidden');menu.style.display='grid';}
+   console.info('ClassMana R4: entrada direta no menu; sem pre-carregamento integral da abertura');
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',abrirTeste,{once:true});
+  else abrirTeste();
+ })();
+ <\/script>`;
+ });
+ if(new URLSearchParams(location.search).get("direct")==="1"&&!loaderBypassed)throw Error('Nao foi localizada a pre-carga bloqueante da V2.4; interrompido para evitar erro silencioso');
+ const scriptRE=/<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
+ let patched=false;
+ original=original.replace(scriptRE,(full,attrs,code)=>{
+  if(patched||!code.includes('function resetStage')||!code.includes('function drawHero'))return full;
+  patched=true;
+  // Modo de teste integrado: não registrar pontuações na planilha da V2.4.
+  code=code.replace('async function saveBestScore(){','async function saveBestScore(){if(window.ClassManaV25TestMode)return false;');
+
+  // Direct Reino 4 uses stage 0; select the ORIGINAL Mestre da Colmeia six-frame animation by monster kind.
+  // A animação original do Mestre da Colmeia é selecionada pelo tipo bee.
+  // Hero can cross most of the arena; flip facing with user's input.
+  code=code.replaceAll('Math.min(W*.56,p.x)','Math.min(W*.91,p.x)');
+  code=code.replace('let hh=Math.min(210,H*.32)', 'let hh=Math.min(178,H*.285)');
+  // R4: ajustar a base VISIBLE de cada frame do heroi, independentemente da margem
+  // transparente. Se a imagem remota restringir leitura RGBA, usar perfil seguro por heroi.
+  const heroAnchorSource = `
+const cm25HeroBoundsCache=new WeakMap();
+const cm25HeroFallbackBottom=[.15,.10,.11,.30,.12,.18];
+function cm25HeroBottomPad(im,hh){
+  if(!im||!im.complete||!im.naturalWidth)return hh*(cm25HeroFallbackBottom[heroIdx]||.14);
+  if(cm25HeroBoundsCache.has(im))return hh*cm25HeroBoundsCache.get(im);
+  let trim=cm25HeroFallbackBottom[heroIdx]||.14;
+  try{
+    const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;
+    const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(im,0,0);
+    const d=g.getImageData(0,0,c.width,c.height).data;
+    let last=-1;
+    for(let y=c.height-1;y>=0&&last<0;y--){
+      for(let x=0;x<c.width;x++){if(d[(y*c.width+x)*4+3]>=64){last=y;break}}
+    }
+    if(last>=0)trim=Math.max(0,Math.min(.55,1-(last+1)/c.height));
+  }catch(_e){/* arquivo remoto sem leitura de pixels: usa perfil visual por heroi */}
+  cm25HeroBoundsCache.set(im,trim);
+  return hh*trim;
+}
+`;
+  code=code.replace('function drawHero(){',heroAnchorSource+'function drawHero(){');
+  // Fisica permanece referenciada ao piso; compensar somente pixels transparentes do PNG.
+  code=code.replace('ctx.translate(p.x,p.y-45);if(heroIdx===3)', 'ctx.translate(p.x,p.y-45+(window.cm25HeroFeetOffset||0)+cm25HeroBottomPad(im,hh));if((heroIdx===3?1:-1)*(window.cm25Facing||1)>0)');
+  // Anel de escudo acompanha o sprite, em vez de ficar acima dele.
+  code=code.replace('ctx.translate(p.x,p.y-45);', 'ctx.translate(p.x,p.y-45+cm25HeroBottomPad(im,hh));');
+  code=code.replace('if(heroIdx===3)ctx.scale(-1,1);','if(window.cm25Facing===-1)ctx.scale(-1,1);');
+  // EXTENSÃO DO CHEFÃO: os seis frames V2.4 são preservados; 7..10 apenas adicionados.
+  const originalGolemSeq='let golemSeq=[0,1,2,3,4,5,4,3,2,1]';
+  const expandedGolemSeq='let golemSeq=window.cm25ExtraGolemFrames&&golemFrames.length>=10?[0,1,2,6,3,7,4,8,5,9,4,3,2,1]:[0,1,2,3,4,5,4,3,2,1]';
+  
+  // Sem alteração da sequência da Mestre da Colmeia original.
+  // Ampliação de aproximadamente 20% apenas no Golem da arena final do Reino 4.
+  const bossHeightV24='let hh=stage===9?Math.min(360,H*.52):Math.min(235,H*.40)';
+  
+  // Preserva tamanho original da Mestre da Colmeia.
+  code=code.replace('let hh=stage===9?Math.min(360,H*.52):Math.min(235,H*.40)','let hh=stage===0?Math.min(282,H*.48):(stage===9?Math.min(360,H*.52):Math.min(235,H*.40))');
+
+  // Golem vira conforme caminha, sem espelhar o cenário.
+  // Não inverte a Mestre da Colmeia indiscriminadamente.
+  return '<script'+attrs+'>'+code+'\n'+globalScript+'\n'+extension+'\nwindow.ClassManaNucleo.instalar();\n<\/script>';
+ });
+ if(!patched)throw Error('O formato do script original mudou. A V2.5 não foi injetada para evitar um jogo quebrado.');
+ original=original.replace(/<head([^>]*)>/i,'<head$1><base href="'+base+'">');
+
+ // O carregamento e a intro originais rodam APENAS na primeira entrada normal.
+ // Durante F6/F7/F8 explícitos, impedir que iniciem música/vídeo após o combate.
+ original=original.replace('function startOpening(){', 'function startOpening(){if(window.CM25TestDirectBoot)return;');
+ original=original.replace('function playLoadingMusic(){', 'function playLoadingMusic(){if(window.CM25TestDirectBoot)return;');
+ original=original.replace('function reveal(){if(revealed)return;', 'function reveal(){if(window.CM25TestDirectBoot||revealed)return;');
+ original=original.replace('function startWithSound(){', 'function startWithSound(){if(window.CM25TestDirectBoot)return;');
+ original=original.replace('loadingMusic.pause();loadingMusic.currentTime=0;', 'loadingMusic.pause();loadingMusic.currentTime=0;');
+ original=original.replace('const loadingMusic=new Audio(', 'const loadingMusic=new Audio(');
+ original=original.replace('function playLoadingMusic(){', 'function playLoadingMusic(){');
+ // Permite pausar a trilha mesmo que a pré-carga continue em segundo plano.
+ original=original.replace('loadingMusic.loop=true;loadingMusic.volume=.35;', 'loadingMusic.loop=true;loadingMusic.volume=.35;window.cm25StopLoadingMusic=()=>{try{loadingMusic.pause();loadingMusic.currentTime=0;}catch(e){}};');
+ // Asset path to current local test, independent of remote base URL.
+ original=original.replace(/<head([^>]*)>/i,'<head$1><style>#cm25build{position:fixed;right:8px;bottom:5px;z-index:999999;background:#111c33c9;color:#aff;padding:3px 9px;border-radius:8px;font:11px Arial}</style>');
+ original=original.replace(/<\/body>/i,'<div id="cm25build">ClassMana V2.5 • REINO 5 • MESTRE DA COLMEIA • F6 AVANÇA • F7 CHEFÃO</div></body>');
+ // Added assets must resolve locally, even though original HTML uses the original base.
+ const localPrefix=new URL('./assets_v25/',location.href).href;
+ original=original.replaceAll("'assets_v25/", "'"+localPrefix);
+ document.open();document.write(original);document.close();
+}catch(e){document.getElementById('status').innerHTML='<h1>Não foi possível iniciar o teste</h1><p>'+String(e.message).replaceAll('<','&lt;')+'</p><p>Verifique a conexão e execute por um servidor local.</p><button onclick="location.reload()">Tentar novamente</button>';console.error(e)}
+})();
+</script></body></html>
