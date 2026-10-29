@@ -409,6 +409,25 @@ function mobUpdate(dt){
    }else m.cool=.45;
   }
  }
+ // Resolver cruzamentos entre dragões: evitar o bolo visual mesmo quando vários
+ // chegam ao fim da passarela ou o herói muda de direção.
+ // Corrigir em coordenadas do mundo; NÃO aproxima ninguém do herói.
+ const engaged=R.mobs.filter(m=>m.alive&&m.spawned);
+ for(let pass=0;pass<3;pass++){
+  for(let i=0;i<engaged.length;i++)for(let j=i+1;j<engaged.length;j++){
+   const u=engaged[i],v=engaged[j];
+   let dx=u.x-v.x,dy=u.y-v.y,dist=Math.hypot(dx,dy);
+   const spacing=(u.size+v.size)*.66;
+   if(dist>=spacing)continue;
+   if(dist<.1){dx=(i%2===0?-1:1)*.72;dy=(j%2===0?-1:1)*.7;dist=1;}
+   const correction=Math.min(30,(spacing-dist)*.45),ox=dx/dist*correction,oy=dy/dist*correction;
+   u.x=clamp(u.x+ox,u.size*.35,R.world-u.size*.35);
+   v.x=clamp(v.x-ox,v.size*.35,R.world-v.size*.35);
+   u.y=clamp(u.y+oy,u.size*.55+10,floor()-u.size*.62);
+   v.y=clamp(v.y-oy,v.size*.55+10,floor()-v.size*.62);
+  }
+ }
+
 }
 function mobHitByWeapons(dt){for(const q of shots){if(q.life<=0||q.cmBoss)continue;for(const m of R.mobs){if(!m.alive)continue;const cx=m.x,cy=m.y;const a=q.x-q.vx*dt,b=q.y-q.vy*dt,vx=q.x-a,vy=q.y-b,f=clamp(((cx-a)*vx+(cy-b)*vy)/(vx*vx+vy*vy||1),0,1);if(Math.hypot(a+vx*f-cx,b+vy*f-cy)<m.size*.32+(q.r||12)){q.life=0;m.hp=Math.max(0,m.hp-q.dmg);m.hit=.13;if(m.hp<=0)killMob(m);else burst(m.x-R.cam,cy,'#ffeeaa',5);break}}}
  shots=shots.filter(q=>q.life>0)}
