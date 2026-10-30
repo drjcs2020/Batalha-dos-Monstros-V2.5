@@ -1,14 +1,21 @@
 
 'use strict';
-/* Modo teste V2.5 — um controlador de navegação, único dono de F6/F7/F8.
-   Não sobrescreve o combate e os chefões individuais. */
+/* Campanha V2.5 — entrada completa do jogo e salvamento isolado.
+   Os territórios avançam pelo combate, sem atalhos de teste. */
 const CAMPAIGN=window.CM25_CONFIG.reinos.map(r=>[r.nome,r.territorios,r.dificuldade]);
-const $=id=>document.getElementById(id),frame=$('gameWindow'),sel=$('realmSelect');
-let realm=1,territory=1,ready=false,pendingArea=1,identity=null,loadId=0,lastCommand=0,autoTimer=null,automaticEntry=false,campaignStarted=false,entering=false;
-CAMPAIGN.forEach((r,i)=>{const o=document.createElement('option');o.value=i+1;o.textContent=`${i+1}. ${r[0]} — nível ${r[2]}`;sel.appendChild(o)});
+const $=id=>document.getElementById(id),frame=$('gameWindow');
+let realm=1,territory=1,ready=false,pendingArea=1,identity=null,loadId=0,autoTimer=null,automaticEntry=false,campaignStarted=false,entering=false;
 try{identity=JSON.parse(sessionStorage.getItem('cm25TesteIdentidade')||'null')}catch(e){}
-function report(s){$('status').textContent=s;}
-function info(){const a=CAMPAIGN[realm-1];sel.value=String(realm);$('realmTitle').textContent=`Reino ${realm}/10 · ${a[0]} · Terr. ${territory}/${a[1]}`;}
+let statusTimer=null;
+function report(s){
+ const status=$('status');status.textContent=s;
+ if(statusTimer){clearTimeout(statusTimer);statusTimer=null;}
+ const visible=/⚠|ERRO|falha|salvo|encerrada|registrado/i.test(s);
+ status.classList.toggle('visible',visible);
+ if(visible&&!/⚠|ERRO|falha/i.test(s))
+  statusTimer=setTimeout(()=>status.classList.remove('visible'),3500);
+}
+function info(){const a=CAMPAIGN[realm-1];$('realmTitle').textContent=`Reino ${realm}/10 · ${a[0]} · Terr. ${territory}/${a[1]}`;}
 function capture(){try{const s=frame.contentWindow.CM25RealmBridge?.status();if(s&&s.active&&s.realm===realm&&s.id_aluno&&String(s.id_aluno)===String(identity?.id_aluno)){identity={...identity,hero:s.hero,name:s.name,className:s.className,personagem:s.personagem||identity.personagem};sessionStorage.setItem('cm25TesteIdentidade',JSON.stringify(identity))}}catch(e){console.warn('Não foi possível preservar personagem',e)}}
 // Placar/continuidade da V2.5, sem nenhuma chamada à implantação da V2.4.
 const CM25_SAVE_API="https://script.google.com/macros/s/AKfycbx47UtNCTdpQ4OukNxdzrcsFH2Mf1xCLO5mspGClV6Sn4OelwIZai3ZJn_Q8aVPp2Z-/exec";
@@ -61,11 +68,11 @@ async function postV25(data){
   throw new Error('O Google Sheets não confirmou a gravação. '+String(lastError?.message||''));
  }finally{clearTimeout(timer);}
 }
-function currentSnapshot(){
+function currentSnapshot(allowInactive=false){
  if(!currentRun||!identity?.id_aluno||!ready)return null;
  try{
   const status=frame.contentWindow.CM25RealmBridge?.status();
-  if(!status||!status.active||status.realm!==realm)return null;
+  if(!status||(!allowInactive&&!status.active)||status.realm!==realm)return null;
   if(String(status.id_aluno)!==String(identity.id_aluno))return null;
   return {reino:realm,territorio:status.territory||territory,
    heroi_indice:Number.isInteger(status.hero)?status.hero:identity.hero,
@@ -150,9 +157,14 @@ async function enterRegisteredStudent(profile){
   pendingSnapshot={reino:game.reino||1,territorio:game.territorio||1,
    heroi_indice:identity.hero,personagem:game.personagem||'',
    hp:game.hp??100,mana:game.mana??100,pontuacao:game.pontuacao||0,tempo:game.tempo||0,
-   id_aluno:identity.id_aluno};
-  // A tela anterior era só o cadastro; NÃO substituir o aluno confirmado.
-  switchRealm(pendingSnapshot.reino,pendingSnapshot.territorio,true);
+   id_aluno:identity.id_aluno,showTutorial:choice==='new'};
+  // No primeiro reino, reutilizar a tela que já mostrou barra de carregamento,
+  // vídeo, narração, seleção de herói e cadastro: sem recarregar o áudio.
+  const bridge=ready&&!campaignStarted?frame.contentWindow.CM25RealmBridge:null;
+  if(bridge&&bridge.realm===pendingSnapshot.reino){
+   automaticEntry=true;pendingArea=pendingSnapshot.territorio;
+   await area(pendingArea);
+  }else switchRealm(pendingSnapshot.reino,pendingSnapshot.territorio,true);
  }catch(error){
   currentRun=previousRun;identity=previousIdentity;
   console.error('[ClassMana] Entrada V2.5',error);
@@ -165,7 +177,7 @@ function switchRealm(next,target=1,direct=true){
  if(next<1||next>10){report('Limite da campanha: Reino '+realm);return;}
  // Preservar o personagem também ao mudar de território no mesmo reino.
  if(ready)capture();
- const before=currentSnapshot()||pendingSnapshot;
+ const before=currentSnapshot(true)||pendingSnapshot;
  if(currentRun&&before){
   pendingSnapshot={...before,reino:next,territorio:target};
   queueCheckpoint(pendingSnapshot).catch(()=>{});
@@ -173,11 +185,12 @@ function switchRealm(next,target=1,direct=true){
  if(autoTimer){clearTimeout(autoTimer);autoTimer=null;}
  realm=next;territory=target;pendingArea=target;ready=false;entering=false;automaticEntry=direct;loadId++;
  info();report(`Carregando ${CAMPAIGN[realm-1][0]} · território ${target}…`);
- // Transição teste: nunca mostrar a tela de seleção durante F6/F7/F8.
- // A iframe continua renderizando; apenas seu conteúdo fica invisível
- // até que a batalha esteja inicializada e desenhada.
+ // A entrada inicial preserva o carregamento/vídeo originais.
+ // Só as mudanças de reino usam a transição discreta, sem recarregar a abertura.
  frame.style.opacity=direct?'0':'1';
  frame.style.pointerEvents=direct?'none':'auto';
+ $('transitionLoading').hidden=!direct;
+ $('transitionLabel').textContent='Preparando Reino '+next+' · '+CAMPAIGN[next-1][0]+'…';
  frame.src=`reinos/${String(realm).padStart(2,'0')}/index.html?cm25=${loadId}&direct=${direct?'1':'0'}`;
 }
 // READY confirma o código do iframe, mas não o carregamento das imagens.
@@ -217,7 +230,10 @@ async function area(n){
   if(!bridge||bridge.realm!==realm)throw Error('Ligação do reino não está pronta');
   const confirmed=bridge.selectArea(n-1,identity);
   if(pendingSnapshot){
-   if(!bridge.restoreProgress?.({...pendingSnapshot,id_aluno:identity?.id_aluno}))throw Error('Não foi possível restaurar o herói e a pontuação.');
+   if(!bridge.restoreProgress?.({...pendingSnapshot,id_aluno:identity?.id_aluno}))
+    throw Error('Não foi possível restaurar o herói e a pontuação.');
+   if(pendingSnapshot.showTutorial&&realm===1&&n===1)
+    bridge.startTutorial?.();
   }
   const status=bridge.status();
   if(confirmed!==n||!status.active||status.territory!==n)throw Error('O jogo não confirmou a entrada no território');
@@ -234,24 +250,13 @@ async function area(n){
   if(token!==loadId||selectedRealm!==realm)return;
   territory=n;pendingArea=0;campaignStarted=true;info();
   pendingSnapshot=null;
+  $('transitionLoading').hidden=true;
   frame.style.opacity='1';frame.style.pointerEvents='auto';
   frame.focus();try{frame.contentWindow.focus()}catch(e){}
   report(`Reino ${realm} · território ${n} · ${n===maximum?'chefão':status.monstersLoaded+' monstros carregados'}`);
  }catch(e){
-  if(token===loadId){frame.style.opacity='1';frame.style.pointerEvents='auto';report('ERRO AO ABRIR TERRITÓRIO: '+String(e.message||e));console.error('[ClassMana] Falha ao iniciar',selectedRealm,n,e);}
+  if(token===loadId){$('transitionLoading').hidden=true;frame.style.opacity='1';frame.style.pointerEvents='auto';report('ERRO AO ABRIR TERRITÓRIO: '+String(e.message||e));console.error('[ClassMana] Falha ao iniciar',selectedRealm,n,e);}
  }finally{if(token===loadId)entering=false;}
-}
-function command(key,shift=false){
- if(!currentRun){report('Selecione a turma e o aluno para iniciar a jornada.');return;}
- if(key==='F8'){if(realm+(shift?-1:1)<1||realm+(shift?-1:1)>10){report('Limite da campanha');return;}switchRealm(realm+(shift?-1:1),1);return;}
- if(key==='F7'){switchRealm(realm,CAMPAIGN[realm-1][1],true);return;}
- if(key==='F6'){
-  if(!campaignStarted){switchRealm(realm,Math.min(2,CAMPAIGN[realm-1][1]),true);return;}
-  if(!ready){report('Carregamento do reino em andamento; comando ignorado');return;}
-  try{const s=frame.contentWindow.CM25RealmBridge?.status();if(s?.active&&s.realm===realm)territory=s.territory;}catch(e){}
-  if(territory<CAMPAIGN[realm-1][1])switchRealm(realm,territory+1,true);
-  else if(realm<10)switchRealm(realm+1,1);else report('Você está no chefão final, Reino 10');
- }
 }
 window.addEventListener('message',e=>{
  if(e.origin!==location.origin||e.source!==frame.contentWindow||e.data?.namespace!=='CM25')return;
@@ -259,34 +264,22 @@ window.addEventListener('message',e=>{
  if(data.action==='READY'){
    ready=true;
    if(automaticEntry){report('Reino '+realm+' carregado — iniciando território '+pendingArea);if(pendingArea)area(pendingArea);}
-   else report('Abertura original: aguarde o carregamento, assista ou pule o vídeo e selecione seu herói. Depois clique em INICIAR TESTE V2.5.');
+   else report('Aguarde o carregamento, assista ou pule o vídeo e selecione seu herói, turma e nome.');
  }
- else if(data.action==='INTRO_DONE'){report('Vídeo concluído. Selecione o personagem e clique em INICIAR TESTE V2.5.');}
+ else if(data.action==='INTRO_DONE'){report('Selecione seu herói, sua turma e seu nome cadastrado.');}
  else if(data.action==='START'){
    if(automaticEntry||campaignStarted)return;
    enterRegisteredStudent(data.profile||{});
  }
- else if(data.action==='KEY')command(data.key,!!data.shift);
  else if(data.action==='COMPLETE'){
   const completedRealm=realm,completedToken=loadId;
   report('Chefão derrotado! Preparando o próximo reino…');
   if(realm<10)autoTimer=setTimeout(()=>{if(realm===completedRealm&&loadId===completedToken)switchRealm(realm+1,1);},2300);
-  else {const snapshot=currentSnapshot()||pendingSnapshot;
+  else {const snapshot=currentSnapshot(true)||pendingSnapshot;
    if(snapshot)queueCheckpoint(snapshot,true,'VITORIA').catch(()=>{});
   }
  }
 });
-window.addEventListener('keydown',e=>{
- if(!['F6','F7','F8'].includes(e.code))return;
- e.preventDefault();if(e.repeat)return;
- const now=performance.now();if(now-lastCommand<220)return;lastCommand=now;
- command(e.code,e.shiftKey);
-},true);
-sel.addEventListener('change',()=>{if(currentRun)switchRealm(Number(sel.value),1);else{sel.value=String(realm);report('Selecione seu aluno antes de trocar de reino.')}});
-$('startHere').onclick=()=>{if(currentRun)switchRealm(realm,1,true);else report('Selecione o aluno no jogo antes da entrada rápida.');};
-$('f6').onclick=()=>command('F6');$('f7').onclick=()=>command('F7');$('f8').onclick=()=>command('F8');$('prev').onclick=()=>command('F8',true);
-$('musicButton').onclick=()=>{try{const game=frame.contentWindow;const ok=game.ClassManaNucleo?.audio?.play();report(ok?'Música solicitada para o reino atual. Se estiver sem som, confira o botão de áudio no jogo e a conexão.':'Não foi possível iniciar a música. Inicie o território e tente novamente.')}catch(e){report('Áudio indisponível: '+e.message)}};
-$('helpButton').onclick=()=>{$('help').hidden=!$('help').hidden};
 setInterval(()=>{
  if(!ready)return;
  try{
@@ -306,5 +299,5 @@ setInterval(()=>{
   }
  }catch(e){console.error('[ClassMana V2.5] Monitor',e);}
 },900);
-// Em cada abertura começar de forma previsível no primeiro reino. Selecionar outro reino inicia automaticamente o seu T1.
+// Abertura original: barra de carregamento, vídeo, áudio e seleção antes de jogar.
 switchRealm(1,1,false);
