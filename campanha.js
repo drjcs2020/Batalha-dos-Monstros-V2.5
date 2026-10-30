@@ -228,7 +228,7 @@ async function enterRegisteredStudent(profile){
   let journeyEntered=false;
   try{
   const record=choice==='new'
-    ?await postV25({acao:'nova_partida',id_aluno:profile.id_aluno,turma:profile.className,partida_anterior:existing?.partida_id||''})
+    ?await postV25({acao:'nova_partida',id_aluno:profile.id_aluno,turma:profile.className,partida_anterior:existing?.partida_id||'',heroi_indice:profile.hero,personagem:profile.personagem||''})
     :{success:true,partida:existing};
   if(record?.success!==true||!record.partida?.partida_id)throw Error(record?.erro||'Partida não foi confirmada pelo servidor.');
   const game=record.partida;
