@@ -82,11 +82,15 @@ function createMob(territory,x,id,bossGuard=false){
  const size=Math.min(H*.355,sizes[territory]*clamp(H/640,.85,1.18));
  // Quinze dragões mais resistentes em cada território comum; guardiões não mudam.
  const max=bossGuard?120:220+territory*65;
- const anchorY=H*(.30+(id%4)*.085);
+ // Corredor de voo VISÍVEL: nenhum corpo de dragão jovem nasce na faixa do HUD.
+ // Usar o mesmo limite no spawn e durante a perseguição.
+ const maxFlightY=floor()-size*.62;
+ const minFlightY=Math.min(maxFlightY,Math.max(H*.22+size*.50,size*.58+12));
+ const anchorY=bossGuard?H*(.30+(id%4)*.085):clamp(H*(.43+(id%3)*.115),minFlightY,maxFlightY);
  return {territory,x,y:anchorY,baseY:anchorY,size,max,hp:max,alive:true,seed:id*.91,
   speed:(bossGuard?0:72+territory*9),cool:1.1+(id*.2%3),contact:0,hit:0,
   guard:bossGuard, spawned:bossGuard, spawnX:x, swoop:0, vx:0, vy:0, modeTime:.7+id*.16,
-   attackUntil:0,restUntil:0};
+   attackUntil:0,restUntil:0,attackSlot:-1};
 }
 function updateHud(){document.getElementById('ename').textContent=R.area===4?'DRAGÃO DE FOGO':names[R.area];document.getElementById('round').textContent='REINO 10 · TERRITÓRIO '+(R.area+1)+'/5';document.getElementById('stageText').textContent=names[R.area];document.getElementById('difficulty').textContent=R.area===4?'CHEFÃO + QUATRO DRAGÕES GUARDIÕES':'SUBALTERNOS RESTANTES: '+R.mobs.filter(x=>x.alive).length;
  if(R.area<4){const alive=R.mobs.filter(x=>x.alive).length;document.getElementById('ehp').style.width=100*alive/R.mobs.length+'%';}}
@@ -286,148 +290,100 @@ function mobUpdateBossGuards(dt){
 // Reino 10 T1-T4: 15 dragões, três investindo por vez em rodízio.
 // Os outros patrulham e acompanham à distância, sem se empilharem no herói.
 // O chefão/guardiões T5 continuam com a IA que já existia antes desta revisão.
+// REINO 10 (T1–T4): 15 dragões em setores; até três investem por vez.
+// Não perseguir tiros nem forçar os 15 para perto do herói.
+// A IA do chefão e dos quatro guardiões T5 permanece separada.
 function mobUpdate(dt){
  if(R.area===4)return mobUpdateBossGuards(dt);
- const step=Math.min(dt,.055),heroX=p.x,heroY=p.y-52;
- // Primeiro despertar por proximidade: dragões de regiões futuras não invadem o início.
- for(const m of R.mobs){
-  if(!m.alive||m.spawned)continue;
-  if(Math.abs(m.x-heroX)<W*.80){
-   m.spawned=true;m.cool=Math.max(.65,m.cool);m.modeTime=.6+(m.seed%1.0);
-  }
- }
- // Um atacante descansa após cada investida; outros têm oportunidade de entrar.
- let active=0;
- const usedSlots=new Set();
- for(const m of R.mobs){
-  if(!m.alive||!m.spawned)continue;
+ const step=Math.min(Math.max(dt,0),.055),heroX=p.x,heroY=p.y-52;
+ const alive=R.mobs.filter(m=>m.alive);
+ // Faixa de voo segura: a parte SUPERIOR do sprite fica abaixo do HUD.
+ const ceiling=m=>Math.min(floor()-m.size*.62,Math.max(H*.22+m.size*.50,m.size*.58+12));
+ const groundLimit=m=>floor()-m.size*.62;
+ // Todos ocupam posições diferentes ao longo dos 4,3 comprimentos de tela.
+ // O despertar dá acesso à perseguição; não modifica x nem y instantaneamente.
+ for(const m of alive){
+  m.hit=Math.max(0,m.hit-step);m.contact=Math.max(0,m.contact-step);
+  if(!m.spawned&&Math.abs(m.spawnX-heroX)<W*1.07){m.spawned=true;m.cool=Math.max(.65,m.cool);}
   if(m.attackUntil>0&&m.attackUntil<=R.clock){
-   m.attackUntil=0;m.restUntil=R.clock+3.5+(m.seed%1.0);
-  }
-  if(m.attackUntil>R.clock){active++;usedSlots.add(m.attackSlot);}
- }
- // Ativar o próximo dragão com antecedência quando restarem menos de dois
- // perseguidores. O reforço voa do próprio setor; nunca aparece por teleporte.
- if(active<2){
-  const backup=R.mobs.filter(m=>m.alive&&!m.spawned)
-    .sort((a,b)=>Math.abs(a.x-heroX)-Math.abs(b.x-heroX))[0];
-  if(backup&&Math.abs(backup.x-heroX)<W*1.55){
-   backup.spawned=true;backup.cool=Math.max(.65,backup.cool);
+   m.attackUntil=0;m.attackSlot=-1;m.restUntil=R.clock+2.4+(m.seed%1.5);
   }
  }
- const candidates=R.mobs.filter(m=>m.alive&&m.spawned&&m.attackUntil<=R.clock&&m.restUntil<=R.clock&&
-   Math.abs(m.x-heroX)<W*.94);
- candidates.sort((a,b)=>Math.abs(a.x-heroX)-Math.abs(b.x-heroX));
- for(const m of candidates){
-  if(active>=3)break;
-  m.attackUntil=R.clock+4.6+(m.seed%1.25);
-  m.attackSlot=[0,1,2].find(slot=>!usedSlots.has(slot))??0;
-  usedSlots.add(m.attackSlot);active++;
- }
- for(const m of R.mobs){
-  if(!m.alive)continue;
-  m.hit=Math.max(0,m.hit-dt);
-  m.contact=Math.max(0,m.contact-dt);
-  if(!m.spawned){
-   // Patrulha visível e suave do setor, não fica parado mirando bolas de fogo.
-   const homeX=m.spawnX+Math.sin(R.clock*.92+m.seed)*Math.min(42,W*.04);
-   const homeY=clamp(m.baseY+Math.sin(R.clock*1.65+m.seed)*H*.05,m.size*.55+12,floor()-m.size*.72);
-   m.x+=clamp(homeX-m.x,-70*step,70*step);
-   m.y+=clamp(homeY-m.y,-65*step,65*step);
-   continue;
+ const attack=alive.filter(m=>m.attackUntil>R.clock);
+ const used=new Set(attack.map(m=>m.attackSlot));
+ // Manter no máximo três investidas. Em caso de morte, convocar o próximo
+ // dragão de seu setor, sem teleporte, mesmo se estiver fora da tela.
+ if(attack.length<3){
+  const candidates=alive.filter(m=>m.attackUntil<=R.clock&&m.restUntil<=R.clock);
+  candidates.sort((a,b)=>Math.abs(a.x-heroX)-Math.abs(b.x-heroX));
+  for(const m of candidates){
+   if(attack.length>=3)break;
+   // Não mobilizar os quinze de uma só vez a partir do outro extremo do mapa.
+   if(Math.abs(m.x-heroX)>W*1.6)continue;
+   m.spawned=true;
+   m.attackSlot=[0,1,2].find(i=>!used.has(i))??0;used.add(m.attackSlot);
+   m.attackUntil=R.clock+4.8+(m.seed%1.15);
+   attack.push(m);
   }
+ }
+ for(const m of alive){
+  const minY=ceiling(m),maxY=groundLimit(m);
   const striking=m.attackUntil>R.clock;
-  // Escolhe o flanco que tem espaço de voo no mundo; não prende 12 dragões
-  // no limite direito/esquerdo da arena quando o herói chega à saída.
-  const leftRoom=heroX-m.size*.35,rightRoom=R.world-m.size*.35-heroX;
-  let side=m.x<heroX?-1:1;
-  if(rightRoom<W*.40&&leftRoom>W*.40)side=-1;
-  else if(leftRoom<W*.40&&rightRoom>W*.40)side=1;
-  let aimX,aimY,speed;
+  let tx,ty,speed;
   if(striking){
-   // Três faixas de ataque em diferentes alturas, com distância da boca.
-   const slot=m.attackSlot||0;
-   const reach=Math.max(155,m.size*.98)+(slot%2)*95;
-   aimX=heroX+side*reach;
-   aimY=heroY-170+slot*112;
-   speed=Math.max(280,m.speed*3.45);
+   const slot=m.attackSlot;
+   // Três destinos realmente diferentes, com altitude e flanco separados.
+   const distance=[Math.max(215,m.size*1.2),Math.max(340,m.size*1.85),Math.max(520,m.size*2.65)][slot];
+   let side=slot===1?-1:1;
+   if(heroX-distance<m.size*.65+W*.10)side=1;
+   if(heroX+distance>R.world-m.size*.65-W*.10)side=-1;
+   tx=heroX+side*distance;
+   ty=minY+(maxY-minY)*[.22,.64,.90][slot];
+   speed=335+R.area*23;
   }else{
-   // Reservas patrulham em seus setores originais. Quando o herói passa,
-   // acompanham à distância, cada uma em uma coluna DIFERENTE no mundo.
-   // Não usar a posição do herói como o mesmo ponto de encontro para as 15.
-   const passed=heroX>m.spawnX;
-   const trailing=W*(.38+m.id*.145); // Cada dragão tem sua coluna própria; sem agrupamento a cada 6.
-   const patrol=m.spawnX+Math.sin(R.clock*.85+m.seed)*Math.min(46,W*.045);
-   // Reservas seguem depois que o herói passa, com distância separada.
-   // Não prendê-las no spawnX: isso deixava a tela vazia ao avançar.
-   aimX=passed?heroX-trailing:patrol;
-   // Faixas verticais estáveis, não uma altura única sobre o jogador.
-   aimY=H*(.23+(m.id%3)*.19)+Math.sin(R.clock*1.55+m.seed)*H*.025;
-   speed=Math.max(125,m.speed*1.65);
+   // RESERVA: continua visível patrulhando SEU setor, sem voltar ao canto
+   // do personagem e sem convergir em uma única coordenada do mapa.
+   tx=m.spawnX+Math.sin(R.clock*.85+m.seed)*Math.min(40,W*.035);
+   ty=minY+(maxY-minY)*(.16+(m.seed%3)*.26);
+   speed=105+R.area*12;
   }
-  aimX=clamp(aimX,m.size*.35,R.world-m.size*.35);
-  aimY=clamp(aimY,m.size*.55+10,floor()-m.size*.62);
-  const dx=aimX-m.x,dy=aimY-m.y,len=Math.hypot(dx,dy)||1;
-  // Repulsão física entre dragões próximos. Mais forte entre os que investem.
-  let repelX=0,repelY=0;
-  for(const other of R.mobs){
-   if(other===m||!other.alive||!other.spawned)continue;
-   const ox=m.x-other.x,oy=m.y-other.y,d=Math.hypot(ox,oy);
-   const minSep=(m.size+other.size)*(striking?.62:.51);
-   if(d>.001&&d<minSep){
-    const force=(minSep-d)/minSep;
-    repelX+=ox/d*force;repelY+=oy/d*force;
-   }
-  }
-  const steer=1-Math.exp(-step*(striking?3.3:2.6));
-  const vx=clamp((dx/len)*speed+repelX*(striking?230:135),-speed*1.05,speed*1.05);
-  const vy=clamp((dy/len)*speed*.80+repelY*(striking?210:125),-speed*.9,speed*.9);
-  m.x=clamp(m.x+vx*step,m.size*.35,R.world-m.size*.35);
-  m.y=clamp(m.y+vy*step,m.size*.55+10,floor()-m.size*.62);
-  // Defesa contra sprites sobrepostos: após aproximação, empurra o atacante para
-  // fora do espaço do jogador, mantendo o ataque na borda do alcance.
-  if(striking){
-   const hdx=m.x-heroX,hdy=m.y-heroY,hr=Math.hypot(hdx,hdy)||1;
-   const safeHeroDist=Math.max(145,m.size*.88);
-   if(hr<safeHeroDist){
-    const push=safeHeroDist-hr;
-    m.x=clamp(m.x+(hdx/hr)*push,m.size*.35,R.world-m.size*.35);
-    m.y=clamp(m.y+(hdy/hr)*push,m.size*.55+10,floor()-m.size*.62);
-   }
-  }
-  const heroDistance=Math.hypot(m.x-heroX,m.y-heroY);
-
-  if(striking&&heroDistance<m.size*.34+38&&m.contact<=0){
-   applyDragonDamage(4+R.area,'contato');
-   m.contact=1.55;
-  }
+  tx=clamp(tx,m.size*.65,R.world-m.size*.65);
+  ty=clamp(ty,minY,maxY);
+  const dx=tx-m.x,dy=ty-m.y,len=Math.hypot(dx,dy)||1;
+  const travel=Math.min(len,speed*step);
+  m.x=clamp(m.x+dx/len*travel,m.size*.65,R.world-m.size*.65);
+  // Subir/baixar lentamente, mas tirar imediatamente o sprite do HUD
+  // se o motor anterior o entregou fora da faixa de voo.
+  m.y=clamp(m.y+clamp(dy,-speed*.73*step,speed*.73*step),minY,maxY);
   m.cool-=step;
+  const distanceToHero=Math.hypot(m.x-heroX,m.y-heroY);
+  if(striking&&m.contact<=0&&distanceToHero<m.size*.85+36){
+   applyDragonDamage(4+R.area,'contato');m.contact=1.65;
+  }
+  // As bolas de fogo são disparadas só por dragões que estão investindo,
+  // e seguem a posição REAL do herói no instante do disparo.
   if(striking&&m.cool<=0){
    const visible=m.x-R.cam>-m.size&&m.x-R.cam<W+m.size;
-   if(visible&&heroDistance<W*.70&&R.projectiles.length<6){
-    createFire(m);m.cool=3.2+(m.seed%1.3)+m.territory*.15;
-   }else m.cool=.45;
+   if(visible&&distanceToHero<W*.76&&R.projectiles.length<6){
+    createFire(m);m.cool=2.7+(m.seed%1.25)+R.area*.16;
+   }else m.cool=.24;
   }
  }
- // Resolver cruzamentos entre dragões: evitar o bolo visual mesmo quando vários
- // chegam ao fim da passarela ou o herói muda de direção.
- // Corrigir em coordenadas do mundo; NÃO aproxima ninguém do herói.
- const engaged=R.mobs.filter(m=>m.alive&&m.spawned);
- for(let pass=0;pass<3;pass++){
-  for(let i=0;i<engaged.length;i++)for(let j=i+1;j<engaged.length;j++){
-   const u=engaged[i],v=engaged[j];
-   let dx=u.x-v.x,dy=u.y-v.y,dist=Math.hypot(dx,dy);
-   const spacing=(u.size+v.size)*.66;
-   if(dist>=spacing)continue;
-   if(dist<.1){dx=(i%2===0?-1:1)*.72;dy=(j%2===0?-1:1)*.7;dist=1;}
-   const correction=Math.min(30,(spacing-dist)*.45),ox=dx/dist*correction,oy=dy/dist*correction;
-   u.x=clamp(u.x+ox,u.size*.35,R.world-u.size*.35);
-   v.x=clamp(v.x-ox,v.size*.35,R.world-v.size*.35);
-   u.y=clamp(u.y+oy,u.size*.55+10,floor()-u.size*.62);
-   v.y=clamp(v.y-oy,v.size*.55+10,floor()-v.size*.62);
+ // Separação dos corpos para não formar um bolo. Ajuste 2D determinístico,
+ // sem deslocar ninguém para dentro da faixa do HUD nem para fora do mundo.
+ for(let pass=0;pass<4;pass++){
+  for(let i=0;i<alive.length;i++)for(let j=i+1;j<alive.length;j++){
+   const a=alive[i],b=alive[j],min=(a.size+b.size)*.66;
+   let dx=a.x-b.x,dy=a.y-b.y,d=Math.hypot(dx,dy);
+   if(d>=min)continue;
+   if(d<.01){dx=(i%2===0?1:-1)*.72;dy=(j%2===0?1:-1)*.69;d=1;}
+   const push=Math.min(48,(min-d)*.48);
+   a.x=clamp(a.x+dx/d*push,a.size*.65,R.world-a.size*.65);
+   b.x=clamp(b.x-dx/d*push,b.size*.65,R.world-b.size*.65);
+   a.y=clamp(a.y+dy/d*push,ceiling(a),groundLimit(a));
+   b.y=clamp(b.y-dy/d*push,ceiling(b),groundLimit(b));
   }
  }
-
 }
 function mobHitByWeapons(dt){for(const q of shots){if(q.life<=0||q.cmBoss)continue;for(const m of R.mobs){if(!m.alive)continue;const cx=m.x,cy=m.y;const a=q.x-q.vx*dt,b=q.y-q.vy*dt,vx=q.x-a,vy=q.y-b,f=clamp(((cx-a)*vx+(cy-b)*vy)/(vx*vx+vy*vy||1),0,1);if(Math.hypot(a+vx*f-cx,b+vy*f-cy)<m.size*.32+(q.r||12)){q.life=0;m.hp=Math.max(0,m.hp-q.dmg);m.hit=.13;if(m.hp<=0)killMob(m);else burst(m.x-R.cam,cy,'#ffeeaa',5);break}}}
  shots=shots.filter(q=>q.life>0)}
