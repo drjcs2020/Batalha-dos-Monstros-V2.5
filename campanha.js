@@ -437,9 +437,12 @@ window.addEventListener('message',e=>{
    completed.reino=realm;
    completed.territorio=CAMPAIGN[realm-1][1];
    if(realm<10)queueCheckpoint(completed).catch(()=>{});
-   else queueCheckpoint(completed,true,'VITORIA').catch(()=>{});
+   else queueCheckpoint(completed,true,'VITORIA').then(()=>{
+    report('🏆 Campanha concluída! Resultado confirmado no ClassMana.');
+   }).catch(()=>{});
   }
-  report('Chefão derrotado! Preparando o próximo reino…');
+  if(realm<10)report('Chefão derrotado! Preparando o próximo reino…');
+  else report('🏆 Último chefão derrotado! Confirmando a vitória no servidor…');
   if(realm<10)autoTimer=setTimeout(()=>{
    autoTimer=null;
    if(realm===completedRealm&&loadId===completedToken&&currentRun&&!endingRun)
