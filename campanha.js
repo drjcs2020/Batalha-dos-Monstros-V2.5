@@ -250,7 +250,7 @@ async function enterRegisteredStudent(profile){
   const introMenuState=introMenu?{display:introMenu.style.display,hidden:introMenu.classList.contains('hidden')}:null;
   if(introMenu){introMenu.classList.add('hidden');introMenu.style.display='none';}
   $('transitionLoading').hidden=false;
-  $('transitionLabel').textContent=choice==='new'?'Iniciando sua jornada…':'Recuperando sua partida…';
+  $('transitionLabel').textContent=choice==='new'?'O portal está se abrindo…':'Reunindo suas conquistas…';
   frame.style.pointerEvents='none';
   let journeyEntered=false;
   try{
@@ -315,7 +315,7 @@ function switchRealm(next,target=1,direct=true){
  frame.style.opacity=direct?'0':'1';
  frame.style.pointerEvents=direct?'none':'auto';
  $('transitionLoading').hidden=!direct;
- $('transitionLabel').textContent='Preparando Reino '+next+' · '+CAMPAIGN[next-1][0]+'…';
+ $('transitionLabel').textContent='Portal para '+CAMPAIGN[next-1][0]+'…';
  frame.src=`reinos/${String(realm).padStart(2,'0')}/index.html?cm25=${loadId}&direct=${direct?'1':'0'}`;
 }
 // READY confirma o código do iframe, mas não o carregamento das imagens.
@@ -423,6 +423,28 @@ window.addEventListener('message',e=>{
 });
 
 let stopSaveOpen=false,stopSaveConfirmed=false,stopPauseState=null,stopSaveMode='save';
+// Apresentação do progresso: imagens 3D do acervo original ClassMana.
+const CM25_ITEM_ART='https://drjcs2020.github.io/classmana-batalha-dos-monstros-V2/assets/items3d/';
+function cm25SaveVisual(state){
+ const panel=$('savePanel'),mark=$('saveMark'),gem=$('saveMarkGem'),glyph=$('saveMarkGlyph');
+ panel.dataset.visual=state;mark.dataset.state=state;
+ const icons={save:['crystal.png','✦'],finish:['dagger.png','⚔'],working:['crystal.png','✧'],success:['potion.png','✓'],error:['shield.png','!']};
+ const [image,symbol]=icons[state]||icons.save;
+ gem.src=CM25_ITEM_ART+image;glyph.textContent=symbol;
+ $('saveSyncTrack').hidden=state!=='working';
+ const badge={save:'✦ CLASSMANA · JORNADA DO HERÓI ✦',
+  finish:'✦ CLASSMANA · FIM DE JORNADA ✦',
+  working:'✦ CLASSMANA · PROTEGENDO CONQUISTAS ✦',
+  success:'✦ CLASSMANA · PROGRESSO PROTEGIDO ✦',
+  error:'✦ CLASSMANA · ATENÇÃO AO REGISTRO ✦'};
+ $('saveEyebrow').textContent=badge[state]||badge.save;
+}
+function cm25SaveStats(snapshot){
+ $('saveRealm').textContent=String(snapshot.reino);
+ $('saveTerritory').textContent=String(snapshot.territorio);
+ $('saveScore').textContent=Number(snapshot.pontuacao||0).toLocaleString('pt-BR');
+}
+
 function openStopAndSave(mode='save'){
  if(stopSaveOpen||!currentRun||!campaignStarted||!ready||entering||endingRun)return;
  const snapshot=currentSnapshot();
@@ -435,17 +457,19 @@ function openStopAndSave(mode='save'){
  stopSaveOpen=true;stopSaveConfirmed=false;
  const finishing=stopSaveMode==='finish';
  $('stopSave').hidden=true;$('finishRun').hidden=true;
- $('saveMark').textContent=finishing?'🏁':'💾';
- $('saveTitle').textContent=finishing?'Finalizar esta partida?':'Parar e salvar a jornada?';
+ cm25SaveVisual(finishing?'finish':'save');cm25SaveStats(snapshot);
+ $('saveTitle').textContent=finishing?'Encerrar minha aventura?':'Guardar minha jornada?';
  $('saveDescription').textContent=finishing
-   ?'Seu resultado será enviado ao histórico e ao ranking V2.5. Esta partida será encerrada e não poderá ser retomada.'
-   :'Confirme para guardar seu progresso e continuar mais tarde.';
+   ?'Sua pontuação será registrada e esta partida será encerrada. Depois, você poderá começar uma nova aventura!'
+   :'Proteja tudo o que conquistou! Seus pontos e seu território ficarão guardados para continuar depois.';
  $('saveDetails').textContent='Reino '+snapshot.reino+' · Território '+snapshot.territorio+' · '+snapshot.pontuacao.toLocaleString('pt-BR')+' pontos';
- $('saveNotice').textContent=finishing?'Confirme apenas se deseja encerrar. A partida está pausada.':'A partida está pausada até a confirmação do salvamento.';
+ $('saveNotice').textContent=finishing
+   ?'⚠ Encerrar é diferente de guardar: esta aventura não poderá ser retomada.'
+   :'Seu herói está esperando. O progresso será guardado somente após a confirmação online.';
  $('saveNotice').classList.remove('error');
  $('saveConfirm').hidden=false;$('saveConfirm').disabled=false;
- $('saveConfirm').textContent=finishing?'🏁 Confirmar finalização':'✔ Confirmar e salvar';
- $('saveCancel').hidden=false;$('saveCancel').disabled=false;$('saveCancel').textContent='Continuar jogando';
+ $('saveConfirm').textContent=finishing?'⚔ Encerrar aventura':'✦ Guardar conquistas';
+ $('saveCancel').hidden=false;$('saveCancel').disabled=false;$('saveCancel').textContent='▶ Voltar à batalha';
  $('saveExit').hidden=true;$('saveOverlay').hidden=false;$('saveConfirm').focus();
 }
 function closeStopAndResume(){
@@ -460,8 +484,10 @@ async function confirmStopAndSave(){
  const confirm=$('saveConfirm'),cancel=$('saveCancel'),notice=$('saveNotice');
  confirm.disabled=true;cancel.disabled=true;
  const finishing=stopSaveMode==='finish';
- confirm.textContent=finishing?'⏳ Finalizando…':'⏳ Salvando e confirmando…';
- notice.textContent='Enviando ao Google Sheets. Não feche esta página durante a confirmação.';
+ cm25SaveVisual('working');
+ $('saveTitle').textContent=finishing?'Registrando o resultado…':'Protegendo suas conquistas…';
+ confirm.textContent=finishing?'✦ Registrando…':'✦ Guardando…';
+ notice.textContent='Enviando ao ClassMana e conferindo o registro online. Mantenha a janela aberta.';
  notice.classList.remove('error');
  try{
   const snapshot=currentSnapshot();
@@ -469,21 +495,23 @@ async function confirmStopAndSave(){
   if(finishing)await queueCheckpoint(snapshot,true,'ENCERRADA',true);
   else await queueCheckpoint(snapshot,false,'ENCERRADA',true);
   stopSaveConfirmed=true;
-  $('saveMark').textContent='✅';
-  $('saveTitle').textContent=finishing?'Partida finalizada!':'Partida salva com sucesso!';
+  cm25SaveVisual('success');
+  $('saveTitle').textContent=finishing?'Aventura encerrada!':'Conquistas protegidas!';
   $('saveDescription').textContent=finishing
    ?'O resultado foi confirmado. Sua partida terminou e você poderá iniciar uma nova jornada.'
    :'Seu progresso foi confirmado. Use Continuar partida quando voltar.';
   $('saveDetails').textContent='Reino '+snapshot.reino+' · Território '+snapshot.territorio+' · '+snapshot.pontuacao.toLocaleString('pt-BR')+' pontos';
-  notice.textContent=finishing?'Encerramento confirmado na V2.5.':'Salvamento confirmado na V2.5.';
+  notice.textContent=finishing?'Resultado confirmado no ClassMana V2.5.':'Tudo certo! O ClassMana confirmou seu progresso.';
   confirm.hidden=true;cancel.disabled=false;cancel.hidden=finishing;
-  if(!finishing)cancel.textContent='Retomar batalha';
+  if(!finishing)cancel.textContent='▶ Retomar batalha';
   $('saveExit').hidden=false;$('saveExit').focus();
  }catch(error){
   console.error('[ClassMana V2.5] Registro da partida:',error);
-  notice.textContent='⚠ Salvamento NÃO confirmado. A batalha continua aberta nesta aba. Tente de novo ou volte a jogar; não feche a página enquanto precisar preservar esse progresso.';
+  cm25SaveVisual('error');
+  $('saveTitle').textContent='Ainda não foi possível registrar';
+  notice.textContent='⚠ O servidor não confirmou esta tentativa. Seu herói continua nesta página. Tente novamente antes de sair.';
   notice.classList.add('error');
-  confirm.textContent=finishing?'↻ Tentar finalizar novamente':'↻ Tentar salvar novamente';
+  confirm.textContent=finishing?'↻ Tentar encerrar novamente':'↻ Tentar guardar novamente';
   confirm.disabled=false;cancel.disabled=false;
  }
 }
