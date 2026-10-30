@@ -200,7 +200,8 @@
         }catch(e){console.warn('[ClassMana V2.5] Áudio aguardando interação',e);}
         const profile={id_aluno:String(playerId),hero:Number.isInteger(heroIdx)?heroIdx:0,
           name:String(playerName||input?.value||'').trim(),
-          className:String(playerClass||'')};
+          className:String(playerClass||''),
+          personagem:String(heroes[heroIdx]?.name||'')};
         if(!profile.name||!profile.className){alert('Confirme seu nome e sua turma.');return;}
         core.send('START',{profile});
       };
