@@ -114,22 +114,69 @@ function makeElement(tag,css,text){
 }
 function chooseJourney(saved){
  return new Promise(resolve=>{
-  const backdrop=makeElement('div','position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:#030c1eea;padding:20px');
-  const panel=makeElement('div','width:min(450px,96vw);border:2px solid #d6ad65;border-radius:18px;background:#102643;color:#fff;padding:22px;text-align:center;box-shadow:0 20px 55px #0008');
-  panel.appendChild(makeElement('h2','color:#ffdc91;margin:0 0 15px;font:700 23px Arial','ClassMana · Sua jornada'));
-  panel.appendChild(makeElement('p','font:16px Arial;margin:0 0 18px',
-   saved?'Partida encontrada: Reino '+saved.reino+' · Território '+saved.territorio+' · '+Number(saved.pontuacao||0).toLocaleString('pt-BR')+' pontos':'Nenhuma partida em andamento encontrada.'));
-  const btn=(caption,value)=>{
-   const b=makeElement('button','display:block;width:100%;padding:14px;margin:10px 0;border-radius:10px;background:#2167aa;color:white;font:bold 17px Arial;border:1px solid #94d8fd;cursor:pointer',caption);
-   b.onclick=()=>{
-    if(value==='new'&&saved&&!confirm('Começar uma nova partida? O progresso atual será substituído; resultados já encerrados permanecem no histórico.'))return;
-    backdrop.remove();resolve(value);
-   };panel.appendChild(b);
-  };
-  if(saved)btn('▶ Continuar partida','continue');
-  btn('↻ Nova partida','new');
-  btn('Cancelar','cancel');
+  const base='https://drjcs2020.github.io/classmana-batalha-dos-monstros-V2/assets/';
+  const backdrop=makeElement('div');
+  backdrop.id='cm25JourneyDialog';
+  backdrop.setAttribute('role','dialog');
+  backdrop.setAttribute('aria-modal','true');
+  backdrop.setAttribute('aria-labelledby','cm25JourneyTitle');
+  const panel=makeElement('div');panel.id='cm25JourneyPanel';
+  const logo=makeElement('img');logo.id='cm25JourneyLogo';logo.src=base+'logo.png';logo.alt='ClassMana';
+  panel.appendChild(logo);
+  const decor=makeElement('div');decor.id='cm25JourneyDecor';
+  for(const item of ['shield.png','crystal.png','potion.png']){
+   const picture=makeElement('img');picture.src=base+'items3d/'+item;picture.alt='';picture.setAttribute('aria-hidden','true');decor.appendChild(picture);
+  }
+  panel.appendChild(decor);
+  const title=makeElement('h2','','SUA JORNADA');
+  title.id='cm25JourneyTitle';panel.appendChild(title);
+  const status=makeElement('p','',saved
+   ?'PARTIDA ANTERIOR ENCONTRADA'
+   :'PRONTO PARA COMEÇAR UMA NOVA AVENTURA!');
+  status.id='cm25JourneyStatus';panel.appendChild(status);
+  const description=makeElement('p','',
+   saved?'Reino '+saved.reino+' · Território '+saved.territorio+' · '+Number(saved.pontuacao||0).toLocaleString('pt-BR')+' pontos'+
+    (saved.personagem?' · '+saved.personagem:''):
+    'Seu herói iniciará no Reino 1, Território 1, com a pontuação zerada.');
+  panel.appendChild(description);
+  const note=makeElement('p','','Continuar mantém o herói salvo. Nova partida permite trocar de herói, mas reinicia o progresso atual.');
+  note.className='cm25JourneyNote';panel.appendChild(note);
+  let pending=false,confirmNew=false;
+  const actions=makeElement('div');panel.appendChild(actions);
+  function choose(value,button){
+   if(pending)return;
+   if(value==='new'&&saved&&!confirmNew){
+    confirmNew=true;
+    title.textContent='CONFIRMAR NOVA PARTIDA?';
+    status.textContent='ATENÇÃO: SUA JORNADA ATUAL SERÁ SUBSTITUÍDA';
+    description.textContent='Você começará no Reino 1 com o herói escolhido na seleção. Os pontos da jornada em andamento serão zerados. Resultados anteriores já finalizados permanecerão no histórico.';
+    note.textContent='Se quiser manter seu progresso, escolha Voltar e depois Continuar partida.';
+    [...actions.querySelectorAll('button')].forEach(x=>{x.hidden=x!==button&&x.dataset.action!=='cancel';});
+    button.textContent='✔ CONFIRMAR NOVA JORNADA';
+    const cancel=actions.querySelector('[data-action="cancel"]');
+    if(cancel)cancel.textContent='↩ VOLTAR';
+    return;
+   }
+   if(value==='cancel'&&confirmNew){
+    confirmNew=false;backdrop.remove();resolve('cancel');return;
+   }
+   pending=true;button.classList.add('is-selected');
+   [...actions.querySelectorAll('button')].forEach(x=>x.disabled=true);
+   window.setTimeout(()=>{backdrop.remove();resolve(value);},230);
+  }
+  function button(label,value,cancel=false){
+   const b=makeElement('button','',label);
+   b.type='button';b.className='cm25JourneyButton'+(cancel?' cm25JourneyCancel':'');
+   b.dataset.action=value;
+   b.onclick=()=>choose(value,b);
+   actions.appendChild(b);
+   return b;
+  }
+  if(saved)button('▶ CONTINUAR COM O HERÓI SALVO','continue');
+  button('✦ COMEÇAR NOVA PARTIDA','new');
+  button('↩ CANCELAR','cancel',true);
   backdrop.appendChild(panel);document.body.appendChild(backdrop);
+  actions.querySelector('button')?.focus();
  });
 }
 async function enterRegisteredStudent(profile){
