@@ -95,31 +95,56 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050c1b;col
 @media(max-height:580px){#cm25JourneyPanel{max-height:95dvh}#cm25JourneyDecor{display:none}#cm25JourneyLogo{height:53px}#cm25JourneyPanel .cm25JourneyStats{margin:5px 0}}
 
 </style>
+<link rel="stylesheet" href="interface_visual_v25.css?v=20261030-18" />
 </head>
 <body>
 <div id="shell">
 <iframe id="gameWindow" title="ClassMana — Batalha dos Monstros V2.5" allow="autoplay;fullscreen" referrerpolicy="strict-origin-when-cross-origin"></iframe>
 <div id="realmTitle" aria-live="polite"></div>
-<button id="stopSave" type="button" hidden>💾 Parar e salvar</button>
+<button id="stopSave" type="button" hidden>✦ Guardar progresso</button>
 <button id="finishRun" type="button" hidden>🏁 Finalizar partida</button>
 <section id="saveOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="saveTitle">
-<div id="savePanel">
-<div id="saveMark" class="saveMark" aria-hidden="true">💾</div>
-<h2 id="saveTitle">Parar e salvar?</h2>
-<p id="saveDescription">Seu progresso ficará disponível para continuar depois.</p>
-<p id="saveDetails"></p>
-<p id="saveNotice" role="status" aria-live="polite"></p>
-<div class="saveActions">
-<button id="saveCancel" type="button">Continuar jogando</button>
-<button id="saveConfirm" type="button" class="primary">✔ Confirmar e salvar</button>
-<button id="saveExit" type="button" class="primary" hidden>Voltar ao início</button>
-</div>
+<div id="savePanel" data-visual="save">
+  <i class="cm25SaveCorner a" aria-hidden="true"></i><i class="cm25SaveCorner b" aria-hidden="true"></i>
+  <i class="cm25SaveCorner c" aria-hidden="true"></i><i class="cm25SaveCorner d" aria-hidden="true"></i>
+  <div class="cm25SaveBrand" id="saveEyebrow">✦ CLASSMANA · JORNADA DO HERÓI ✦</div>
+  <div id="saveMark" class="saveMark" data-state="save" aria-hidden="true">
+    <img class="cm25CrestShield" src="https://drjcs2020.github.io/classmana-batalha-dos-monstros-V2/assets/items3d/shield.png" alt="">
+    <img id="saveMarkGem" class="cm25CrestGem" src="https://drjcs2020.github.io/classmana-batalha-dos-monstros-V2/assets/items3d/crystal.png" alt="">
+    <span id="saveMarkGlyph" class="cm25SaveGlyph">✦</span>
+  </div>
+  <h2 id="saveTitle">Guardar minha jornada?</h2>
+  <p id="saveDescription">Guarde suas conquistas e continue esta aventura quando voltar!</p>
+  <div class="cm25ProgressHeading">✦ Progresso conquistado ✦</div>
+  <div class="cm25SaveStats" aria-hidden="true">
+    <div class="cm25SaveStat"><strong id="saveRealm">1</strong><small>🏰 Reino</small></div>
+    <div class="cm25SaveStat"><strong id="saveTerritory">1</strong><small>⚔ Território</small></div>
+    <div class="cm25SaveStat"><strong id="saveScore">0</strong><small>✦ Pontos</small></div>
+  </div>
+  <p id="saveDetails"></p>
+  <p id="saveNotice" role="status" aria-live="polite">Seu herói aguarda sua decisão.</p>
+  <div id="saveSyncTrack" class="cm25SyncTrack" hidden aria-hidden="true"><span></span></div>
+  <div class="saveActions">
+    <button id="saveCancel" type="button">▶ Voltar à batalha</button>
+    <button id="saveConfirm" type="button" class="primary">✦ Guardar progresso</button>
+    <button id="saveExit" type="button" class="primary" hidden>↩ Voltar ao início</button>
+  </div>
 </div>
 </section>
 
 <div id="transitionLoading" hidden role="status" aria-live="polite">
-  <div id="transitionLabel">Preparando o próximo reino…</div>
-  <div id="transitionTrack"><div id="transitionFill"></div></div>
+  <div id="transitionPanel">
+    <div class="cm25TransitionEyebrow">✦ CLASSMANA · PORTAL DOS REINOS ✦</div>
+    <div class="cm25TransitionHeraldry" aria-hidden="true">
+      <img src="https://drjcs2020.github.io/classmana-batalha-dos-monstros-V2/assets/items3d/shield.png" alt="">
+      <img class="cm25TransitionCrystal" src="https://drjcs2020.github.io/classmana-batalha-dos-monstros-V2/assets/items3d/crystal.png" alt="">
+      <img src="https://drjcs2020.github.io/classmana-batalha-dos-monstros-V2/assets/items3d/dagger.png" alt="">
+    </div>
+    <div id="transitionLabel">Preparando sua aventura…</div>
+    <p id="transitionSubTitle">Seu herói está atravessando o portal para o próximo desafio.</p>
+    <div id="transitionTrack"><div id="transitionFill"></div></div>
+    <p class="cm25TransitionFoot">✦ MONSTROS, PODERES E DESCOBERTAS À FRENTE ✦</p>
+  </div>
 </div>
 <div id="status" role="status" aria-live="polite"></div>
 <button id="enableLoadingSound" type="button" hidden>🔊 Ativar música de preparação</button>
