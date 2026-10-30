@@ -399,88 +399,88 @@ window.addEventListener('message',e=>{
  }
 });
 
-let stopSaveOpen=false,stopSaveConfirmed=false,stopPauseState=null;
-function openStopAndSave(){
- if(stopSaveOpen||!currentRun||!campaignStarted||!ready||entering)return;
+let stopSaveOpen=false,stopSaveConfirmed=false,stopPauseState=null,stopSaveMode='save';
+function openStopAndSave(mode='save'){
+ if(stopSaveOpen||!currentRun||!campaignStarted||!ready||entering||endingRun)return;
  const snapshot=currentSnapshot();
- if(!snapshot){report('⚠ Ainda não foi possível capturar o progresso desta batalha.');return;}
+ if(!snapshot){report('⚠ Não foi possível capturar o progresso desta batalha.');return;}
  let bridge=null;
  try{bridge=frame.contentWindow.CM25RealmBridge;}catch(e){}
  const pauseState=bridge?.pauseForSave?.();
- if(!pauseState){report('⚠ Aguarde o início da batalha para parar e salvar.');return;}
- stopPauseState=pauseState;
+ if(!pauseState){report('⚠ Aguarde o início da batalha para utilizar este botão.');return;}
+ stopPauseState=pauseState;stopSaveMode=mode==='finish'?'finish':'save';
  stopSaveOpen=true;stopSaveConfirmed=false;
- $('stopSave').hidden=true;
- $('saveMark').textContent='💾';
- $('saveTitle').textContent='Parar e salvar a jornada?';
- $('saveDescription').textContent='Confirme para guardar seu progresso. Você poderá voltar com Continuar partida.';
+ const finishing=stopSaveMode==='finish';
+ $('stopSave').hidden=true;$('finishRun').hidden=true;
+ $('saveMark').textContent=finishing?'🏁':'💾';
+ $('saveTitle').textContent=finishing?'Finalizar esta partida?':'Parar e salvar a jornada?';
+ $('saveDescription').textContent=finishing
+   ?'Seu resultado será enviado ao histórico e ao ranking V2.5. Esta partida será encerrada e não poderá ser retomada.'
+   :'Confirme para guardar seu progresso e continuar mais tarde.';
  $('saveDetails').textContent='Reino '+snapshot.reino+' · Território '+snapshot.territorio+' · '+snapshot.pontuacao.toLocaleString('pt-BR')+' pontos';
- $('saveNotice').textContent='Sua batalha está pausada. O progresso só será considerado salvo após a confirmação do servidor.';
+ $('saveNotice').textContent=finishing?'Confirme apenas se deseja encerrar. A partida está pausada.':'A partida está pausada até a confirmação do salvamento.';
  $('saveNotice').classList.remove('error');
- $('saveConfirm').hidden=false;
- $('saveConfirm').disabled=false;
- $('saveConfirm').textContent='✔ Confirmar e salvar';
- $('saveCancel').disabled=false;
- $('saveCancel').textContent='Continuar jogando';
- $('saveExit').hidden=true;
- $('saveOverlay').hidden=false;
- $('saveConfirm').focus();
+ $('saveConfirm').hidden=false;$('saveConfirm').disabled=false;
+ $('saveConfirm').textContent=finishing?'🏁 Confirmar finalização':'✔ Confirmar e salvar';
+ $('saveCancel').hidden=false;$('saveCancel').disabled=false;$('saveCancel').textContent='Continuar jogando';
+ $('saveExit').hidden=true;$('saveOverlay').hidden=false;$('saveConfirm').focus();
 }
 function closeStopAndResume(){
- if(!stopSaveOpen)return;
+ if(!stopSaveOpen||stopSaveMode==='finish'&&stopSaveConfirmed)return;
  try{frame.contentWindow.CM25RealmBridge?.resumeAfterSave?.(stopPauseState);}catch(e){console.warn('[V2.5] Retorno do jogo:',e);}
  stopPauseState=null;stopSaveOpen=false;stopSaveConfirmed=false;
  $('saveOverlay').hidden=true;
- $('stopSave').hidden=false;
- $('stopSave').focus();
+ $('stopSave').hidden=false;$('finishRun').hidden=false;$('stopSave').focus();
 }
 async function confirmStopAndSave(){
  if(!stopSaveOpen||stopSaveConfirmed||$('saveConfirm').disabled)return;
  const confirm=$('saveConfirm'),cancel=$('saveCancel'),notice=$('saveNotice');
  confirm.disabled=true;cancel.disabled=true;
- confirm.textContent='⏳ Salvando e confirmando…';
- notice.textContent='Enviando para o Google Sheets. Não feche esta página durante a confirmação.';
+ const finishing=stopSaveMode==='finish';
+ confirm.textContent=finishing?'⏳ Finalizando…':'⏳ Salvando e confirmando…';
+ notice.textContent='Enviando ao Google Sheets. Não feche esta página durante a confirmação.';
  notice.classList.remove('error');
  try{
   const snapshot=currentSnapshot();
-  if(!snapshot)throw Error('Não foi possível recuperar o estado desta batalha.');
-  // Mantém a partida em andamento para Continuar; NÃO finaliza nem duplica o ranking.
-  await queueCheckpoint(snapshot);
+  if(!snapshot)throw Error('Não foi possível recuperar o estado da batalha.');
+  if(finishing)await queueCheckpoint(snapshot,true,'ENCERRADA');
+  else await queueCheckpoint(snapshot);
   stopSaveConfirmed=true;
   $('saveMark').textContent='✅';
-  $('saveTitle').textContent='Partida salva com sucesso!';
-  $('saveDescription').textContent='Seu progresso está confirmado. Você pode voltar mais tarde e escolher Continuar partida.';
+  $('saveTitle').textContent=finishing?'Partida finalizada!':'Partida salva com sucesso!';
+  $('saveDescription').textContent=finishing
+   ?'O resultado foi confirmado. Sua partida terminou e você poderá iniciar uma nova jornada.'
+   :'Seu progresso foi confirmado. Use Continuar partida quando voltar.';
   $('saveDetails').textContent='Reino '+snapshot.reino+' · Território '+snapshot.territorio+' · '+snapshot.pontuacao.toLocaleString('pt-BR')+' pontos';
-  notice.textContent='Salvamento confirmado no ClassMana V2.5. Agora você pode fechar a aba com segurança.';
-  confirm.hidden=true;cancel.disabled=false;cancel.textContent='Retomar batalha';
-  $('saveExit').hidden=false;
-  $('saveExit').focus();
+  notice.textContent=finishing?'Encerramento confirmado na V2.5.':'Salvamento confirmado na V2.5.';
+  confirm.hidden=true;cancel.disabled=false;cancel.hidden=finishing;
+  if(!finishing)cancel.textContent='Retomar batalha';
+  $('saveExit').hidden=false;$('saveExit').focus();
  }catch(error){
-  console.error('[ClassMana V2.5] Parar e salvar:',error);
-  notice.textContent='⚠ O salvamento não foi confirmado. Sua batalha está pausada; tente novamente ou continue jogando.';
+  console.error('[ClassMana V2.5] Registro da partida:',error);
+  notice.textContent='⚠ O servidor não confirmou o registro. Tente novamente ou continue jogando.';
   notice.classList.add('error');
-  confirm.textContent='↻ Tentar salvar novamente';
+  confirm.textContent=finishing?'↻ Tentar finalizar novamente':'↻ Tentar salvar novamente';
   confirm.disabled=false;cancel.disabled=false;
  }
 }
-$('stopSave').addEventListener('click',openStopAndSave);
+$('stopSave').addEventListener('click',()=>openStopAndSave('save'));
+$('finishRun').addEventListener('click',()=>openStopAndSave('finish'));
 $('saveCancel').addEventListener('click',closeStopAndResume);
 $('saveConfirm').addEventListener('click',confirmStopAndSave);
-$('saveExit').addEventListener('click',()=>{
- if(stopSaveConfirmed)location.reload();
-});
+$('saveExit').addEventListener('click',()=>{if(stopSaveConfirmed)location.reload();});
 
 setInterval(()=>{
  if(!ready)return;
  try{
   const s=frame.contentWindow.CM25RealmBridge?.status();
   if(!s||s.realm!==realm||!s.active){
-   $('stopSave').hidden=true;
+   $('stopSave').hidden=true;$('finishRun').hidden=true;
    return;
   }
-  const stopBtn=$('stopSave');
-  stopBtn.hidden=!(currentRun&&campaignStarted&&!stopSaveOpen&&!endingRun);
-  if(!stopBtn.hidden)stopBtn.disabled=!s.playing||s.paused||entering;
+  const stopBtn=$('stopSave'),finishBtn=$('finishRun');
+  stopBtn.hidden=finishBtn.hidden=!(currentRun&&campaignStarted&&!stopSaveOpen&&!endingRun);
+  if(!stopBtn.hidden)stopBtn.disabled=finishBtn.disabled=!s.playing||s.paused||entering;
   // Sem atualização de tempo/pontos enquanto a confirmação está aberta.
   if(stopSaveOpen)return;
   if(s.territory!==territory){
