@@ -43,6 +43,8 @@ function cm25StartLoadingMusic(){
  }catch(e){cm25SoundButton.hidden=false;}
 }
 cm25SoundButton.addEventListener('click',cm25StartLoadingMusic);
+document.addEventListener('pointerdown',()=>{if(!cm25OpeningDone&&cm25LoadingMusic.paused)cm25StartLoadingMusic();},{passive:true});
+document.addEventListener('keydown',()=>{if(!cm25OpeningDone&&cm25LoadingMusic.paused)cm25StartLoadingMusic();});
 cm25LoadingMusic.load();
 cm25StartLoadingMusic();
 
@@ -239,7 +241,7 @@ async function enterRegisteredStudent(profile){
   sessionStorage.setItem('cm25TesteIdentidade',JSON.stringify(identity));
   currentRun={partida_id:String(game.partida_id)};
   revision=Number(game.revisao)||0;endingRun=false;lastCheckpoint=0;
-  pendingSnapshot={reino:game.reino||1,territorio:game.territorio||1,
+  pendingSnapshot={reino:Math.max(1,Math.min(10,Number(game.reino)||1)),territorio:Math.max(1,Number(game.territorio)||1),
    heroi_indice:identity.hero,personagem:game.personagem||'',
    hp:game.hp??100,mana:game.mana??100,pontuacao:game.pontuacao||0,tempo:game.tempo||0,
    id_aluno:identity.id_aluno,showTutorial:choice==='new'};
@@ -350,6 +352,10 @@ async function area(n){
   if(token!==loadId||selectedRealm!==realm)return false;
   territory=n;pendingArea=0;campaignStarted=true;info();
   pendingSnapshot=null;
+  // A entrada no território é um checkpoint oficial, mesmo que o aluno ainda não tenha terminado a fase.
+  if(currentRun&&!endingRun){
+   const entered=currentSnapshot(true);if(entered)queueCheckpoint(entered).catch(()=>{});
+  }
   $('transitionLoading').hidden=true;
   frame.style.opacity='1';frame.style.pointerEvents='auto';
   frame.focus();try{frame.contentWindow.focus()}catch(e){}
@@ -367,6 +373,15 @@ window.addEventListener('message',e=>{
    ready=true;
    if(automaticEntry){report('Reino '+realm+' carregado — iniciando território '+pendingArea);if(pendingArea)area(pendingArea);}
    else report('Aguarde o carregamento, assista ou pule o vídeo e selecione seu herói, turma e nome.');
+ }
+ else if(data.action==='AREA_ADVANCED'){
+  if(!campaignStarted||!currentRun||endingRun||entering)return;
+  const reached=Number(data.territory)||territory;
+  if(reached>territory){
+   territory=reached;pendingArea=0;info();
+   const snap=currentSnapshot(true);
+   if(snap){snap.territorio=reached;queueCheckpoint(snap).catch(()=>{});}
+  }
  }
  else if(data.action==='OPENING_VIDEO'){cm25StopLoadingMusic();}
  else if(data.action==='INTRO_DONE'){cm25StopLoadingMusic();report('Selecione seu herói, sua turma e seu nome cadastrado.');}
