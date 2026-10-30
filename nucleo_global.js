@@ -1,4 +1,4 @@
-/* CLASSMANA V2.5 — NÚCLEO GLOBAL DA CAMPANHA DE TESTE
+/* CLASSMANA V2.5 — NÚCLEO GLOBAL DA CAMPANHA
  * Este arquivo é carregado por TODOS os reinos. Comandos compartilhados e
  * futuros hooks globais ficam aqui. Módulos de chefões permanecem individuais.
  * Ranking da V2.4 é bloqueado em modo de teste.
@@ -176,7 +176,7 @@
         document.head.appendChild(script);
       });
     },
-    criarEntradaDeTeste(){
+    criarEntradaCampanha(){
       const menu=document.getElementById('menu'),main=document.getElementById('start');
       if(!menu||!main)return;
       // Reaproveita o seletor de turma e busca de alunos cadastrados da V2.4,
@@ -187,10 +187,17 @@
       const note=document.getElementById('cm25-start-test');
       if(note)note.remove();
       main.style.display='';
-      main.textContent='⚔ ENTRAR NA CAMPANHA V2.5';
+      main.textContent='⚔ INICIAR JORNADA';
       main.title='Escolha sua turma, selecione seu nome cadastrado e continue ou inicie uma partida';
       main.onclick=()=>{
+        if(!cmBankReady){alert('O banco de questões ainda não terminou de carregar.');return;}
         if(!playerId){alert('Selecione sua turma e escolha seu nome completo na lista de alunos cadastrados.');input?.focus();return;}
+        // A confirmação e o áudio são desbloqueados pelo gesto real do aluno.
+        try{
+          audio=audio||new (window.AudioContext||window.webkitAudioContext)();
+          audio.resume();
+          efeitoClassMana('confirmar',.28);
+        }catch(e){console.warn('[ClassMana V2.5] Áudio aguardando interação',e);}
         const profile={id_aluno:String(playerId),hero:Number.isInteger(heroIdx)?heroIdx:0,
           name:String(playerName||input?.value||'').trim(),
           className:String(playerClass||'')};
@@ -229,6 +236,20 @@
         elapsedMs=Math.max(0,(Number(snapshot.tempo)||0)*1000);
         try{setHud()}catch(e){}
         try{updateHUD()}catch(e){}
+        const heroName=heroes[heroIdx]?.name||'Herói';
+        const nameHud=document.getElementById('hname');
+        if(nameHud)nameHud.textContent=playerName+' • '+playerClass+' • '+heroName;
+        const elapsed=Math.floor(Math.max(0,elapsedMs)/1000);
+        const timer=document.getElementById('timerHud');
+        if(timer)timer.textContent='⏳ '+String(Math.floor(elapsed/60)).padStart(2,'0')+':'+String(elapsed%60).padStart(2,'0');
+        return true;
+      };
+      bridge.startTutorial=()=>{
+        // A abertura e a seleção já foram exibidas na entrada normal.
+        // O tutorial pertence só à primeira tentativa de uma nova jornada.
+        if(typeof showTutorial!=='function')return false;
+        playing=false;paused=true;
+        showTutorial();
         return true;
       };
     },
@@ -260,7 +281,15 @@
       };
       draw=function(){const r=oldDraw();try{core.hooks.afterDraw?.()}catch(e){console.error('Hook global visual',e)}return r};
       this.integrarProgresso();
-      this.criarEntradaDeTeste();
+      this.criarEntradaCampanha();
+      // Quando a campanha já começou, nunca reabrir o menu de cadastro
+      // no curto intervalo entre a derrota de um chefão e o próximo reino.
+      if(!document.getElementById('cm25-campaign-visuals')){
+        const style=document.createElement('style');
+        style.id='cm25-campaign-visuals';
+        style.textContent='body.cm25-test-direct #menu{display:none!important;}';
+        document.head.appendChild(style);
+      }
       // Navegadores bloqueiam autoplay no carregamento do iframe.
       // O primeiro comando/gesto durante uma batalha reativa a trilha correta.
       const unlock=()=>{try{if(playing&&!paused&&window.CM25RealmBridge?.status?.().active){
@@ -276,10 +305,4 @@
     }
   };
   window.ClassManaNucleo = core;
-  window.addEventListener('keydown',e=>{
-    if (!['F6','F7','F8'].includes(e.code) && !(e.code==='F8'&&e.shiftKey)) return;
-    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
-    if(e.repeat)return;
-    core.send('KEY',{key:e.code,shift:!!e.shiftKey});
-  },true);
 })();
