@@ -15,7 +15,7 @@ const S={area:0,active:false,transition:false,mobs:[],fx:[],camera:0,lastCamera:
   [1,5,10,1, 0,4,8,11, 2,6,9,2, 3,7,0,4, 11,8,10,9]
  ],
  files:['01_fantasma_encantado.png','02_bruxinha_fantasma.png','03_zumbizinho_espectral.png','04_fantasma_lanterna.png','05_fantasma_ataque.png','06_bruxinha_ataque.png','07_zumbizinho_ataque.png','08_fantasma_lanterna_ataque.png','09_fantasma_gelatinoso.png','10_zumbi_mago.png','11_bruxinha_fantasma_nova.png','12_fantasma_azul_investida.png'],
- bg:[],imgs:[],facing:1,total:0,clock:0,advanceReady:false,idleSeconds:0,arrowPulse:0,vy:0,jumpWasDown:false,shotDirection:1,shotHits:0,loot:null,lootClock:0,lootNext:14,lootCount:0,lootHeartUsed:false,lootChestUsed:false,lootPhaseChest:false,lootBuffs:{},lootNotice:"",lootNoticeTime:0,lootMapUntil:0,bossMovement:0,bossFace:1,bossHealthAtStart:0,previousBossHP:0,lootGuarantees:{},spriteFeet:0
+ bg:[],imgs:[],facing:1,total:0,clock:0,advanceReady:false,idleSeconds:0,arrowPulse:0,vy:0,jumpWasDown:false,shotDirection:1,shotHits:0,loot:null,lootClock:0,lootNext:14,lootCount:0,lootHeartUsed:false,lootChestUsed:false,lootPhaseChest:false,lootBuffs:{},lootNotice:"",lootNoticeTime:0,lootMapUntil:0,bossMovement:0,bossFace:1,bossHealthAtStart:0,previousBossHP:0,bossGuardTime:0,bossGuardCooldown:12,lootGuarantees:{},spriteFeet:0
 };
 const getAsset=f=>new URL('assets_v25/'+f,location.href).href;
 for(let i=1;i<=4;i++){const im=new Image(); im.src=getAsset('cenarios/cenario_'+i+'.jpg');S.bg.push(im)}
@@ -239,8 +239,8 @@ function setHud(){
  $('#ename').textContent=S.area===3?'FANTASMA':S.names[S.area];
  $('#round').textContent='FANTASMA · TERRITÓRIO '+(S.area+1)+'/4';
  $('#stageText').textContent=S.area===3?'ARENA DO FANTASMA':'NECRÓPOLE ESPECTRAL · '+S.names[S.area];
- $('#difficulty').textContent=S.area===3?'BATALHA FINAL':'DERROTE OS SUBORDINADOS · '+S.total+' RESTANTES';
- $('#ehp').style.width=S.area===3?'100%':(S.total/S.mobs.length*100)+'%';
+ $('#difficulty').textContent=S.area===3?'CHEFÃO + '+S.total+' SUBORDINADOS':'DERROTE OS SUBORDINADOS · '+S.total+' RESTANTES';
+ $('#ehp').style.width=S.area===3?(boss.max>0?Math.max(0,boss.hp/boss.max*100):0)+'%':(S.mobs.length?S.total/S.mobs.length*100:0)+'%';
 }
 function startTerritory(){
  lootResetTerritory();
@@ -248,7 +248,21 @@ function startTerritory(){
  p.x=W*.19;p.y=ground();window.cm25HeroFeetOffset=0;p.hp=100;p.mana=100;p.inv=1.5;
  shots=[];bad=[];parts=[];superCooldown=0;superUses=0;
  if(S.area<3){let ids=S.waves[S.area];S.mobs=ids.map((id,i)=>createMob(id,i,ids.length));S.total=S.mobs.length}
- else {boss.max=Math.round(stages[0].hp*4.1);boss.hp=boss.max;boss.x=W*.78;boss.y=H*.49;boss.cool=3.1;S.total=0;S.bossIntroTime=1.85;S.bossPhase=1;S.bossPhaseNotice=0;S.camera=0;S.bossMovement=0;S.bossFace=-1;S.bossHealthAtStart=boss.hp;S.previousBossHP=boss.hp}
+ else {
+  boss.max=Math.round(stages[0].hp*4.1);boss.hp=boss.max;boss.x=W*.78;boss.y=H*.49;boss.cool=3.1;
+  // Um exemplar de cada um dos doze subordinados, sem repetição.
+  S.mobs=S.files.map((_,id)=>{
+   const m=createMob(id,id,S.files.length),column=id%6,row=Math.floor(id/6);
+   m.x=W*(.27+column*.105+(row?-.025:0));
+   m.size*=.68;m.speed=46+(id%4)*6;
+   m.cool=3.0+(id%6)*.70+row*.38;
+   m.baseY=platformY()-(m.airborne?18+row*12:0);
+   m.y=m.baseY;m.cm25Chasing=true;return m;
+  });
+  S.total=S.mobs.length;S.bossIntroTime=1.85;S.bossPhase=1;S.bossPhaseNotice=0;
+  S.camera=0;S.bossMovement=0;S.bossFace=-1;S.bossHealthAtStart=boss.hp;S.previousBossHP=boss.hp;
+  S.bossGuardTime=0;S.bossGuardCooldown=11;
+ }
  setHud();say25('👻 '+S.names[S.area]+' — '+(S.area===3?'CHEFÃO!':'avance e vença a horda!'),3);
 }
 resetStage=function(){orig.reset();if(stage!==0)return;S.area=0;S.active=true;S.lootChestUsed=false;S.lootPhaseChest=false;startTerritory()};
@@ -487,7 +501,7 @@ update=function(dt){
     try{tone(newPhase===2?450:310,.40,'triangle',.06)}catch(e){}
    }
    S.bossPhaseNotice=Math.max(0,(S.bossPhaseNotice||0)-dt);
-   boss.cool=Math.max(boss.cool,.92); // Evita rajadas injustas na luta ampliada.
+   // Deixar boss.cool chegar a zero: enemyAttack depende disso!
   }
   return;
  }
