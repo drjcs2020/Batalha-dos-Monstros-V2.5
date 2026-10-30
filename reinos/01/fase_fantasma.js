@@ -640,12 +640,25 @@ function drawBossEntrance(){
 function playBossSignal(){
  try{if(soundOn){tone(196,.45,'triangle',.09);setTimeout(()=>tone(247,.45,'triangle',.09),460);setTimeout(()=>tone(330,.68,'sawtooth',.07),900)}}catch(e){}
 }
-draw=function(){if(stage!==0||!S.active)return orig.draw();if(S.area===3){orig.draw();
-  // Chefão também lança emojis ofensivos, acompanhando os projéteis reais.
-  if(S.bossIntroTime<=0){ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='32px "Segoe UI Emoji","Apple Color Emoji",sans-serif';for(let i=0;i<bad.length;i++){const q=bad[i];if(q.life>0)ctx.fillText(mobEmojis[(i+Math.floor(S.bossMovement*0.6))%mobEmojis.length],q.x,q.y)}ctx.restore()}
-  lootDraw(false);lootHud();drawBossEntrance();return}drawHorde()};
+draw=function(){if(stage!==0||!S.active)return orig.draw();if(S.area===3){
+ orig.draw();
+ // Os 12 subordinados aparecem realmente na arena, com sprites aprovados e HP.
+ for(const m of S.mobs){if(m.hp>0)drawMob(m)}
+ drawMobEffects();drawGhostGuard();
+ // Os ataques originais do chefe já são desenhados pelo motor.
+ // Emojis identificam somente projéteis criados pelos subordinados.
+ if(S.bossIntroTime<=0){
+  ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.font='29px "Segoe UI Emoji","Apple Color Emoji",sans-serif';
+  for(const q of bad){if(q.life>0&&q.ownerId!==undefined)
+   ctx.fillText(attackEmojiById[q.ownerId]||'👻',q.x,q.y)}
+  ctx.restore();
+ }
+ lootDraw(false);lootHud();drawBossEntrance();return
+}drawHorde()};
 finishBossDefeat=function(){if(stage!==0||!S.active)return orig.defeat();
  defeatPending=false;playing=false;paused=true;S.active=false;
+ S.mobs=[];S.total=0;S.bossGuardTime=0;
  changedArea('FANTASMA DERROTADO!', 'Próximo reino: Golem de Lava!',()=>{
   $('#menu').classList.remove('hidden');$('#menu').style.display='grid';$('#start').textContent='↻ TESTAR NOVAMENTE';
   stage=0;expectedStage=0;S.area=0;playing=false;paused=true;
