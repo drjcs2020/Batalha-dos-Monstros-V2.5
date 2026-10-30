@@ -1,0 +1,71 @@
+/* ClassMana V2.5 — Interfaces de jornada, transição e progresso.
+   Reutiliza arte existente da V2.4 sem alterar seu motor, placar ou salvamento. */
+:root{--cm25-gold:#ffdf86;--cm25-gold-dark:#b97524;--cm25-ice:#93eaff;--cm25-navy:#07152e;--cm25-blue:#174d86;--cm25-art:"https://drjcs2020.github.io/classmana-batalha-dos-monstros-V2/assets/arena/fundos/arena-medieval-original.png"}
+/* Moldura e atmosfera compartilhadas com a identidade ClassMana. */
+#saveOverlay,#transitionLoading{background:linear-gradient(130deg,#020a20ed,#071d3aca 45%,#050718e9),url("https://drjcs2020.github.io/classmana-batalha-dos-monstros-V2/assets/arena/fundos/arena-medieval-original.png") center/cover!important;isolation:isolate}
+#saveOverlay:before,#transitionLoading:before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 37%,#75ceff29,transparent 48%),radial-gradient(circle at 10% 88%,#b9703b24,transparent 26%);z-index:-1}
+#saveOverlay:after,#transitionLoading:after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(125deg,transparent 0 125px,#8cd7ff09 127px 128px,transparent 130px 210px);opacity:.65;z-index:-1}
+/* Painel principal de salvar/finalizar */
+#savePanel{position:relative;isolation:isolate;width:min(680px,95vw);max-height:calc(100dvh - 28px);overflow-y:auto;overflow-x:hidden;padding:24px clamp(18px,4.5vw,40px) 27px!important;border:2px solid #f7d58b!important;border-radius:24px!important;background:linear-gradient(155deg,#205486ed 0%,#12345ceb 35%,#081b3aee 72%,#081328fa 100%)!important;box-shadow:0 0 0 5px #224d71ba,0 0 0 7px #88dfff38,0 26px 80px #000c,inset 0 0 34px #7edaff1b!important;color:#effaff!important;font-family:"Trebuchet MS",Arial,sans-serif!important;text-align:center}
+#savePanel:before{content:"";position:absolute;inset:10px;border:1px solid #eecb7e6e;border-radius:16px;pointer-events:none;z-index:-1}
+#savePanel:after{content:"";position:absolute;top:-70px;left:50%;transform:translateX(-50%);width:370px;height:270px;background:radial-gradient(circle,#68d7ff25 0%,transparent 70%);pointer-events:none;z-index:-1}
+#savePanel .cm25SaveCorner{position:absolute;width:27px;height:27px;border:3px solid var(--cm25-gold);pointer-events:none;filter:drop-shadow(0 0 6px #ffdb8190)}
+#savePanel .cm25SaveCorner.a{top:14px;left:14px;border-right:0;border-bottom:0;border-top-left-radius:9px}
+#savePanel .cm25SaveCorner.b{top:14px;right:14px;border-left:0;border-bottom:0;border-top-right-radius:9px}
+#savePanel .cm25SaveCorner.c{bottom:14px;left:14px;border-right:0;border-top:0;border-bottom-left-radius:9px}
+#savePanel .cm25SaveCorner.d{bottom:14px;right:14px;border-left:0;border-top:0;border-bottom-right-radius:9px}
+#savePanel .cm25SaveBrand{display:flex;align-items:center;justify-content:center;gap:12px;min-height:24px;margin:0 0 8px;color:#d8eaff;font-size:11px;font-weight:900;letter-spacing:.2em}
+#savePanel .cm25SaveBrand:before,#savePanel .cm25SaveBrand:after{content:"";height:1px;max-width:65px;flex:1;background:linear-gradient(90deg,transparent,#f6d78eaa)}
+#savePanel .cm25SaveBrand:after{transform:rotate(180deg)}
+#savePanel .saveMark{position:relative;display:block;width:110px;height:91px;margin:0 auto 4px;font-size:initial;filter:drop-shadow(0 8px 12px #0008)}
+#savePanel .saveMark:before{content:"";position:absolute;inset:3px 13px 0;border-radius:50%;border:1px solid #7de9ff75;box-shadow:0 0 24px #58dbff70,inset 0 0 22px #45e2ff24;animation:cm25Halo 5s linear infinite}
+#savePanel .saveMark img{position:absolute;inset:0;margin:auto;max-width:100%;max-height:100%;object-fit:contain;pointer-events:none}
+#savePanel .cm25CrestShield{width:83px;height:82px;filter:drop-shadow(0 3px 7px #010b23)}
+#savePanel .cm25CrestGem{width:48px;height:51px;top:18px!important;filter:drop-shadow(0 0 13px #7ffff1c9);animation:cm25Float 2.5s ease-in-out infinite}
+#savePanel .cm25SaveGlyph{position:absolute;bottom:1px;right:7px;display:grid;place-items:center;width:29px;height:29px;border:2px solid #f9dc99;border-radius:50%;background:linear-gradient(135deg,#205487,#0b2343);color:#ffe3a1;font:900 18px Arial;box-shadow:0 0 14px #eab96170}
+#savePanel h2{font-size:clamp(23px,4.7vw,34px)!important;font-weight:900!important;line-height:1.15!important;letter-spacing:.01em;color:#ffe4a3!important;text-shadow:0 3px 1px #2e1931,0 0 23px #edac5270;margin:8px 0 8px!important}
+#savePanel #saveDescription{max-width:535px;margin:8px auto 16px;color:#f2f7ff;font-size:clamp(13px,2.2vw,16px)!important;line-height:1.5;font-weight:600}
+#savePanel .cm25ProgressHeading{margin:0 0 9px;color:#bfeeff;text-transform:uppercase;font-size:11px;font-weight:900;letter-spacing:.15em}
+#savePanel .cm25SaveStats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 12px}
+#savePanel .cm25SaveStat{min-width:0;padding:11px 5px;border-radius:12px;border:1px solid #83cce67a;background:linear-gradient(180deg,#0b2c50c8,#061a33c9);box-shadow:inset 0 1px 9px #4bcdff1b}
+#savePanel .cm25SaveStat strong{display:block;color:#ffe19c;font-size:clamp(17px,4vw,26px);font-weight:900;line-height:1.2;text-shadow:0 2px 8px #07142c}
+#savePanel .cm25SaveStat small{display:block;color:#cae9f6;font-size:clamp(10px,2vw,12px);font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-top:4px}
+#savePanel #saveDetails{position:absolute!important;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+#savePanel #saveNotice{padding:10px 12px;margin:11px 0 6px;color:#d9eafa;font-weight:700;font-size:clamp(12px,2vw,13px)!important;line-height:1.45;border:1px solid #72b8d446;background:#06172d6b;border-radius:10px}
+#savePanel #saveNotice.error{color:#ffe3da!important;background:#4a1c31bc;border:1px solid #f7a69d8c}
+#savePanel .cm25SyncTrack{height:7px;margin:6px 12px 8px;overflow:hidden;border-radius:999px;background:#06112a;border:1px solid #8cceec69}
+#savePanel .cm25SyncTrack[hidden]{display:none!important}
+#savePanel .cm25SyncTrack span{display:block;width:32%;height:100%;border-radius:999px;background:linear-gradient(90deg,#6ce2f6,#fce49b,#79cafa);animation:cm25Sync 1.3s ease-in-out infinite alternate;box-shadow:0 0 12px #acebff}
+#savePanel .saveActions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px!important;margin-top:15px!important}
+#savePanel .saveActions button{min-height:54px!important;min-width:0;flex:auto!important;margin:0!important;padding:12px 13px!important;border:2px solid #a2e8ff!important;border-radius:12px!important;background:linear-gradient(180deg,#368dc5,#14437a 89%)!important;box-shadow:0 4px 0 #061a38,0 0 15px #43aef328!important;color:#fff!important;font:900 clamp(13px,2.3vw,16px) "Trebuchet MS",Arial,sans-serif!important;text-shadow:0 2px 2px #00152c!important;cursor:pointer;transition:transform .17s ease,filter .17s ease,box-shadow .17s ease}
+#savePanel .saveActions button.primary{border-color:#fff0bf!important;background:linear-gradient(180deg,#fff3b1,#f0c65f 48%,#cf8e32)!important;color:#273353!important;text-shadow:none!important;box-shadow:0 4px 0 #89521b,0 0 19px #efb95340!important}
+#savePanel .saveActions button:hover:enabled{filter:brightness(1.12);transform:translateY(-2px)}
+#savePanel .saveActions button:active:enabled{transform:translateY(2px)}
+#savePanel .saveActions button:focus-visible{outline:3px solid #fff;outline-offset:3px}
+#savePanel .saveActions button:disabled{opacity:.6!important;cursor:wait;filter:saturate(.55)}
+#savePanel .saveActions button[hidden]{display:none!important}
+#savePanel .saveActions button:only-child{grid-column:1/-1;max-width:330px;width:100%;justify-self:center}
+#savePanel[data-visual="finish"] .cm25SaveGlyph{background:linear-gradient(#8d3851,#451c37)}
+#savePanel[data-visual="success"] .cm25SaveGlyph{background:linear-gradient(#237d66,#0e4537);border-color:#bbffda;color:#fff}
+#savePanel[data-visual="working"] .saveMark:before{animation-duration:1.15s}
+#savePanel[data-visual="error"] .cm25SaveGlyph{background:#783540;border-color:#ffbdaf}
+/* Passagem de reino: portal de cristal, sem placeholder simples */
+#transitionLoading{padding:clamp(10px,3vw,28px)!important;gap:0!important}
+#transitionLoading #transitionPanel{position:relative;isolation:isolate;width:min(640px,94vw);max-height:calc(100dvh - 20px);overflow:auto;padding:clamp(14px,3vw,24px) clamp(19px,4vw,35px) 25px;border:2px solid #f1cc79;border-radius:24px;background:linear-gradient(145deg,#235b8dea,#112d56f4 49%,#08152ff8);box-shadow:0 0 0 5px #367ab356,0 24px 74px #000b,inset 0 0 31px #95e6ff22;text-align:center}
+#transitionLoading #transitionPanel:before{content:"";position:absolute;inset:9px;border:1px solid #f3d88b6a;border-radius:15px;pointer-events:none;z-index:-1}
+#transitionLoading .cm25TransitionEyebrow{display:inline-block;padding:6px 14px;border:1px solid #e8c87972;border-radius:30px;background:#0b2b4cc9;color:#f7dc9b;font:900 11px "Trebuchet MS",Arial,sans-serif;letter-spacing:.16em;margin-bottom:7px}
+#transitionLoading .cm25TransitionHeraldry{display:flex;justify-content:center;align-items:center;gap:18px;height:86px;margin:3px 0 8px}
+#transitionLoading .cm25TransitionHeraldry img{width:68px;height:68px;object-fit:contain;filter:drop-shadow(0 0 13px #7beaff70)}
+#transitionLoading .cm25TransitionHeraldry .cm25TransitionCrystal{width:92px;height:90px;animation:cm25Float 2.3s ease-in-out infinite;filter:drop-shadow(0 0 18px #7aeefa9b)}
+#transitionLoading #transitionLabel{font-size:clamp(21px,4.4vw,34px)!important;line-height:1.15;font-weight:900!important;color:#ffdd8c!important;text-shadow:0 3px 1px #332143,0 0 18px #f7c66e68;margin:2px auto 8px}
+#transitionLoading #transitionSubTitle{font:600 clamp(12px,2.4vw,16px) "Trebuchet MS",Arial,sans-serif;color:#d8ecfa;margin:0 auto 15px;line-height:1.5}
+#transitionLoading #transitionTrack{width:min(445px,100%)!important;height:17px!important;margin:0 auto;overflow:hidden;border:2px solid #f4ce80!important;border-radius:999px!important;background:#081429!important;box-shadow:0 0 18px #68d4ff39,inset 0 2px 5px #0008}
+#transitionLoading #transitionFill{height:100%;width:38%!important;border-radius:999px!important;background:linear-gradient(90deg,#329cdb,#8beeff,#f6d782);box-shadow:0 0 18px #96edff;animation:cm25PortalLoad 1.4s ease-in-out infinite alternate!important}
+#transitionLoading .cm25TransitionFoot{font:800 11px "Trebuchet MS",Arial,sans-serif;letter-spacing:.12em;color:#bee6f9;margin:13px 0 0}
+@keyframes cm25Float{0%,100%{transform:translateY(2px)}50%{transform:translateY(-6px)}}
+@keyframes cm25Halo{to{transform:rotate(360deg)}}
+@keyframes cm25Sync{0%{transform:translateX(-12%)}100%{transform:translateX(240%)}}
+@keyframes cm25PortalLoad{0%{transform:translateX(-100%)}100%{transform:translateX(270%)}}
+@media(max-width:520px){#savePanel{padding:17px 17px 20px!important}#savePanel .saveMark{height:75px;width:96px}#savePanel .cm25CrestShield{height:70px;width:70px}#savePanel .cm25CrestGem{height:42px;width:42px}#savePanel .saveActions{gap:8px!important}#savePanel .saveActions button{padding:10px 7px!important;font-size:12px!important}#savePanel .cm25SaveStats{gap:6px}#transitionLoading .cm25TransitionHeraldry{gap:9px;height:74px}#transitionLoading .cm25TransitionHeraldry img{height:56px;width:56px}#transitionLoading .cm25TransitionHeraldry .cm25TransitionCrystal{height:76px;width:75px}}
+@media(max-height:560px){#savePanel{padding-top:12px!important;padding-bottom:13px!important}#savePanel .saveMark{height:57px;width:90px;margin-bottom:0}#savePanel .cm25CrestShield{height:57px;width:57px}#savePanel .cm25CrestGem{height:34px;width:34px}#savePanel h2{font-size:21px!important;margin:2px 0!important}#savePanel #saveDescription{margin:5px auto 10px;font-size:12px!important}#savePanel .cm25SaveStat{padding:6px 3px}#savePanel .cm25SaveStat strong{font-size:17px}#savePanel #saveNotice{padding:6px 8px;margin:6px auto}#savePanel .saveActions{margin-top:9px!important}#savePanel .saveActions button{min-height:43px!important}#transitionLoading #transitionPanel{padding:12px 18px 17px}#transitionLoading .cm25TransitionHeraldry{height:62px;margin:0}#transitionLoading .cm25TransitionHeraldry img{height:52px;width:52px}#transitionLoading .cm25TransitionHeraldry .cm25TransitionCrystal{height:63px;width:64px}#transitionLoading #transitionLabel{font-size:22px!important;margin:2px}#transitionLoading #transitionSubTitle{margin-bottom:10px}}
+@media(prefers-reduced-motion:reduce){#savePanel .saveMark:before,#savePanel .cm25CrestGem,#savePanel .cm25SyncTrack span,#transitionLoading .cm25TransitionCrystal,#transitionLoading #transitionFill{animation:none!important}#transitionLoading #transitionFill{transform:none!important;width:100%!important}}
