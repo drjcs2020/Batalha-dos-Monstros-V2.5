@@ -267,16 +267,27 @@
       if(!bridge||bridge.cm25ProgressInstalled)return;
       bridge.cm25ProgressInstalled=true;
       const status=bridge.status.bind(bridge),select=bridge.selectArea.bind(bridge);
-      bridge.status=()=>({
-        ...status(),id_aluno:String(playerId||''),
-        personagem:String(heroes[heroIdx]?.name||''),
-        hp:Number(p.hp)||0,mana:Number(p.mana)||0,
-        tempo:Math.max(0,Math.round(Number(elapsedMs||0)/1000)),
-        gameEnded:!!gameEnded
-      });
+      let lastReportedTerritory=Number(status()?.territory)||1;
+      bridge.status=()=>{
+        const actual=status(),reached=Number(actual.territory)||1;
+        // Avanço real é informado ao controlador para que Continuar retome a área correta.
+        if(actual.active&&reached>lastReportedTerritory){
+          lastReportedTerritory=reached;
+          core.send('AREA_ADVANCED',{territory:reached});
+        }else if(!actual.active){lastReportedTerritory=reached;}
+        return {
+          ...actual,id_aluno:String(playerId||''),
+          personagem:String(heroes[heroIdx]?.name||''),
+          hp:Number(p.hp)||0,mana:Number(p.mana)||0,
+          tempo:Math.max(0,Math.round(Number(elapsedMs||0)/1000)),
+          gameEnded:!!gameEnded
+        };
+      };
       bridge.selectArea=(target,profile)=>{
         if(profile?.id_aluno)playerId=String(profile.id_aluno);
-        return select(target,profile);
+        const selected=select(target,profile);
+        lastReportedTerritory=Number(selected)||Number(target)+1||1;
+        return selected;
       };
       bridge.restoreProgress=snapshot=>{
         if(!snapshot||!bridge.status().active)return false;
