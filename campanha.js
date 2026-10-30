@@ -76,7 +76,7 @@ function currentSnapshot(){
  }catch(e){return null;}
 }
 function queueCheckpoint(snapshot,final=false,resultado='ENCERRADA'){
- if(!currentRun||!identity?.id_aluno||!snapshot||endingRun&&!final)return saveChain;
+ if(!currentRun||!identity?.id_aluno||!snapshot||endingRun)return saveChain;
  if(final)endingRun=true;
  const request={acao:final?'finalizar_partida':'salvar_progresso',
   id_aluno:identity.id_aluno,turma:identity.className,partida_id:currentRun.partida_id,
