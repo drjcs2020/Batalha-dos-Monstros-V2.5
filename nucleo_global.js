@@ -189,6 +189,95 @@
       main.style.display='';
       main.textContent='⚔ INICIAR JORNADA';
       main.title='Escolha sua turma, selecione seu nome cadastrado e continue ou inicie uma partida';
+      // RESTAURAR acesso livre ao PLACAR: nunca exigir cadastro ou início de partida.
+      // O botão original era ocultado por módulos dos reinos; a V2.5 deve consultar
+      // exclusivamente a API da V2.5 e não mostrar placares locais da V2.4.
+      const placarButton=document.getElementById('openRanking');
+      if(placarButton){
+        const markerId='cm25-placar-livre';
+        if(!document.getElementById(markerId)){
+          const style=document.createElement('style');
+          style.id=markerId;
+          style.textContent='#menu .menuActions #openRanking{display:inline-flex!important;align-items:center;justify-content:center;min-height:48px;padding:10px 19px!important;cursor:pointer;visibility:visible!important}';
+          document.head.appendChild(style);
+        }
+        placarButton.removeAttribute('hidden');
+        placarButton.textContent='🏆 PLACAR';
+        placarButton.title='Consultar o placar ClassMana V2.5 sem iniciar uma partida';
+        placarButton.onclick=async()=>{
+          const overlay=document.getElementById('rankingOverlay');
+          const tableContainer=document.getElementById('rankingTable');
+          const summary=document.getElementById('rankSummary');
+          const close=document.getElementById('closeRanking');
+          if(!overlay||!tableContainer||!summary||!close)return;
+          const requestId=core.placarRequestId=(core.placarRequestId||0)+1;
+          overlay.dataset.final='0';overlay.dataset.defeat='0';
+          close.textContent='↩ VOLTAR À SELEÇÃO';
+          summary.textContent='Ranking ClassMana V2.5 • Maior pontuação, maior fase e menor tempo.';
+          tableContainer.textContent='🌐 Consultando classificação da V2.5…';
+          overlay.classList.remove('hidden');
+          try{
+            const response=await core.consultarV25({acao:'ranking'});
+            if(response?.success!==true&&response?.sucesso!==true)
+              throw Error(response?.erro||'Resposta inválida do servidor.');
+            if(!Array.isArray(response.ranking))
+              throw Error('O servidor não retornou a lista de classificação.');
+            if(requestId!==core.placarRequestId||overlay.classList.contains('hidden'))return;
+            const players=response.ranking.map((r,i)=>({
+              name:String(r.nome||r.name||'').trim(),
+              turma:String(r.turma||'').trim(),
+              hero:String(r.personagem||r.hero||'').trim(),
+              fase:Number(r.fase??r.territorio??r.stage??0)||0,
+              pontos:Number(r.pontuacao??r.score??0)||0,
+              tempo:Number(r.tempo??r.tempo_seg??r.time??0)||0,
+              id:String(r.id_aluno||i)
+            })).filter(r=>r.name);
+            players.sort((a,b)=>b.pontos-a.pontos||b.fase-a.fase||a.tempo-b.tempo||a.name.localeCompare(b.name,'pt-BR'));
+            tableContainer.replaceChildren();
+            if(!players.length){
+              const empty=document.createElement('p');
+              empty.textContent='Ainda não há pontuações registradas na V2.5.';
+              tableContainer.appendChild(empty);
+              return;
+            }
+            const wrap=document.createElement('div');wrap.className='rankingScroll';
+            const table=document.createElement('table');table.className='ranking';
+            const thead=document.createElement('thead'),header=document.createElement('tr');
+            for(const heading of ['#','Aluno','Turma','Herói','Fase','Pontos','Tempo']){
+              const th=document.createElement('th');th.textContent=heading;header.appendChild(th);
+            }
+            thead.appendChild(header);table.appendChild(thead);
+            const tbody=document.createElement('tbody');
+            for(const [index,p] of players.slice(0,50).entries()){
+              const tr=document.createElement('tr');
+              const seconds=Math.max(0,Math.round(p.tempo));
+              const values=[index<3?['🥇','🥈','🥉'][index]:String(index+1),p.name,p.turma||'—',
+                p.hero||'—',String(p.fase),p.pontos.toLocaleString('pt-BR'),
+                '⏳ '+String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0')];
+              for(const value of values){
+                const td=document.createElement('td');td.textContent=value;tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+            table.appendChild(tbody);wrap.appendChild(table);tableContainer.appendChild(wrap);
+            const note=document.createElement('p');note.style.margin='10px 0 0';
+            note.textContent='TOP 50 • Classificação online V2.5';
+            tableContainer.appendChild(note);
+          }catch(error){
+            if(requestId!==core.placarRequestId||overlay.classList.contains('hidden'))return;
+            console.error('[ClassMana V2.5] Consulta do placar',error);
+            tableContainer.replaceChildren();
+            const notice=document.createElement('p');
+            notice.textContent='⚠ Não foi possível consultar o placar online: '+String(error.message||error);
+            const retry=document.createElement('button');
+            retry.type='button';retry.className='rankBtn';
+            retry.textContent='🔄 TENTAR NOVAMENTE';
+            retry.onclick=()=>placarButton.click();
+            tableContainer.append(notice,retry);
+          }
+        };
+      }
+
       main.onclick=()=>{
         if(!cmBankReady){alert('O banco de questões ainda não terminou de carregar.');return;}
         if(!playerId){alert('Selecione sua turma e escolha seu nome completo na lista de alunos cadastrados.');input?.focus();return;}
