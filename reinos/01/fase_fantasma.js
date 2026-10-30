@@ -411,6 +411,50 @@ function cm25ApplyHeroContact(dt,includeBoss=false){
   if(boss.hp===0){bossDefeated=true;defeatPending=true;defeatDelay=3.4;defeatStage=stage;}
  }
 }
+
+ // O motor original atualiza projéteis na arena: detectar apenas colisões
+ // com os subordinados, para evitar dupla movimentação.
+ function hitBossMinions(dt){
+  if(S.area!==3||!S.active||!playing||paused||defeatPending)return;
+  for(const q of shots){
+   if(q.life<=0)continue;
+   const ox=q.x-q.vx*dt,oy=q.y-q.vy*dt,vx=q.x-ox,vy=q.y-oy;
+   for(const m of S.mobs){
+    if(m.hp<=0)continue;
+    const cx=m.x,cy=m.y-m.size*.52;
+    const t=clamp(((cx-ox)*vx+(cy-oy)*vy)/(vx*vx+vy*vy||1),0,1);
+    if(Math.hypot(ox+vx*t-cx,oy+vy*t-cy)>m.size*.32+q.r*.58)continue;
+    q.life=0;m.hp=Math.max(0,m.hp-q.dmg*((S.lootBuffs.sword||0)>0?1.35:1));
+    m.hit=.22;burst(cx,cy,q.col||'#a4f2ff',12);
+    if(m.hp===0){S.total=Math.max(0,S.total-1);score+=45;burst(cx,cy,'#d2f5ff',22);setHud();try{updateHUD()}catch(e){}}
+    break;
+   }
+  }
+  shots=shots.filter(q=>q.life>0);
+ }
+ function updateGhostGuard(dt,previousHp){
+  S.bossGuardCooldown=Math.max(0,S.bossGuardCooldown-dt);
+  S.bossGuardTime=Math.max(0,S.bossGuardTime-dt);
+  if(S.bossGuardCooldown<=0&&boss.hp>boss.max*.18&&!bossDefeated){
+   S.bossGuardTime=2.3;S.bossGuardCooldown=S.bossPhase>=3?9.5:12.5;
+   say25('🛡 O FANTASMA ERGUEU UM ESCUDO ESPECTRAL!',2);
+   burst(boss.x,boss.y,'#86eaff',19);
+  }
+  if(S.bossGuardTime>0&&boss.hp>0&&!bossDefeated&&boss.hp<previousHp){
+   boss.hp=Math.min(boss.max,boss.hp+(previousHp-boss.hp)*.45);
+   $('#ehp').style.width=Math.max(0,boss.hp/boss.max*100)+'%';
+  }
+ }
+ function drawGhostGuard(){
+  if(S.area!==3||S.bossGuardTime<=0||boss.hp<=0)return;
+  const radius=Math.min(W*.15,116)*(1+Math.sin(S.bossMovement*10)*.055);
+  ctx.save();ctx.globalAlpha=.74;ctx.strokeStyle='#9beeff';ctx.lineWidth=5;
+  ctx.shadowColor='#72dbff';ctx.shadowBlur=24;
+  ctx.beginPath();ctx.arc(boss.x,boss.y,radius,0,Math.PI*2);ctx.stroke();
+  ctx.strokeStyle='#e8faff';ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(boss.x,boss.y,radius*.83,0,Math.PI*2);ctx.stroke();
+  ctx.restore();
+ }
 function collision(dt){
  for(const q of shots){const ox=q.x,oy=q.y;q.x+=q.vx*dt;q.y+=q.vy*dt;q.life-=dt;if(q.life<=0)continue;
   for(const m of S.mobs){if(m.hp<=0)continue;
@@ -476,10 +520,13 @@ update=function(dt){
   updateFacing((keys.ArrowRight||keys.d?1:0)-(keys.ArrowLeft||keys.a?1:0)+joy.x);
   // Na arena do chefão, preservar o combate original mas substituir a física vertical.
   const old=[keys.ArrowUp,keys.w,keys.ArrowDown,keys.s,joy.y];
+  const previousBossHp=boss.hp;
   keys.ArrowUp=keys.w=keys.ArrowDown=keys.s=false;joy.y=0;
   try{orig.update(dt)}finally{[keys.ArrowUp,keys.w,keys.ArrowDown,keys.s,joy.y]=old}
-  if(playing&&!paused){
-   applyVerticalPhysics(dt);lootStep(dt);cm25ApplyHeroContact(dt,true);
+  if(playing&&!paused&&!gameEnded&&!defeatPending){
+   applyVerticalPhysics(dt);lootStep(dt);
+   updateMobs(dt);hitBossMinions(dt);cm25ApplyHeroContact(dt,true);
+   updateGhostGuard(dt,previousBossHp);stepMobEffects(dt);
    // Chefe se move em arcos, alterna direção e persegue o jogador em toda a arena.
    // Controla a velocidade para haver espaço de reação entre as investidas.
    S.bossMovement+=dt;
