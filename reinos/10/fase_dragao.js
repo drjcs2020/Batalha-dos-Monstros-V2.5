@@ -488,7 +488,6 @@ draw=function(){if(stage!==0||!R.active)return orig.draw();if(R.area===4){orig.d
 };
 finishBossDefeat=function(){if(stage!==0||!R.active)return orig.finish();if(R.area===4&&R.mobs.some(m=>m.alive)){boss.hp=Math.max(1,boss.hp);bossDefeated=false;defeatPending=false;say('DERROTE OS QUATRO GUARDIÕES!',2.2);return;}return orig.finish();};
 window.addEventListener('keydown',e=>{if(window.ClassManaV25TestMode&&window.parent!==window)return;if(!R.active)return;if(e.code==='F6'||e.code==='F7'){e.preventDefault();e.stopImmediatePropagation();if(e.code==='F7'){if(R.area!==4)banner('⚠ CHEFÃO FINAL\n🐉 DRAGÃO DE FOGO',()=>toArea(4),2300)}else if(R.area===3)advanceTerritory();else toArea((R.area+1)%5)}},true);
-const note=document.createElement('div');note.style.cssText='position:fixed;bottom:3px;left:5px;z-index:99990;font:11px Arial;color:#e9eeff;background:#15213aaf;padding:4px 6px;border-radius:5px;pointer-events:none';note.textContent='REINO 10 · V2.5 FINAL · F6 próxima fase · F7 chefão · ↑/W saltar';document.body.appendChild(note);
 
 // == Ponte de integração com o núcleo compartilhado, Reino 10 ==
 // Avanço automático de reino após o chefão (quando o módulo realmente concluiu a luta).
