@@ -172,17 +172,17 @@
 #question .arena-hero{position:absolute!important;left:.6%!important;bottom:0!important;height:clamp(145px,35vh,280px)!important;max-width:23vw!important;object-fit:contain!important;z-index:4!important}
 @media(max-width:650px){
  #question .arena-stage{width:100vw!important;max-height:98dvh!important}
- #question .arena-progress{top:25.5%!important;font-size:clamp(8px,2vw,12px)!important;padding:1px 5px!important}
+ #question .arena-progress{top:25.5%!important;font-size:clamp(12px,2.1vw,16px)!important;padding:2px 7px!important}
  #question .arena-question{top:32%!important;left:14%!important;width:72%!important;height:20%!important;padding:3px!important}
- #question #qtext{font-size:clamp(9px,2.1vw,14px)!important}
+ #question #qtext{font-size:clamp(16px,2.6vw,21px)!important}
  #question .arena-image-slot{width:32%!important;padding:2px!important}
  #question #arenaZoom{bottom:-12px!important;font-size:15px!important}
  #question .arena-answers{left:15%!important;top:54%!important;width:70%!important;height:21%!important;column-gap:3%!important;row-gap:5%!important}
- #question .arena-answers .ans{font-size:clamp(7px,1.8vw,11px)!important;padding:1px 3px 1px 25px!important}
- #question .arena-answers .ans::before{height:25px!important;width:25px!important}
+ #question .arena-answers .ans{font-size:clamp(14px,2.3vw,18px)!important;padding:2px 5px 2px 33px!important}
+ #question .arena-answers .ans::before{height:32px!important;width:32px!important}
  #question .arena-hint{top:76%!important;width:23vw!important;height:7vw!important;min-height:22px!important}
- #question #qfeedback{top:84%!important;font-size:clamp(7px,1.6vw,10px)!important}
- #question .arena-status{top:88%!important;font-size:clamp(7px,1.5vw,10px)!important;max-width:72%!important}
+ #question #qfeedback{top:84%!important;font-size:clamp(12px,1.9vw,15px)!important}
+ #question .arena-status{top:88%!important;font-size:clamp(12px,1.8vw,14px)!important;max-width:72%!important}
  #question .arena-hero{height:30vh!important;max-width:23vw!important}
 }
 
@@ -335,16 +335,24 @@
 </style><link rel="preload" as="audio" href="assets/sons/cm_selecao_herois.mp3"><link rel="preload" as="image" href="assets/arena/fundos/tutorial-esmeralda.png">
 <style id="cmLoadStyle">
 #classmanaSplash{z-index:120!important}
-#cmLoadUI{position:absolute;z-index:3;bottom:max(25px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(440px,86vw);padding:12px 17px 14px;border-radius:15px;background:rgba(5,14,34,.82);border:1px solid #e4c568a6;box-shadow:0 8px 30px #0009;text-align:center;color:#fff;font:700 15px Trebuchet MS,Arial,sans-serif}
-#cmLoadText{display:flex;justify-content:space-between;gap:12px;margin-bottom:9px;text-shadow:0 2px 3px #000}
-#cmLoadTrack{height:20px;border:2px solid #b4e1a7;border-radius:20px;background:#122a27;overflow:hidden;box-shadow:inset 0 2px 5px #0008}
+#cmLoadUI{position:absolute;z-index:3;bottom:max(25px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(650px,94vw);padding:17px 23px 19px;border-radius:19px;background:linear-gradient(145deg,#12325de9,#061933f2);border:2px solid #e4c568c7;box-shadow:0 8px 34px #0009;text-align:center;color:#fff;font:800 clamp(18px,2.1vw,24px) Trebuchet MS,Arial,sans-serif}
+#cmLoadText{display:flex;justify-content:space-between;gap:12px;margin-bottom:13px;text-shadow:0 2px 3px #000}
+#cmLoadTrack{height:27px;border:2px solid #b4e1a7;border-radius:20px;background:#122a27;overflow:hidden;box-shadow:inset 0 2px 5px #0008}
 #cmLoadFill{height:100%;width:0%;background:linear-gradient(180deg,#8af86d,#2bd33e 60%,#148e32);box-shadow:0 0 13px #57ff5b;transition:width .25s ease}
 
+
+/* Escala para carregamento compacto em paisagem: reduzir ornamentos, não o texto. */
+@media(max-height:480px){
+ #cmLoadUI{bottom:12px!important;padding:10px 16px 13px!important;font-size:18px!important}
+ #cmLoadTrack{height:23px!important}
+ #question #qtext{font-size:clamp(15px,2.3vw,20px)!important}
+ #question #answers .ans{font-size:clamp(13px,1.8vw,17px)!important}
+}
 #classmanaSplash.hide #cmLoadUI{pointer-events:none}
 </style><style id="cm-review-css">
-#question #qtext{ text-align:left!important;text-indent:12px!important;overflow:auto!important;overflow-wrap:anywhere!important;hyphens:auto!important;font-size:clamp(15px,1.8vw,23px)!important;line-height:1.18!important;padding:4px 9px!important;min-height:0!important;max-height:100%!important;}
+#question #qtext{ text-align:left!important;text-indent:12px!important;overflow:auto!important;overflow-wrap:anywhere!important;hyphens:auto!important;font-size:clamp(18px,2vw,28px)!important;line-height:1.25!important;padding:4px 9px!important;min-height:0!important;max-height:100%!important;}
 #question .arena-image-slot{min-width:0!important;}
-#question #answers .ans{white-space:normal!important;overflow-wrap:anywhere!important;font-size:clamp(13px,1.45vw,19px)!important;line-height:1.12!important;}
+#question #answers .ans{white-space:normal!important;overflow-wrap:anywhere!important;font-size:clamp(15px,1.65vw,21px)!important;line-height:1.17!important;}
 #cmTextPreview{display:none;width:100%;height:100%;overflow:hidden;background:white;color:#111;border-radius:7px;padding:7px;box-sizing:border-box;font-size:12px;text-align:left;line-height:1.2;}
 #cmFullText{display:none;background:#fff;color:#111;max-width:min(92vw,900px);max-height:75vh;overflow:auto;padding:24px;border-radius:12px;font:normal clamp(18px,2.5vw,27px)/1.45 Arial,sans-serif;white-space:pre-wrap;}
 #arenaImageModal.cm-text #arenaImageExpanded{display:none}#arenaImageModal.cm-text #cmFullText{display:block}
