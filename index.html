@@ -13,6 +13,23 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050c1b;col
 #realmTitle{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 #status{position:fixed;bottom:max(10px,env(safe-area-inset-bottom));left:max(10px,env(safe-area-inset-left));z-index:201;max-width:min(92vw,560px);padding:8px 13px;background:#092141ed;border:1px solid #c6a568;border-radius:9px;color:#fff;box-shadow:0 6px 25px #0008;pointer-events:none;opacity:0;transition:opacity .2s;font-size:13px}
 #status.visible{opacity:1}
+#stopSave{position:fixed;right:max(12px,env(safe-area-inset-right));top:max(12px,env(safe-area-inset-top));z-index:90;padding:11px 16px;border:2px solid #ebc273;border-radius:12px;background:linear-gradient(#2968a2,#112a48);color:#ffe9ae;font:bold 15px Arial;box-shadow:0 6px 20px #0009;cursor:pointer}
+#stopSave[hidden],#saveOverlay[hidden]{display:none!important}
+#stopSave:disabled{opacity:.55;cursor:not-allowed}
+#saveOverlay{position:fixed;inset:0;z-index:1001;display:grid;place-items:center;background:#020a1aef;padding:16px}
+#savePanel{width:min(510px,94vw);max-height:90vh;overflow:auto;border:2px solid #e7bb65;border-radius:20px;background:linear-gradient(145deg,#194366,#0d1a31 80%);box-shadow:0 22px 65px #000b;padding:25px 22px;text-align:center;color:#fff;font-family:Arial,sans-serif}
+#savePanel h2{color:#ffe19d;font-size:clamp(23px,4vw,29px);margin:10px 0}
+#savePanel p{font-size:16px;line-height:1.5}
+#savePanel .saveMark{font-size:43px}
+#savePanel .saveActions{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}
+#savePanel button{flex:1 1 185px;padding:13px 15px;min-height:49px;border:2px solid #e6be77;border-radius:11px;background:linear-gradient(#3275b2,#194572);color:#fff;font:bold 15px Arial;cursor:pointer}
+#savePanel button.primary{background:linear-gradient(#fbe9ac,#cf962f);color:#193353}
+#savePanel button:disabled{opacity:.6;cursor:wait}
+#savePanel button[hidden]{display:none}
+#saveDetails{color:#bfeaff;font-weight:bold}
+#saveNotice{color:#ffe3a3;font-size:13px!important}
+#saveNotice.error{color:#ffb6ae}
+
 #transitionLoading{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:30px;background:radial-gradient(circle at center,#19385a,#050c1b 75%);text-align:center}
 #transitionLoading[hidden]{display:none!important}
 #transitionLabel{font-size:clamp(18px,4vw,27px);font-weight:bold;color:#f6d890}
@@ -26,6 +43,22 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050c1b;col
 <div id="shell">
 <iframe id="gameWindow" title="ClassMana — Batalha dos Monstros V2.5" allow="autoplay;fullscreen" referrerpolicy="strict-origin-when-cross-origin"></iframe>
 <div id="realmTitle" aria-live="polite"></div>
+<button id="stopSave" type="button" hidden>💾 Parar e salvar</button>
+<section id="saveOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="saveTitle">
+<div id="savePanel">
+<div id="saveMark" class="saveMark" aria-hidden="true">💾</div>
+<h2 id="saveTitle">Parar e salvar?</h2>
+<p id="saveDescription">Seu progresso ficará disponível para continuar depois.</p>
+<p id="saveDetails"></p>
+<p id="saveNotice" role="status" aria-live="polite"></p>
+<div class="saveActions">
+<button id="saveCancel" type="button">Continuar jogando</button>
+<button id="saveConfirm" type="button" class="primary">✔ Confirmar e salvar</button>
+<button id="saveExit" type="button" class="primary" hidden>Voltar ao início</button>
+</div>
+</div>
+</section>
+
 <div id="transitionLoading" hidden role="status" aria-live="polite">
   <div id="transitionLabel">Preparando o próximo reino…</div>
   <div id="transitionTrack"><div id="transitionFill"></div></div>
