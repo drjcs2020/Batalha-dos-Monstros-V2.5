@@ -928,7 +928,7 @@ draw=function(){if(stage!==0||!S.active)return orig.draw();
 
 finishBossDefeat=function(){if(stage!==0||!S.active)return orig.defeat();
  defeatPending=false;playing=false;paused=true;S.active=false;
- changedArea('HIDRA DERROTADA!', 'Fim do teste do Reino 8 · V2.5',()=>{
+ changedArea('HIDRA DERROTADA!', 'Próximo reino: Rainha Aranha!',()=>{
   $('#menu').classList.remove('hidden');$('#menu').style.display='grid';$('#start').textContent='↻ TESTAR NOVAMENTE';
   stage=0;expectedStage=0;S.area=0;playing=false;paused=true;
  });
