@@ -207,8 +207,59 @@
       const movie=document.getElementById('openingMovie');
       const skipped=document.getElementById('openingSkip');
       const complete=()=>{core.introCompleted=true;core.send('INTRO_DONE')};
+      // A trilha de preparação deve parar no início real do vídeo.
+      movie?.addEventListener('playing',()=>core.send('OPENING_VIDEO'),{once:true});
       movie?.addEventListener('ended',complete);
       skipped?.addEventListener('click',complete);
+    },
+    estilizarHud(){
+      if(document.getElementById('cm25-hud-legibilidade'))return;
+      const style=document.createElement('style');
+      style.id='cm25-hud-legibilidade';
+      style.textContent=`
+/* A posição do título do território não muda: apenas o cronômetro sobe. */
+#timerHud,.timerHud{
+ top:10px!important;left:50%!important;right:auto!important;
+ transform:translateX(-50%)!important;
+ padding:7px 17px!important;font-size:clamp(13px,1.25vw,17px)!important;
+ min-height:35px!important;white-space:nowrap!important;z-index:6!important;
+ background:linear-gradient(135deg,#fdf5d4,#e9c977)!important;
+ border:2px solid #b27b24!important;box-shadow:0 4px 18px #0008!important
+}
+/* Informações do monstro: mais área, mais contraste e tipografia legível. */
+.hud>.card:last-child{
+ width:min(450px,38vw)!important;max-width:450px!important;
+ padding:12px 16px 13px!important;
+ border:2px solid #edc871!important;
+ background:linear-gradient(145deg,#0c2b4cf5,#051226f5)!important;
+ box-shadow:0 6px 24px #000b,0 0 14px #29b6f633!important;
+}
+.hud>.card:last-child .title,
+.hud>.card:last-child #round{
+ font-size:clamp(12px,1.1vw,16px)!important;letter-spacing:.55px!important;
+ line-height:1.3!important;font-weight:900!important;color:#ffe19a!important;
+}
+.hud>.card:last-child .name,
+.hud>.card:last-child #ename{
+ font-size:clamp(17px,1.8vw,24px)!important;line-height:1.25!important;
+ text-shadow:0 2px 6px #000!important;overflow-wrap:anywhere!important;
+}
+.hud>.card:last-child .stats{font-size:clamp(12px,1.06vw,15px)!important;margin:8px 0!important;}
+.hud>.card:last-child #difficulty{font-size:inherit!important;line-height:1.3!important;overflow-wrap:anywhere!important;}
+.hud>.card:last-child .bar{height:15px!important;border:1px solid #c4ddf7aa!important;}
+@media(max-width:700px){
+ .hud>.card:last-child{width:min(51vw,300px)!important;padding:8px 10px!important;}
+ .hud>.card:last-child .title,.hud>.card:last-child #round{font-size:clamp(10px,2.3vw,13px)!important;}
+ .hud>.card:last-child .name,.hud>.card:last-child #ename{font-size:clamp(14px,3.4vw,19px)!important;}
+ .hud>.card:last-child .stats{font-size:clamp(10px,2.2vw,12px)!important;margin:4px 0!important;}
+ .hud>.card:last-child .bar{height:12px!important;}
+ #timerHud,.timerHud{top:5px!important;font-size:12px!important;padding:5px 10px!important;min-height:28px!important;}
+}
+@media(max-width:400px){
+ #timerHud,.timerHud{top:5px!important;font-size:11px!important;}
+}
+`;
+      document.head.appendChild(style);
     },
     integrarProgresso(){
       const bridge=window.CM25RealmBridge;
@@ -298,6 +349,7 @@
         return r;
       };
       draw=function(){const r=oldDraw();try{core.hooks.afterDraw?.()}catch(e){console.error('Hook global visual',e)}return r};
+      this.estilizarHud();
       this.integrarProgresso();
       this.criarEntradaCampanha();
       // Quando a campanha já começou, nunca reabrir o menu de cadastro
