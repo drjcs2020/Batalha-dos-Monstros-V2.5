@@ -177,10 +177,12 @@ function switchRealm(next,target=1,direct=true){
  if(next<1||next>10){report('Limite da campanha: Reino '+realm);return;}
  // Preservar o personagem também ao mudar de território no mesmo reino.
  if(ready)capture();
- const before=currentSnapshot(true)||pendingSnapshot;
+ // Antes da primeira batalha, o iframe ainda contém a tela de cadastro;
+ // seus valores NÃO podem substituir um progresso recuperado do servidor.
+ const before=campaignStarted?(currentSnapshot(true)||pendingSnapshot):pendingSnapshot;
  if(currentRun&&before){
   pendingSnapshot={...before,reino:next,territorio:target};
-  queueCheckpoint(pendingSnapshot).catch(()=>{});
+  if(campaignStarted)queueCheckpoint(pendingSnapshot).catch(()=>{});
  }
  if(autoTimer){clearTimeout(autoTimer);autoTimer=null;}
  realm=next;territory=target;pendingArea=target;ready=false;entering=false;automaticEntry=direct;loadId++;
