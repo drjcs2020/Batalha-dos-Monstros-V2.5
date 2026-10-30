@@ -584,7 +584,7 @@ draw=function(){if(stage!==0||!S.active)return orig.draw();if(S.area===3){orig.d
   lootDraw(false);lootHud();drawBossEntrance();return}drawHorde()};
 finishBossDefeat=function(){if(stage!==0||!S.active)return orig.defeat();
  defeatPending=false;playing=false;paused=true;S.active=false;
- changedArea('FANTASMA DERROTADO!', 'Fim do teste da primeira fase · V2.5',()=>{
+ changedArea('FANTASMA DERROTADO!', 'Próximo reino: Golem de Lava!',()=>{
   $('#menu').classList.remove('hidden');$('#menu').style.display='grid';$('#start').textContent='↻ TESTAR NOVAMENTE';
   stage=0;expectedStage=0;S.area=0;playing=false;paused=true;
  });
