@@ -988,7 +988,7 @@ draw=function(){if(stage!==0||!S.active)return orig.draw();if(S.area===4){orig.d
   lootDraw(false);lootHud();drawBossEntrance();return}drawHorde()};
 finishBossDefeat=function(){if(stage!==0||!S.active)return orig.defeat();
  defeatPending=false;playing=false;paused=true;S.active=false;
- changedArea('MESTRE DA COLMEIA DERROTADA!', 'Fim do teste do Reino 4 · V2.5',()=>{
+ changedArea('MESTRE DA COLMEIA DERROTADA!', 'Próximo reino: Duquesa Aranha!',()=>{
   $('#menu').classList.remove('hidden');$('#menu').style.display='grid';$('#start').textContent='↻ TESTAR NOVAMENTE';
   stage=0;expectedStage=0;S.area=0;playing=false;paused=true;
  });
