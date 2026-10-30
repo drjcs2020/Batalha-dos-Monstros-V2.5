@@ -92,8 +92,15 @@ async function postV25(data,deadlineMs=18000){
        confirm.partida?.partida_id===data.partida_id&&
        Number(confirm.partida.revisao)>=Number(data.revisao))
       return {success:true,salvo:true,revisao:confirm.partida.revisao};
-    if(data.acao==='finalizar_partida'&&!confirm.existe)
-      return {success:true,resultado_registrado:true};
+    if(data.acao==='finalizar_partida'){
+      // Uma finalização é válida se o progresso desapareceu OU se o servidor
+      // confirmou status terminal para a MESMA PARTIDA_ID.
+      if(!confirm.existe)return {success:true,resultado_registrado:true};
+      const state=String(confirm.partida?.status||confirm.partida?.STATUS||'').toUpperCase();
+      if(String(confirm.partida?.partida_id||'')===String(data.partida_id)&&
+         ['FINALIZADA','ENCERRADA','VITORIA','DERROTA','CONCLUIDA'].includes(state))
+        return {success:true,resultado_registrado:true};
+    }
    }catch(err){lastError=err;}
   }
   throw new Error('O Google Sheets não confirmou a gravação. '+String(lastError?.message||''));
@@ -242,7 +249,9 @@ async function enterRegisteredStudent(profile){
   report('Consultando sua partida na V2.5…');
   const found=await getV25({acao:'progresso',id_aluno:profile.id_aluno,turma:profile.className});
   if(found?.success!==true)throw Error(found?.erro||'Não foi possível consultar seu progresso.');
-  const existing=found.existe?found.partida:null;
+  // Só partidas em andamento podem oferecer a opção CONTINUAR.
+  const storedStatus=String(found.partida?.status||found.partida?.STATUS||'EM_ANDAMENTO').toUpperCase();
+  const existing=found.existe&&storedStatus==='EM_ANDAMENTO'?found.partida:null;
   const choice=await chooseJourney(existing);
   if(choice==='cancel'){report('Escolha cancelada. Seu progresso está preservado.');return;}
   // Seleção não pode reaparecer enquanto o servidor confirma e prepara a batalha.
