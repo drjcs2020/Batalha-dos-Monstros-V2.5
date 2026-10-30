@@ -367,7 +367,7 @@ window.addEventListener('message',e=>{
    else report('Aguarde o carregamento, assista ou pule o vídeo e selecione seu herói, turma e nome.');
  }
  else if(data.action==='OPENING_VIDEO'){cm25StopLoadingMusic();}
- else if(data.action==='INTRO_DONE'){report('Selecione seu herói, sua turma e seu nome cadastrado.');}
+ else if(data.action==='INTRO_DONE'){cm25StopLoadingMusic();report('Selecione seu herói, sua turma e seu nome cadastrado.');}
  else if(data.action==='START'){
    if(automaticEntry||campaignStarted)return;
    enterRegisteredStudent(data.profile||{});
