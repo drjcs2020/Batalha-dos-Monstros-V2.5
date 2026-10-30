@@ -17,6 +17,11 @@ function switchRealm(next,target=1,direct=true){
  if(autoTimer){clearTimeout(autoTimer);autoTimer=null;}
  realm=next;territory=target;pendingArea=target;ready=false;entering=false;automaticEntry=direct;loadId++;
  info();report(`Carregando ${CAMPAIGN[realm-1][0]} · território ${target}…`);
+ // Transição teste: nunca mostrar a tela de seleção durante F6/F7/F8.
+ // A iframe continua renderizando; apenas seu conteúdo fica invisível
+ // até que a batalha esteja inicializada e desenhada.
+ frame.style.opacity=direct?'0':'1';
+ frame.style.pointerEvents=direct?'none':'auto';
  frame.src=`reinos/${String(realm).padStart(2,'0')}/index.html?cm25=${loadId}&direct=${direct?'1':'0'}`;
 }
 // READY confirma o código do iframe, mas não o carregamento das imagens.
@@ -57,10 +62,22 @@ async function area(n){
   const confirmed=bridge.selectArea(n-1,identity),status=bridge.status();
   if(confirmed!==n||!status.active||status.territory!==n)throw Error('O jogo não confirmou a entrada no território');
   if(n<maximum&&status.monstersLoaded===0)throw Error('Nenhum monstro foi criado; território interrompido para evitar cenário vazio');
-  territory=n;pendingArea=0;campaignStarted=true;info();frame.focus();try{frame.contentWindow.focus()}catch(e){}
+  // Espera pelo primeiro desenho real da fase, não apenas pelo DOMContentLoaded.
+  // Opacity 0 não pausa o loop, ao contrário de display:none/visibility:hidden.
+  await new Promise(resolve=>{
+    let finished=false;
+    const done=()=>{if(finished)return;finished=true;clearTimeout(limit);resolve();};
+    const limit=setTimeout(done,700);
+    try{const win=frame.contentWindow;win.requestAnimationFrame(()=>win.requestAnimationFrame(done));}
+    catch(e){done();}
+  });
+  if(token!==loadId||selectedRealm!==realm)return;
+  territory=n;pendingArea=0;campaignStarted=true;info();
+  frame.style.opacity='1';frame.style.pointerEvents='auto';
+  frame.focus();try{frame.contentWindow.focus()}catch(e){}
   report(`Reino ${realm} · território ${n} · ${n===maximum?'chefão':status.monstersLoaded+' monstros carregados'}`);
  }catch(e){
-  if(token===loadId){report('ERRO AO ABRIR TERRITÓRIO: '+String(e.message||e));console.error('[ClassMana] Falha ao iniciar',selectedRealm,n,e);}
+  if(token===loadId){frame.style.opacity='1';frame.style.pointerEvents='auto';report('ERRO AO ABRIR TERRITÓRIO: '+String(e.message||e));console.error('[ClassMana] Falha ao iniciar',selectedRealm,n,e);}
  }finally{if(token===loadId)entering=false;}
 }
 function command(key,shift=false){
