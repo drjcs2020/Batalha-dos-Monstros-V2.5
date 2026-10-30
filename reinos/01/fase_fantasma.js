@@ -24,7 +24,8 @@ const orig={reset:resetStage,update,draw,fire,defeat:finishBossDefeat,hero:drawH
 window.cm25Facing=1;
 window.addEventListener('keydown',e=>{if(e.code==='ArrowLeft'||e.code==='KeyA')window.cm25Facing=-1;if(e.code==='ArrowRight'||e.code==='KeyD')window.cm25Facing=1},true);
 let css=document.createElement('style');css.textContent=`
- #openRanking,#bonusViewRanking{display:none!important}
+ /* O botão inicial de placar continua visível; só o ranking final antigo fica oculto. */
+ #bonusViewRanking{display:none!important}
  #cm25stage-transition{position:fixed;inset:0;z-index:999999;display:none;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 42%,rgba(48,48,111,.88),rgba(8,12,34,.96));color:#f3f4ff;font-family:Georgia,'Trebuchet MS',sans-serif;text-align:center;pointer-events:none}
  #cm25stage-transition .frame{width:min(88vw,720px);padding:24px 25px 30px;border:2px solid #9ce5f5;border-radius:18px;background:linear-gradient(145deg,rgba(27,52,88,.91),rgba(47,36,85,.92));box-shadow:0 0 0 5px #8a61a42d,0 18px 65px #000b, inset 0 0 55px #75a6ff24}
  #cm25stage-transition .eyebrow{font-size:clamp(12px,1.5vw,17px);color:#b9eaff;letter-spacing:.2em;margin-bottom:14px}
