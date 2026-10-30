@@ -144,12 +144,21 @@ async function enterRegisteredStudent(profile){
   const existing=found.existe?found.partida:null;
   const choice=await chooseJourney(existing);
   if(choice==='cancel'){report('Escolha cancelada. Seu progresso está preservado.');return;}
+  // Seleção não pode reaparecer enquanto o servidor confirma e prepara a batalha.
+  const introMenu=frame.contentWindow.document.getElementById('menu');
+  const introMenuState=introMenu?{display:introMenu.style.display,hidden:introMenu.classList.contains('hidden')}:null;
+  if(introMenu){introMenu.classList.add('hidden');introMenu.style.display='none';}
+  $('transitionLoading').hidden=false;
+  $('transitionLabel').textContent=choice==='new'?'Iniciando sua jornada…':'Recuperando sua partida…';
+  frame.style.pointerEvents='none';
+  let journeyEntered=false;
+  try{
   const record=choice==='new'
     ?await postV25({acao:'nova_partida',id_aluno:profile.id_aluno,turma:profile.className,partida_anterior:existing?.partida_id||''})
     :{success:true,partida:existing};
   if(record?.success!==true||!record.partida?.partida_id)throw Error(record?.erro||'Partida não foi confirmada pelo servidor.');
   const game=record.partida;
-  identity={id_aluno:String(profile.id_aluno),hero:game.heroi_indice>=0?game.heroi_indice:profile.hero,
+  identity={id_aluno:String(profile.id_aluno),hero:choice==='new'?profile.hero:(Number.isInteger(Number(game.heroi_indice))?Number(game.heroi_indice):profile.hero),
    name:String(profile.name),className:String(profile.className),personagem:game.personagem||''};
   sessionStorage.setItem('cm25TesteIdentidade',JSON.stringify(identity));
   currentRun={partida_id:String(game.partida_id)};
@@ -163,8 +172,20 @@ async function enterRegisteredStudent(profile){
   const bridge=ready&&!campaignStarted?frame.contentWindow.CM25RealmBridge:null;
   if(bridge&&bridge.realm===pendingSnapshot.reino){
    automaticEntry=true;pendingArea=pendingSnapshot.territorio;
-   await area(pendingArea);
+   if(!await area(pendingArea))throw Error('Não foi possível iniciar o território.');
   }else switchRealm(pendingSnapshot.reino,pendingSnapshot.territorio,true);
+  journeyEntered=true;
+  }finally{
+   // Se o carregamento falhar, permitir nova tentativa sem novo cadastro.
+   if(!journeyEntered){
+    $('transitionLoading').hidden=true;
+    frame.style.pointerEvents='auto';
+    if(introMenu&&introMenu.isConnected&&introMenuState){
+     if(!introMenuState.hidden)introMenu.classList.remove('hidden');
+     introMenu.style.display=introMenuState.display;
+    }
+   }
+  }
  }catch(error){
   currentRun=previousRun;identity=previousIdentity;
   console.error('[ClassMana] Entrada V2.5',error);
@@ -219,15 +240,15 @@ function preloadScene(realmNumber,areaNumber){
 }
 async function area(n){
  const maximum=CAMPAIGN[realm-1][1];n=Math.max(1,Math.min(maximum,n));
- if(!ready){pendingArea=n;territory=n;info();report('Carregando recursos antes de abrir território '+n+'…');return;}
- if(entering){report('Território em preparação; aguarde o cenário carregar.');return;}
+ if(!ready){pendingArea=n;territory=n;info();report('Carregando recursos antes de abrir território '+n+'…');return false;}
+ if(entering){report('Território em preparação; aguarde o cenário carregar.');return false;}
  entering=true;
  const token=loadId,selectedRealm=realm;
  try{
   report(`Preparando cenário do Reino ${selectedRealm} · território ${n}…`);
   await preloadScene(selectedRealm,n);
   // Um salto novo pode ter invalidado o carregamento anterior.
-  if(token!==loadId||selectedRealm!==realm||!ready)return;
+  if(token!==loadId||selectedRealm!==realm||!ready)return false;
   const bridge=frame.contentWindow.CM25RealmBridge;
   if(!bridge||bridge.realm!==realm)throw Error('Ligação do reino não está pronta');
   const confirmed=bridge.selectArea(n-1,identity);
@@ -249,15 +270,17 @@ async function area(n){
     try{const win=frame.contentWindow;win.requestAnimationFrame(()=>win.requestAnimationFrame(done));}
     catch(e){done();}
   });
-  if(token!==loadId||selectedRealm!==realm)return;
+  if(token!==loadId||selectedRealm!==realm)return false;
   territory=n;pendingArea=0;campaignStarted=true;info();
   pendingSnapshot=null;
   $('transitionLoading').hidden=true;
   frame.style.opacity='1';frame.style.pointerEvents='auto';
   frame.focus();try{frame.contentWindow.focus()}catch(e){}
   report(`Reino ${realm} · território ${n} · ${n===maximum?'chefão':status.monstersLoaded+' monstros carregados'}`);
+  return true;
  }catch(e){
   if(token===loadId){$('transitionLoading').hidden=true;frame.style.opacity='1';frame.style.pointerEvents='auto';report('ERRO AO ABRIR TERRITÓRIO: '+String(e.message||e));console.error('[ClassMana] Falha ao iniciar',selectedRealm,n,e);}
+  return false;
  }finally{if(token===loadId)entering=false;}
 }
 window.addEventListener('message',e=>{
