@@ -210,6 +210,7 @@
       const status=bridge.status.bind(bridge),select=bridge.selectArea.bind(bridge);
       bridge.status=()=>({
         ...status(),id_aluno:String(playerId||''),
+        personagem:String(heroes[heroIdx]?.name||''),
         hp:Number(p.hp)||0,mana:Number(p.mana)||0,
         tempo:Math.max(0,Math.round(Number(elapsedMs||0)/1000)),
         gameEnded:!!gameEnded
