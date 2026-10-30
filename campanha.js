@@ -19,6 +19,33 @@ function info(){const a=CAMPAIGN[realm-1];$('realmTitle').textContent=`Reino ${r
 function capture(){try{const s=frame.contentWindow.CM25RealmBridge?.status();if(s&&s.active&&s.realm===realm&&s.id_aluno&&String(s.id_aluno)===String(identity?.id_aluno)){identity={...identity,hero:s.hero,name:s.name,className:s.className,personagem:s.personagem||identity.personagem};sessionStorage.setItem('cm25TesteIdentidade',JSON.stringify(identity))}}catch(e){console.warn('Não foi possível preservar personagem',e)}}
 // Placar/continuidade da V2.5, sem nenhuma chamada à implantação da V2.4.
 const CM25_SAVE_API="https://script.google.com/macros/s/AKfycbx47UtNCTdpQ4OukNxdzrcsFH2Mf1xCLO5mspGClV6Sn4OelwIZai3ZJn_Q8aVPp2Z-/exec";
+
+// A música da barra inicia no próprio controlador, antes da carga do motor.
+// Navegadores que bloqueiam autoplay recebem um botão discreto no 0%.
+const cm25LoadingMusic=new Audio(new URL('assets/sons/cm_preparing_for_battle.mp3',location.href).href);
+cm25LoadingMusic.preload='auto';
+cm25LoadingMusic.loop=true;
+cm25LoadingMusic.volume=.36;
+let cm25OpeningDone=false;
+const cm25SoundButton=$('enableLoadingSound');
+function cm25StopLoadingMusic(){
+ cm25OpeningDone=true;
+ cm25SoundButton.hidden=true;
+ try{cm25LoadingMusic.pause();cm25LoadingMusic.currentTime=0;}catch(e){}
+}
+function cm25StartLoadingMusic(){
+ if(cm25OpeningDone)return;
+ try{
+  const started=cm25LoadingMusic.play();
+  if(started&&typeof started.then==='function')
+   started.then(()=>{cm25SoundButton.hidden=true;})
+    .catch(()=>{if(!cm25OpeningDone)cm25SoundButton.hidden=false;});
+ }catch(e){cm25SoundButton.hidden=false;}
+}
+cm25SoundButton.addEventListener('click',cm25StartLoadingMusic);
+cm25LoadingMusic.load();
+cm25StartLoadingMusic();
+
 let currentRun=null,revision=0,pendingSnapshot=null,saveChain=Promise.resolve(),lastCheckpoint=0,entryBusy=false,endingRun=false;
 let cm25GetSequence=0;
 function getV25(params){
@@ -243,6 +270,7 @@ async function enterRegisteredStudent(profile){
 
 function switchRealm(next,target=1,direct=true){
  if(next<1||next>10){report('Limite da campanha: Reino '+realm);return;}
+ if(direct)cm25StopLoadingMusic();
  // Preservar o personagem também ao mudar de território no mesmo reino.
  if(ready)capture();
  // Antes da primeira batalha, o iframe ainda contém a tela de cadastro;
@@ -338,6 +366,7 @@ window.addEventListener('message',e=>{
    if(automaticEntry){report('Reino '+realm+' carregado — iniciando território '+pendingArea);if(pendingArea)area(pendingArea);}
    else report('Aguarde o carregamento, assista ou pule o vídeo e selecione seu herói, turma e nome.');
  }
+ else if(data.action==='OPENING_VIDEO'){cm25StopLoadingMusic();}
  else if(data.action==='INTRO_DONE'){report('Selecione seu herói, sua turma e seu nome cadastrado.');}
  else if(data.action==='START'){
    if(automaticEntry||campaignStarted)return;
