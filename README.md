@@ -1,4 +1,4 @@
-# ClassMana V2.5 — Revisão 14 | Arquivos para GitHub Pages
+# ClassMana V2.5 — Revisão 15 | Arquivos para GitHub Pages
 
 Este pacote contém o jogo completo em HTML, JavaScript, imagens e áudios para publicação como site estático. **Não contém executável, arquivo BAT nem servidor local.**
 
@@ -11,7 +11,18 @@ Este pacote contém o jogo completo em HTML, JavaScript, imagens e áudios para 
 
 **Importante:** não envie apenas o ZIP ao repositório esperando que o GitHub Pages o abra; o GitHub não descompacta automaticamente um ZIP enviado como arquivo. Use o conteúdo extraído.
 
-## Esta revisão
+## Revisão 15 — entrada, continuidade e encerramento
+
+- Tela de **Nova Partida / Continuar Partida** redesenhada com identidade ClassMana, informações da aventura salva e confirmação clara antes de reiniciar.
+- **Voltar às opções** na confirmação de nova partida não fecha mais toda a seleção.
+- **Continuar** usa o reino, o território, herói e pontos do checkpoint confirmado. O início e a passagem para outro território agora disparam um salvamento.
+- A música de preparação é solicitada desde 0% da carga. Se o navegador bloquear reprodução automática, o botão de ativação aparece imediatamente para um clique do aluno (restrição do navegador).
+- **Parar e salvar** guarda a aventura sem encerrá-la. **Finalizar partida** encerra a sessão, solicita registro online e aguarda confirmação do servidor antes de anunciar sucesso.
+- Ranking da V2.4 continua desativado e isolado.
+
+**Verificação:** atualizações conferidas no código do GitHub. A execução real no navegador, o comportamento de autoplay e a resposta do Apps Script após uma nova partida ainda precisam ser testados em ambiente publicado.
+
+## Histórico — Revisão 14
 
 - 10 reinos, 49 territórios.
 - Reino 10, território 4/5: apoio do herói deslocado 20 pixels para baixo, de forma local.
