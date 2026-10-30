@@ -1,5 +1,22 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ClassMana — Batalha dos Monstros V2.5 · Reino 9</title>
-<style>body{margin:0;display:grid;min-height:100vh;place-items:center;background:#09142c;color:white;font:17px Arial,sans-serif}.status{max-width:610px;padding:35px;text-align:center;line-height:1.65}h1{color:#a3e1ff}button{padding:12px 18px;background:#2164ab;color:white;border:1px solid #7addff;border-radius:10px;cursor:pointer}</style></head><body><div class="status" id="status"><h1>ClassMana — Batalha dos Monstros V2.5</h1><p>Preparando os recursos do reino e da sua jornada…</p><p>É necessária conexão com a internet para carregar os recursos do jogo original.</p></div>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050817;color:#fff;font-family:Trebuchet MS,Arial,sans-serif}
+#cm25Bootstrap{position:fixed;inset:0;z-index:1;display:grid;place-items:center;background:radial-gradient(circle at 50% 42%,#174e91 0%,#182b6a 42%,#120d35 76%,#050817 100%);overflow:hidden}
+#cm25Bootstrap>img{width:min(1100px,94vw);max-height:88vh;object-fit:contain;filter:drop-shadow(0 16px 30px #000a) drop-shadow(0 0 28px #28dfff66)}
+#cm25Bootstrap:after{content:'';position:absolute;inset:-20%;background:radial-gradient(circle,#ffe26a99 0 1px,transparent 2px) 0 0/65px 65px;opacity:.18;pointer-events:none}
+#cmLoadUI{position:absolute;z-index:3;bottom:max(25px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(440px,86vw);padding:12px 17px 14px;border-radius:15px;background:rgba(5,14,34,.82);border:1px solid #e4c568a6;box-shadow:0 8px 30px #0009;text-align:center;color:#fff;font:700 15px Trebuchet MS,Arial,sans-serif}
+#cmLoadText{display:flex;justify-content:space-between;gap:12px;margin-bottom:9px;text-shadow:0 2px 3px #000}
+#cmLoadTrack{height:20px;border:2px solid #b4e1a7;border-radius:20px;background:#122a27;overflow:hidden;box-shadow:inset 0 2px 5px #0008}
+#cmLoadFill{height:100%;width:0%;background:linear-gradient(180deg,#8af86d,#2bd33e 60%,#148e32)}
+#status{position:fixed;inset:0;display:grid;place-items:center;padding:24px;background:#09142c;color:#fff;font:17px Arial,sans-serif}
+#status[hidden]{display:none!important}
+#status .errorContent{max-width:600px;text-align:center;line-height:1.6}
+#status h1{color:#a3e1ff}
+#status button{padding:12px 18px;background:#2164ab;color:#fff;border:1px solid #7addff;border-radius:10px;cursor:pointer}
+</style></head><body>
+<div id="cm25Bootstrap" aria-label="Carregamento ClassMana"><img src="https://drjcs2020.github.io/classmana-batalha-dos-monstros-V2/assets/splash_classmana.png" alt="ClassMana"><div id="cmLoadUI" role="status" aria-live="polite"><div id="cmLoadText">Aguarde <span id="cmLoadPercent">0%</span></div><div id="cmLoadTrack" role="progressbar" aria-label="Carregamento do jogo" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="cmLoadFill"></div></div></div></div>
+<div id="status" hidden></div>
 <script>
 (async()=>{
 // Teste isolado do Reino 9: os territórios 1–4 reutilizam o Reino 6.
@@ -104,6 +121,6 @@ try{
  const localPrefix=new URL('./assets_v25/',location.href).href;
  original=original.replaceAll("'assets_v25/", "'"+localPrefix);
  document.open();document.write(original);document.close();
-}catch(e){document.getElementById('status').innerHTML='<h1>Não foi possível iniciar o teste</h1><p>'+String(e.message).replaceAll('<','&lt;')+'</p><p>Verifique a conexão e execute por um servidor local.</p><button onclick="location.reload()">Tentar novamente</button>';console.error(e)}
+}catch(e){document.getElementById('cm25Bootstrap')?.remove();document.getElementById('status').hidden=false;document.getElementById('status').innerHTML='<h1>Não foi possível iniciar o teste</h1><p>'+String(e.message).replaceAll('<','&lt;')+'</p><p>Verifique a conexão e execute por um servidor local.</p><button onclick="location.reload()">Tentar novamente</button>';console.error(e)}
 })();
 </script></body></html>
