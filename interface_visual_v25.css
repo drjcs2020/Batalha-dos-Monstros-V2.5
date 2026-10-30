@@ -1,6 +1,12 @@
 /* ClassMana V2.5 — Interfaces de jornada, transição e progresso.
    Reutiliza arte existente da V2.4 sem alterar seu motor, placar ou salvamento. */
 :root{--cm25-gold:#ffdf86;--cm25-gold-dark:#b97524;--cm25-ice:#93eaff;--cm25-navy:#07152e;--cm25-blue:#174d86;--cm25-art:"https://drjcs2020.github.io/classmana-batalha-dos-monstros-V2/assets/arena/fundos/arena-medieval-original.png"}
+/* Os comandos flutuantes também recebem a linguagem visual do jogo. */
+#stopSave,#finishRun{display:flex;align-items:center;justify-content:center;gap:7px;min-height:38px;border:2px solid #fae1a2!important;border-radius:11px!important;font:900 12px "Trebuchet MS",Arial,sans-serif!important;letter-spacing:.02em;text-shadow:0 1px 2px #09233e;box-shadow:0 4px 0 #061934,0 0 18px #6cbbfd47!important;transition:transform .15s,filter .15s!important;white-space:normal}
+#stopSave{background:linear-gradient(180deg,#329cbb,#155385 80%)!important;color:#fff2c9!important}
+#finishRun{border-color:#e7b8a5!important;background:linear-gradient(180deg,#a45765,#4c2448 90%)!important;color:#ffecdf!important}
+#stopSave:hover:enabled,#finishRun:hover:enabled{filter:brightness(1.17);transform:translateY(-2px)}
+#stopSave:focus-visible,#finishRun:focus-visible{outline:3px solid #fff;outline-offset:3px}
 /* Moldura e atmosfera compartilhadas com a identidade ClassMana. */
 #saveOverlay,#transitionLoading{background:linear-gradient(130deg,#020a20ed,#071d3aca 45%,#050718e9),url("https://drjcs2020.github.io/classmana-batalha-dos-monstros-V2/assets/arena/fundos/arena-medieval-original.png") center/cover!important;isolation:isolate}
 #saveOverlay:before,#transitionLoading:before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 37%,#75ceff29,transparent 48%),radial-gradient(circle at 10% 88%,#b9703b24,transparent 26%);z-index:-1}
