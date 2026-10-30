@@ -49,7 +49,7 @@ try{
  // O carregamento e a intro originais rodam APENAS na primeira entrada normal.
  // Durante F6/F7/F8 explícitos, impedir que iniciem música/vídeo após o combate.
  original=original.replace('function startOpening(){', 'function startOpening(){if(window.CM25TestDirectBoot)return;');
- original=original.replace('function playLoadingMusic(){', 'function playLoadingMusic(){if(window.CM25TestDirectBoot)return;');
+ original=original.replace('function playLoadingMusic(){', 'function playLoadingMusic(){if(window.parent!==window)return;if(window.CM25TestDirectBoot)return;');
  original=original.replace('function reveal(){if(revealed)return;', 'function reveal(){if(window.CM25TestDirectBoot||revealed)return;');
  original=original.replace('function startWithSound(){', 'function startWithSound(){if(window.CM25TestDirectBoot)return;');
  original=original.replace('loadingMusic.pause();loadingMusic.currentTime=0;', 'loadingMusic.pause();loadingMusic.currentTime=0;');
