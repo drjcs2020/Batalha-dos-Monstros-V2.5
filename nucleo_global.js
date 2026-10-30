@@ -156,40 +156,80 @@
       // A trilha de carregamento é controlada por um script posterior da V2.4.
       try{window.cm25StopLoadingMusic?.();}catch(e){}
     },
-    criarEntradaDeTeste(){
-      const menu=document.getElementById('menu');
-      if(!menu||document.getElementById('cm25-start-test'))return;
-      const btn=document.createElement('button');btn.type='button';btn.id='cm25-start-test';
-      btn.className='start';btn.textContent='⚔ INICIAR TESTE V2.5';
-      btn.style.cssText='background:linear-gradient(#a7f5dc,#43b6aa);border:2px solid #165f6c;color:#082f44;margin:10px auto;padding:13px 22px;cursor:pointer;display:block;';
-      btn.title='Inicia o território sem consultar o cadastro de estudantes e sem enviar pontos ao ranking';
-      const main=menu.querySelector('#start');
-      // No teste não usar o cadastro online nem o botão da campanha V2.4.
-      if(main)main.style.display='none';
-      const register=document.getElementById('playerName');
-      if(register){register.style.display='none';register.value='';register.previousElementSibling&&(register.previousElementSibling.textContent='3. Modo teste: sem cadastro');}
-      for(const id of ['cmAlunoOpcoes','cmAlunoAviso']){const el=document.getElementById(id);if(el)el.style.display='none';}
-      if(main?.parentNode)main.parentNode.insertBefore(btn,main.nextSibling);
-      else menu.querySelector('.panel')?.appendChild(btn);
-      btn.addEventListener('click',()=>{
-        const video=document.getElementById('openingVideo');
-        const splash=document.getElementById('classmanaSplash');
-        if(!core.introCompleted && !window.CM25TestDirectBoot){
-          // Só sair por escolha do usuário após a introdução, nunca antes.
-          if((video&&!video.hidden)||(splash&&splash.isConnected&&!splash.classList.contains('hide'))){
-            alert('Conclua ou pule o vídeo antes de iniciar o teste.');return;
-          }
-        }
-        const typed=document.getElementById('playerName')?.value?.trim();
-        core.send('START',{profile:{hero:typeof heroIdx==='number'?heroIdx:0,
-          name:typed||'Jogador teste',className:typeof playerClass==='string'?playerClass:'4º A'}});
+    // Só a V2.5 consulta esta API. O endpoint antigo da V2.4 fica intocado.
+    rankingApiV25:"https://script.google.com/macros/s/AKfycbx47UtNCTdpQ4OukNxdzrcsFH2Mf1xCLO5mspGClV6Sn4OelwIZai3ZJn_Q8aVPp2Z-/exec",
+    consultarV25(params){
+      return new Promise((resolve,reject)=>{
+        const callback='cmApiCallback_'+(++window.cm25ApiSequence||1);
+        window.cm25ApiSequence=Number(callback.split('_')[1]);
+        const script=document.createElement('script');
+        let finished=false;
+        const timer=setTimeout(()=>finish(new Error('O cadastro da V2.5 não respondeu.')),15000);
+        const finish=(error,data)=>{
+          if(finished)return;finished=true;clearTimeout(timer);script.remove();
+          try{delete window[callback]}catch(e){window[callback]=undefined}
+          if(error)reject(error);else resolve(data);
+        };
+        window[callback]=data=>finish(null,data);
+        script.onerror=()=>finish(new Error('Não foi possível consultar o cadastro V2.5.'));
+        script.src=this.rankingApiV25+'?'+new URLSearchParams({...params,callback,_:Date.now()});
+        document.head.appendChild(script);
       });
+    },
+    criarEntradaDeTeste(){
+      const menu=document.getElementById('menu'),main=document.getElementById('start');
+      if(!menu||!main)return;
+      // Reaproveita o seletor de turma e busca de alunos cadastrados da V2.4,
+      // mas as consultas são feitas SOMENTE no novo Apps Script da V2.5.
+      if(typeof cmConsultarAPI==='function')cmConsultarAPI=params=>core.consultarV25(params);
+      const input=document.getElementById('playerName');
+      if(input)input.style.display='';
+      const note=document.getElementById('cm25-start-test');
+      if(note)note.remove();
+      main.style.display='';
+      main.textContent='⚔ ENTRAR NA CAMPANHA V2.5';
+      main.title='Escolha sua turma, selecione seu nome cadastrado e continue ou inicie uma partida';
+      main.onclick=()=>{
+        if(!playerId){alert('Selecione sua turma e escolha seu nome completo na lista de alunos cadastrados.');input?.focus();return;}
+        const profile={id_aluno:String(playerId),hero:Number.isInteger(heroIdx)?heroIdx:0,
+          name:String(playerName||input?.value||'').trim(),
+          className:String(playerClass||'')};
+        if(!profile.name||!profile.className){alert('Confirme seu nome e sua turma.');return;}
+        core.send('START',{profile});
+      };
       const movie=document.getElementById('openingMovie');
       const skipped=document.getElementById('openingSkip');
       const complete=()=>{core.introCompleted=true;core.send('INTRO_DONE')};
       movie?.addEventListener('ended',complete);
       skipped?.addEventListener('click',complete);
-      // Filme pode falhar: usuário pode escolher pular pela interface original.
+    },
+    integrarProgresso(){
+      const bridge=window.CM25RealmBridge;
+      if(!bridge||bridge.cm25ProgressInstalled)return;
+      bridge.cm25ProgressInstalled=true;
+      const status=bridge.status.bind(bridge),select=bridge.selectArea.bind(bridge);
+      bridge.status=()=>({
+        ...status(),id_aluno:String(playerId||''),
+        hp:Number(p.hp)||0,mana:Number(p.mana)||0,
+        tempo:Math.max(0,Math.round(Number(elapsedMs||0)/1000)),
+        gameEnded:!!gameEnded
+      });
+      bridge.selectArea=(target,profile)=>{
+        if(profile?.id_aluno)playerId=String(profile.id_aluno);
+        return select(target,profile);
+      };
+      bridge.restoreProgress=snapshot=>{
+        if(!snapshot||!bridge.status().active)return false;
+        if(snapshot.id_aluno&&String(snapshot.id_aluno)!==String(playerId))return false;
+        if(Number.isInteger(snapshot.heroi_indice))heroIdx=snapshot.heroi_indice;
+        score=Math.max(0,Number(snapshot.pontuacao)||0);
+        p.hp=Math.max(0,Math.min(100,Number(snapshot.hp??100)));
+        p.mana=Math.max(0,Math.min(100,Number(snapshot.mana??100)));
+        elapsedMs=Math.max(0,(Number(snapshot.tempo)||0)*1000);
+        try{setHud()}catch(e){}
+        try{updateHUD()}catch(e){}
+        return true;
+      };
     },
     send(action, extras) {
       if (window.parent !== window) window.parent.postMessage({namespace:'CM25',action,realm:window.CM25RealmBridge?.realm||null,token:buildToken,...(extras||{})},location.origin);
@@ -218,6 +258,7 @@
         return r;
       };
       draw=function(){const r=oldDraw();try{core.hooks.afterDraw?.()}catch(e){console.error('Hook global visual',e)}return r};
+      this.integrarProgresso();
       this.criarEntradaDeTeste();
       // Navegadores bloqueiam autoplay no carregamento do iframe.
       // O primeiro comando/gesto durante uma batalha reativa a trilha correta.
