@@ -37,6 +37,31 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050c1b;col
 #transitionFill{width:35%;height:100%;background:linear-gradient(90deg,#427cb7,#b9f9e1,#d4a85b);border-radius:20px;animation:loading 1.3s ease-in-out infinite alternate}
 @keyframes loading{from{transform:translateX(-100%)}to{transform:translateX(290%)}}
 @media(prefers-reduced-motion:reduce){#transitionFill{animation:none;width:100%}}
+
+/* Identidade visual da escolha de jornada: logo e ícones originais do ClassMana. */
+#cm25JourneyDialog{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;background:radial-gradient(circle at 50% 35%,#23649bc9,#040b1cf5 72%);backdrop-filter:blur(6px)}
+#cm25JourneyPanel{position:relative;width:min(540px,96vw);max-height:94vh;overflow:auto;padding:20px clamp(16px,3vw,32px) 26px;border:3px solid #eabe55;border-radius:23px;background:linear-gradient(148deg,#1b5b99,#112e5b 48%,#09172f);box-shadow:0 0 0 4px #4dbeed38,0 22px 70px #000b,inset 0 0 36px #65d6f42b;text-align:center;color:#fff;font-family:"Trebuchet MS",Arial,sans-serif}
+#cm25JourneyPanel:before{content:"";position:absolute;inset:9px;border:1px solid #f9d78950;border-radius:15px;pointer-events:none}
+#cm25JourneyLogo{display:block;width:min(290px,72vw);height:95px;object-fit:contain;margin:0 auto 4px;filter:drop-shadow(0 5px 8px #020c28) drop-shadow(0 0 13px #80dfff66)}
+#cm25JourneyDecor{display:flex;align-items:center;justify-content:center;gap:clamp(14px,4vw,38px);margin:8px 0}
+#cm25JourneyDecor img{height:52px;width:52px;object-fit:contain;filter:drop-shadow(0 5px 8px #0009)}
+#cm25JourneyPanel h2{font-weight:900;font-size:clamp(21px,4.5vw,28px);color:#ffe2a1;text-shadow:0 3px 9px #0009;margin:7px 0 13px}
+#cm25JourneyPanel p{font-size:clamp(14px,2.8vw,17px);line-height:1.45;margin:9px auto 15px}
+#cm25JourneyStatus{padding:14px 12px;border:1px solid #d8b974aa;border-radius:12px;background:#06162c91;color:#dff7ff}
+#cm25JourneyPanel .cm25JourneyNote{font-size:13px;color:#ffe3ac}
+#cm25JourneyPanel .cm25JourneyButton{display:block;width:100%;min-height:57px;padding:12px 15px;margin:11px 0;border-radius:13px;border:2px solid #99dffe;background:linear-gradient(180deg,#4099dc,#1b4c98);box-shadow:0 5px 0 #0c2555,0 0 12px #66d3f833;color:white;text-shadow:0 2px 3px #08274d;font:bold clamp(15px,3vw,18px) "Trebuchet MS",Arial,sans-serif;cursor:pointer;transition:background .14s,transform .14s,box-shadow .14s,color .14s}
+#cm25JourneyPanel .cm25JourneyButton:hover,#cm25JourneyPanel .cm25JourneyButton:focus-visible{border-color:#ffe6a4;box-shadow:0 5px 0 #855016,0 0 18px #f4c55185}
+#cm25JourneyPanel .cm25JourneyButton:active,#cm25JourneyPanel .cm25JourneyButton.is-selected{background:linear-gradient(180deg,#ffe787,#e5a53c 65%,#c97a20);border-color:#fff1b5;color:#243655;text-shadow:none;transform:translateY(4px);box-shadow:0 1px 0 #90541c,0 0 22px #f7d16c85}
+#cm25JourneyPanel .cm25JourneyButton.cm25JourneyCancel{min-height:43px;background:transparent;border-color:#8ab4d4;color:#d8eafa;font-size:14px;box-shadow:none}
+#cm25JourneyPanel .cm25JourneyButton:disabled{pointer-events:none;opacity:.8}
+@media(max-height:660px){#cm25JourneyLogo{height:65px}#cm25JourneyDecor img{height:34px;width:34px}#cm25JourneyPanel{padding-top:10px;padding-bottom:12px}}
+/* O cronômetro fica acima do nome do território; parar e salvar não ocupa o HUD. */
+#stopSave{top:clamp(118px,17vh,150px);left:max(10px,env(safe-area-inset-left));right:auto;font-size:13px;padding:9px 12px;max-width:172px}
+@media(max-width:700px){#stopSave{top:clamp(112px,18vh,143px);left:6px;font-size:12px;padding:7px 9px;max-width:140px}}
+/* Áudio pode depender de uma interação do aluno, por bloqueio de autoplay. */
+#enableLoadingSound{position:fixed;bottom:max(118px,env(safe-area-inset-bottom) + 95px);left:50%;transform:translateX(-50%);z-index:190;padding:10px 16px;border:2px solid #ffe2a0;border-radius:12px;background:linear-gradient(#1a609b,#102e59);color:#fff8d9;font:800 13px Arial;box-shadow:0 4px 18px #000a;cursor:pointer}
+#enableLoadingSound[hidden]{display:none}
+
 </style>
 </head>
 <body>
@@ -64,6 +89,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050c1b;col
   <div id="transitionTrack"><div id="transitionFill"></div></div>
 </div>
 <div id="status" role="status" aria-live="polite"></div>
+<button id="enableLoadingSound" type="button" hidden>🔊 Ativar música de preparação</button>
 </div>
 <script src="configuracao_global.js"></script>
 <script src="campanha.js"></script>
