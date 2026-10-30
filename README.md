@@ -1,4 +1,4 @@
-# ClassMana V2.5 — Revisão 15 | Arquivos para GitHub Pages
+# ClassMana V2.5 — Revisão 16 | Arquivos para GitHub Pages
 
 Este pacote contém o jogo completo em HTML, JavaScript, imagens e áudios para publicação como site estático. **Não contém executável, arquivo BAT nem servidor local.**
 
@@ -10,6 +10,17 @@ Este pacote contém o jogo completo em HTML, JavaScript, imagens e áudios para 
 4. Abra o endereço publicado pelo GitHub Pages quando estiver disponível.
 
 **Importante:** não envie apenas o ZIP ao repositório esperando que o GitHub Pages o abra; o GitHub não descompacta automaticamente um ZIP enviado como arquivo. Use o conteúdo extraído.
+
+## Revisão 16 — arte das interfaces de jornada
+
+- **Janela Guardar progresso:** novo brasão feito com escudo e cristal 3D do ClassMana, moldura dupla dourada, indicadores visíveis de Reino, Território e Pontos; botão de confirmar reforçado e ação de voltar à batalha.
+- **Sem ícone de disquete:** estados de salvar, encerrar, enviar, sucesso e falha usam elementos do próprio universo do jogo.
+- **Transições de início/continuidade e reino:** painel de portal com escudo, cristal, adaga, fundo medieval e barra luminosa animada.
+- **Comandos da batalha:** guardar progresso e finalizar partida com cores e bordas do mesmo tema.
+- **Responsividade:** telas menores e janelas de baixa altura; movimentos reduzidos para usuários com preferência de acessibilidade.
+- **Funcionalidade preservada:** as ações de salvar, finalizar, cancelar e a confirmação do servidor continuam ligadas aos mesmos handlers.
+
+**Verificação:** código e IDs essenciais conferidos; comportamento visual no navegador publicado ainda precisa de validação.
 
 ## Revisão 15 — entrada, continuidade e encerramento
 
