@@ -48,7 +48,7 @@ document.addEventListener('keydown',()=>{if(!cm25OpeningDone&&cm25LoadingMusic.p
 cm25LoadingMusic.load();
 cm25StartLoadingMusic();
 
-let currentRun=null,revision=0,pendingSnapshot=null,checkpointInFlight=null,manualCheckpointPending=false,lastCheckpoint=0,entryBusy=false,endingRun=false;
+let currentRun=null,revision=0,pendingSnapshot=null,checkpointInFlight=null,pendingAutoSnapshot=null,manualCheckpointPending=false,lastCheckpoint=0,entryBusy=false,endingRun=false;
 let cm25GetSequence=0;
 function getV25(params,timeoutMs=16000){
  return new Promise((resolve,reject)=>{
@@ -128,11 +128,14 @@ function queueCheckpoint(snapshot,final=false,resultado='ENCERRADA',manual=false
  if(endingRun&&!final)return checkpointInFlight||Promise.resolve({ignorado:true});
  const priority=manual||final;
  if(!priority&&(checkpointInFlight||manualCheckpointPending)){
-  lastCheckpoint=Date.now();return Promise.resolve({ignorado:true});
+  // Um único checkpoint pendente, atualizado para o estado mais recente.
+  pendingAutoSnapshot={...snapshot};
+  lastCheckpoint=Date.now();
+  return Promise.resolve({adiado:true});
  }
  if(priority&&manualCheckpointPending)
   return checkpointInFlight||Promise.reject(Error('Salvamento manual já em andamento.'));
- if(priority)manualCheckpointPending=true;
+ if(priority){manualCheckpointPending=true;pendingAutoSnapshot=null;}
  if(final)endingRun=true;
  const runId=String(currentRun.partida_id),studentId=String(identity.id_aluno),turma=identity.className;
  const previous=checkpointInFlight;
@@ -160,6 +163,12 @@ function queueCheckpoint(snapshot,final=false,resultado='ENCERRADA',manual=false
  }).finally(()=>{
   if(checkpointInFlight===job)checkpointInFlight=null;
   if(priority)manualCheckpointPending=false;
+  if(!checkpointInFlight&&!manualCheckpointPending&&!endingRun&&pendingAutoSnapshot&&
+     currentRun&&String(currentRun.partida_id)===runId){
+   const newest=pendingAutoSnapshot;
+   pendingAutoSnapshot=null;
+   queueCheckpoint(newest).catch(()=>{});
+  }
  });
  checkpointInFlight=job;
  job.catch(()=>{});
@@ -273,6 +282,7 @@ async function enterRegisteredStudent(profile){
   sessionStorage.setItem('cm25TesteIdentidade',JSON.stringify(identity));
   currentRun={partida_id:String(game.partida_id)};
   revision=Number(game.revisao)||0;endingRun=false;lastCheckpoint=0;
+  pendingAutoSnapshot=null;
   pendingSnapshot={reino:Math.max(1,Math.min(10,Number(game.reino)||1)),territorio:Math.max(1,Number(game.territorio)||1),
    heroi_indice:identity.hero,personagem:game.personagem||'',
    hp:game.hp??100,mana:game.mana??100,pontuacao:game.pontuacao||0,tempo:game.tempo||0,
@@ -309,13 +319,10 @@ function switchRealm(next,target=1,direct=true){
  if(direct)cm25StopLoadingMusic();
  // Preservar o personagem também ao mudar de território no mesmo reino.
  if(ready)capture();
- // Antes da primeira batalha, o iframe ainda contém a tela de cadastro;
- // seus valores NÃO podem substituir um progresso recuperado do servidor.
+ // A próxima fase é uma intenção de navegação, não uma fase alcançada.
+ // Só registrar reino/território depois de confirmar a abertura em area().
  const before=campaignStarted?(currentSnapshot(true)||pendingSnapshot):pendingSnapshot;
- if(currentRun&&before){
-  pendingSnapshot={...before,reino:next,territorio:target};
-  if(campaignStarted)queueCheckpoint(pendingSnapshot).catch(()=>{});
- }
+ if(currentRun&&before)pendingSnapshot={...before,reino:next,territorio:target};
  if(autoTimer){clearTimeout(autoTimer);autoTimer=null;}
  realm=next;territory=target;pendingArea=target;ready=false;entering=false;automaticEntry=direct;loadId++;
  info();report(`Carregando ${CAMPAIGN[realm-1][0]} · território ${target}…`);
@@ -422,12 +429,22 @@ window.addEventListener('message',e=>{
    enterRegisteredStudent(data.profile||{});
  }
  else if(data.action==='COMPLETE'){
+  if(!currentRun||endingRun||stopSaveOpen||autoTimer)return;
   const completedRealm=realm,completedToken=loadId;
-  report('Chefão derrotado! Preparando o próximo reino…');
-  if(realm<10)autoTimer=setTimeout(()=>{if(realm===completedRealm&&loadId===completedToken)switchRealm(realm+1,1);},2300);
-  else {const snapshot=currentSnapshot(true)||pendingSnapshot;
-   if(snapshot)queueCheckpoint(snapshot,true,'VITORIA').catch(()=>{});
+  // Gravar somente o reino que foi vencido, jamais antecipar o próximo.
+  const completed=currentSnapshot(true);
+  if(completed){
+   completed.reino=realm;
+   completed.territorio=CAMPAIGN[realm-1][1];
+   if(realm<10)queueCheckpoint(completed).catch(()=>{});
+   else queueCheckpoint(completed,true,'VITORIA').catch(()=>{});
   }
+  report('Chefão derrotado! Preparando o próximo reino…');
+  if(realm<10)autoTimer=setTimeout(()=>{
+   autoTimer=null;
+   if(realm===completedRealm&&loadId===completedToken&&currentRun&&!endingRun)
+    switchRealm(realm+1,1);
+  },2300);
  }
 });
 
