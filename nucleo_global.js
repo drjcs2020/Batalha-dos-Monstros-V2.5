@@ -252,6 +252,24 @@
         showTutorial();
         return true;
       };
+      bridge.pauseForSave=()=>{
+        if(!bridge.status().active||gameEnded)return null;
+        const wasPlaying=playing,wasPaused=paused;
+        // Congela a atualização física e suspende a música até a decisão.
+        paused=true;
+        try{if(typeof mediaTrack!=='undefined'&&mediaTrack)mediaTrack.pause();}catch(e){}
+        return {wasPlaying,wasPaused};
+      };
+      bridge.resumeAfterSave=state=>{
+        if(!state)return false;
+        playing=!!state.wasPlaying;
+        paused=!!state.wasPaused;
+        if(playing&&!paused){
+          try{core.audio.play();}catch(e){console.warn('[ClassMana V2.5] Áudio:',e);}
+        }
+        return true;
+      };
+
     },
     send(action, extras) {
       if (window.parent !== window) window.parent.postMessage({namespace:'CM25',action,realm:window.CM25RealmBridge?.realm||null,token:buildToken,...(extras||{})},location.origin);
