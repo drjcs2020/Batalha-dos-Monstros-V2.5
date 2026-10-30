@@ -204,6 +204,19 @@ function chooseJourney(saved){
   const description=makeElement('p');description.className='cm25JourneyDescription';panel.append(description);
   const actions=makeElement('div');actions.className='cm25JourneyActions';panel.append(actions);
   const note=makeElement('p');note.className='cm25JourneyNote';panel.append(note);
+  const heroFiles=['hero_fada.png','hero_chama.png','hero_lobo.png','hero_cavaleiro.png','hero_maga.png','hero_dragao.png'];
+  const heroLabels=['Fada Guerreira','Chama Congelante','Lobo Gatuno','Cavaleiro Guardião','Maga Engenheira','Dragão de Combate'];
+  const selected=[...frame.contentWindow.document.querySelectorAll('#heroes .heroPick')].findIndex(x=>x.classList.contains('sel'));
+  const stored=Number(saved?.heroi_indice);
+  const byName=heroLabels.findIndex(x=>x.toLowerCase()===String(saved?.personagem||'').toLowerCase());
+  const hero=saved&&Number.isInteger(stored)&&stored>=0&&stored<6?stored:(byName>=0?byName:Math.max(0,selected));
+  const layout=makeElement('div');layout.id='cm25JourneyLayout';
+  const portrait=makeElement('div');portrait.id='cm25JourneyHero';
+  const image=makeElement('img');image.src=base+heroFiles[hero];image.alt=heroLabels[hero];image.className='cm25JourneyHeroImage';
+  portrait.append(makeElement('span','','🛡 HERÓI DA JORNADA'),image,makeElement('strong','',heroLabels[hero]));
+  const details=makeElement('div');details.id='cm25JourneyDetails';
+  details.append(status,stats,description,actions,note);
+  layout.append(portrait,details);panel.append(layout);
   let pending=false,confirmNew=false;
   function finish(value,button){
     if(pending)return;pending=true;button?.classList.add('is-selected');
