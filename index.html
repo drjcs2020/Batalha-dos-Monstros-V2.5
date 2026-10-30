@@ -62,6 +62,37 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050c1b;col
 #enableLoadingSound{position:fixed;bottom:max(118px,env(safe-area-inset-bottom) + 95px);left:50%;transform:translateX(-50%);z-index:190;padding:10px 16px;border:2px solid #ffe2a0;border-radius:12px;background:linear-gradient(#1a609b,#102e59);color:#fff8d9;font:800 13px Arial;box-shadow:0 4px 18px #000a;cursor:pointer}
 #enableLoadingSound[hidden]{display:none}
 
+/* ClassMana V2.5 — escolha de jornada: painel épico, claro e responsivo. */
+#cm25JourneyDialog{background:radial-gradient(circle at 50% 17%,#2766a366 0,#06152beb 47%,#020713f8 100%);overflow:auto;padding:14px;isolation:isolate}
+#cm25JourneyDialog:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.45;background:linear-gradient(135deg,transparent 0 38%,#37bce516 40% 41%,transparent 42% 100%),radial-gradient(circle at 22% 24%,#e8b75524,transparent 24%),radial-gradient(circle at 81% 78%,#4c85df29,transparent 27%)}
+#cm25JourneyPanel{width:min(620px,96vw);max-height:calc(100dvh - 28px);padding:22px clamp(17px,4vw,36px) 26px;border:2px solid #f7ce6d;border-radius:24px;background:linear-gradient(150deg,#173f74 0%,#0e2b53 41%,#06142c 100%);box-shadow:0 0 0 5px #2c73974a,0 28px 95px #000d,inset 0 1px 40px #8fd9f91c}
+#cm25JourneyPanel:before{inset:9px;border-radius:16px;border-color:#f9d78955}
+#cm25JourneyLogo{width:min(310px,75vw);height:94px;margin-bottom:0}
+#cm25JourneyPanel .cm25JourneyEyebrow{display:inline-flex;align-items:center;gap:7px;margin:5px 0 8px;padding:6px 16px;border:1px solid #e3c47976;border-radius:100px;background:#0d2748;color:#f9d78b;font-size:11px;font-weight:900;letter-spacing:.16em}
+#cm25JourneyDecor{margin:2px 0 8px;gap:20px}
+#cm25JourneyDecor img{height:40px;width:40px;filter:drop-shadow(0 3px 8px #000c) drop-shadow(0 0 9px #94c9f977)}
+#cm25JourneyPanel h2{font-size:clamp(24px,5vw,34px);line-height:1.14;letter-spacing:.02em;margin:7px 0 14px;text-shadow:0 4px 18px #020c29}
+#cm25JourneyStatus{margin:10px 0 8px;padding:14px;border:1px solid #ddc17f7b;border-radius:15px;background:linear-gradient(135deg,#06213dd9,#153d62a9);font-size:13px;color:#e4f6ff;letter-spacing:.045em;font-weight:900}
+#cm25JourneyPanel .cm25JourneyStats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:12px 0}
+#cm25JourneyPanel .cm25JourneyStat{padding:12px 7px;border:1px solid #4b9bba77;border-radius:12px;background:#06182fb8}
+#cm25JourneyPanel .cm25JourneyStat strong{display:block;color:#ffdc85;font-size:clamp(16px,3vw,22px);letter-spacing:0}
+#cm25JourneyPanel .cm25JourneyStat small{display:block;color:#b7daee;font-size:11px;margin-top:3px}
+#cm25JourneyPanel .cm25JourneyDescription{color:#e1edfb;font-size:14px;max-width:440px}
+#cm25JourneyPanel .cm25JourneyActions{display:grid;gap:10px;margin:14px 0 0}
+#cm25JourneyPanel .cm25JourneyButton{position:relative;margin:0;min-height:64px;text-align:left;padding:12px 52px 12px 17px;border-radius:14px;border:2px solid #80cde9;background:linear-gradient(110deg,#2b87c3,#18508a 74%);box-shadow:0 4px 0 #071935,0 6px 20px #0005;text-shadow:none;font-size:16px}
+#cm25JourneyPanel .cm25JourneyButton:after{content:"›";position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:29px;color:#e9ddbd}
+#cm25JourneyPanel .cm25JourneyButton .cm25ButtonSub{display:block;margin-top:4px;font-size:11px;font-weight:500;color:#c9eaff}
+#cm25JourneyPanel .cm25JourneyButton.cm25JourneyPrimary{background:linear-gradient(110deg,#ffe69a,#dba13d 83%);color:#1e3150;border-color:#fff1bf;box-shadow:0 4px 0 #85511c,0 8px 27px #d7a43b30}
+#cm25JourneyPanel .cm25JourneyPrimary .cm25ButtonSub,#cm25JourneyPanel .cm25JourneyPrimary:after{color:#4a3b2f}
+#cm25JourneyPanel .cm25JourneyButton.cm25JourneyCancel{min-height:40px;font-size:13px;text-align:center;padding:8px 12px;border-color:#6e9eb3;background:transparent;box-shadow:none}
+#cm25JourneyPanel .cm25JourneyCancel:after{display:none}
+#cm25JourneyPanel .cm25JourneyButton.is-selected{transform:translateY(2px)}
+#cm25JourneyPanel .cm25JourneyNote{color:#a7c7de;font-size:12px;margin:14px auto 0}
+#finishRun{position:fixed;z-index:91;top:clamp(166px,24vh,201px);left:max(10px,env(safe-area-inset-left));max-width:172px;padding:9px 12px;border:2px solid #f5bd8f;border-radius:12px;background:linear-gradient(#803e40,#421e32);color:#fff4df;font:800 13px Arial;box-shadow:0 6px 20px #0008;cursor:pointer}
+#finishRun[hidden]{display:none!important}#finishRun:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:700px){#cm25JourneyPanel{padding:14px 14px 18px}#cm25JourneyLogo{height:68px}#cm25JourneyDecor img{height:30px;width:30px}#cm25JourneyPanel .cm25JourneyButton{min-height:57px;font-size:14px}#finishRun{top:clamp(151px,25vh,179px);left:6px;font-size:12px;padding:7px 9px;max-width:140px}}
+@media(max-height:580px){#cm25JourneyPanel{max-height:95dvh}#cm25JourneyDecor{display:none}#cm25JourneyLogo{height:53px}#cm25JourneyPanel .cm25JourneyStats{margin:5px 0}}
+
 </style>
 </head>
 <body>
@@ -69,6 +100,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050c1b;col
 <iframe id="gameWindow" title="ClassMana — Batalha dos Monstros V2.5" allow="autoplay;fullscreen" referrerpolicy="strict-origin-when-cross-origin"></iframe>
 <div id="realmTitle" aria-live="polite"></div>
 <button id="stopSave" type="button" hidden>💾 Parar e salvar</button>
+<button id="finishRun" type="button" hidden>🏁 Finalizar partida</button>
 <section id="saveOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="saveTitle">
 <div id="savePanel">
 <div id="saveMark" class="saveMark" aria-hidden="true">💾</div>
