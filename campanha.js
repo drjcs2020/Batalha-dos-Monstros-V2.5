@@ -30,16 +30,35 @@ function getV25(params){
   document.head.appendChild(script);
  });
 }
+// Apps Script ContentService normalmente não libera CORS para leitura de POST.
+// A gravação é feita como pedido simples, e CONFIRMADA por GET/JSONP da planilha.
+// Sem confirmação não anunciamos que uma partida foi salva.
 async function postV25(data){
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),20000);
  try{
-  const response=await fetch(CM25_SAVE_API,{method:'POST',
+  const response=await fetch(CM25_SAVE_API,{method:'POST',mode:'no-cors',
    headers:{'Content-Type':'text/plain;charset=utf-8'},
    body:JSON.stringify(data),redirect:'follow',signal:controller.signal});
-  if(!response.ok)throw new Error('HTTP '+response.status);
-  const out=await response.json();
-  if(!out||out.success!==true)throw new Error(out?.erro||'Resposta inválida do salvamento.');
-  return out;
+  // Uma resposta opaque apenas prova o envio, não que o script aceitou.
+  // Consultar o estado até confirmar a revisão ou a substituição da partida.
+  let lastError=null;
+  for(let n=0;n<7;n++){
+   if(n)await new Promise(r=>setTimeout(r,850));
+   try{
+    const confirm=await getV25({acao:'progresso',id_aluno:data.id_aluno,turma:data.turma});
+    if(!confirm||confirm.success!==true)throw Error(confirm?.erro||'Falha ao consultar confirmação');
+    if(data.acao==='nova_partida'&&confirm.existe&&confirm.partida?.partida_id&&
+       confirm.partida.partida_id!==data.partida_anterior)
+      return {success:true,partida:confirm.partida};
+    if(data.acao==='salvar_progresso'&&confirm.existe&&
+       confirm.partida?.partida_id===data.partida_id&&
+       Number(confirm.partida.revisao)>=Number(data.revisao))
+      return {success:true,salvo:true,revisao:confirm.partida.revisao};
+    if(data.acao==='finalizar_partida'&&!confirm.existe)
+      return {success:true,resultado_registrado:true};
+   }catch(err){lastError=err;}
+  }
+  throw new Error('O Google Sheets não confirmou a gravação. '+String(lastError?.message||''));
  }finally{clearTimeout(timer);}
 }
 function currentSnapshot(){
@@ -119,7 +138,7 @@ async function enterRegisteredStudent(profile){
   const choice=await chooseJourney(existing);
   if(choice==='cancel'){report('Escolha cancelada. Seu progresso está preservado.');return;}
   const record=choice==='new'
-    ?await postV25({acao:'nova_partida',id_aluno:profile.id_aluno,turma:profile.className})
+    ?await postV25({acao:'nova_partida',id_aluno:profile.id_aluno,turma:profile.className,partida_anterior:existing?.partida_id||''})
     :{success:true,partida:existing};
   if(record?.success!==true||!record.partida?.partida_id)throw Error(record?.erro||'Partida não foi confirmada pelo servidor.');
   const game=record.partida;
