@@ -48,13 +48,13 @@ document.addEventListener('keydown',()=>{if(!cm25OpeningDone&&cm25LoadingMusic.p
 cm25LoadingMusic.load();
 cm25StartLoadingMusic();
 
-let currentRun=null,revision=0,pendingSnapshot=null,saveChain=Promise.resolve(),lastCheckpoint=0,entryBusy=false,endingRun=false;
+let currentRun=null,revision=0,pendingSnapshot=null,checkpointInFlight=null,manualCheckpointPending=false,lastCheckpoint=0,entryBusy=false,endingRun=false;
 let cm25GetSequence=0;
-function getV25(params){
+function getV25(params,timeoutMs=16000){
  return new Promise((resolve,reject)=>{
   const callback='cmV25Callback_'+(++cm25GetSequence),script=document.createElement('script');
   let finished=false;
-  const timer=setTimeout(()=>finish(new Error('Tempo esgotado ao consultar o progresso.')),16000);
+  const timer=setTimeout(()=>finish(new Error('Tempo esgotado ao consultar o progresso.')),timeoutMs);
   function finish(error,data){
    if(finished)return;finished=true;clearTimeout(timer);script.remove();
    try{delete window[callback]}catch(e){window[callback]=undefined}
@@ -69,8 +69,9 @@ function getV25(params){
 // Apps Script ContentService normalmente não libera CORS para leitura de POST.
 // A gravação é feita como pedido simples, e CONFIRMADA por GET/JSONP da planilha.
 // Sem confirmação não anunciamos que uma partida foi salva.
-async function postV25(data){
- const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),20000);
+async function postV25(data,deadlineMs=18000){
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),Math.min(10000,deadlineMs));
+ const deadline=Date.now()+deadlineMs;
  try{
   const response=await fetch(CM25_SAVE_API,{method:'POST',mode:'no-cors',
    headers:{'Content-Type':'text/plain;charset=utf-8'},
@@ -78,10 +79,11 @@ async function postV25(data){
   // Uma resposta opaque apenas prova o envio, não que o script aceitou.
   // Consultar o estado até confirmar a revisão ou a substituição da partida.
   let lastError=null;
-  for(let n=0;n<7;n++){
-   if(n)await new Promise(r=>setTimeout(r,850));
+  for(let n=0;n<7&&Date.now()<deadline;n++){
+   if(n)await new Promise(r=>setTimeout(r,Math.min(650,Math.max(0,deadline-Date.now()-1200))));
+   const remaining=deadline-Date.now();if(remaining<1150)break;
    try{
-    const confirm=await getV25({acao:'progresso',id_aluno:data.id_aluno,turma:data.turma});
+    const confirm=await getV25({acao:'progresso',id_aluno:data.id_aluno,turma:data.turma},Math.min(2700,remaining));
     if(!confirm||confirm.success!==true)throw Error(confirm?.erro||'Falha ao consultar confirmação');
     if(data.acao==='nova_partida'&&confirm.existe&&confirm.partida?.partida_id&&
        confirm.partida.partida_id!==data.partida_anterior)
@@ -111,29 +113,50 @@ function currentSnapshot(allowInactive=false){
    gameEnded:!!status.gameEnded};
  }catch(e){return null;}
 }
-function queueCheckpoint(snapshot,final=false,resultado='ENCERRADA'){
- if(!currentRun||!identity?.id_aluno||!snapshot||endingRun)return saveChain;
+// Gravação sequencial com fila de tamanho máximo 1: checkpoints automáticos
+// não se acumulam; o clique manual fica na frente dos próximos automáticos.
+function queueCheckpoint(snapshot,final=false,resultado='ENCERRADA',manual=false){
+ if(!currentRun||!identity?.id_aluno||!snapshot)
+  return Promise.reject(Error('Nenhuma partida válida para salvar.'));
+ if(endingRun&&!final)return checkpointInFlight||Promise.resolve({ignorado:true});
+ const priority=manual||final;
+ if(!priority&&(checkpointInFlight||manualCheckpointPending)){
+  lastCheckpoint=Date.now();return Promise.resolve({ignorado:true});
+ }
+ if(priority&&manualCheckpointPending)
+  return checkpointInFlight||Promise.reject(Error('Salvamento manual já em andamento.'));
+ if(priority)manualCheckpointPending=true;
  if(final)endingRun=true;
- const request={acao:final?'finalizar_partida':'salvar_progresso',
-  id_aluno:identity.id_aluno,turma:identity.className,partida_id:currentRun.partida_id,
-  revisao:++revision,reino:snapshot.reino,territorio:snapshot.territorio,
-  heroi_indice:snapshot.heroi_indice,personagem:snapshot.personagem,
-  hp:snapshot.hp,mana:snapshot.mana,pontuacao:snapshot.pontuacao,tempo:snapshot.tempo};
- if(final)request.resultado=resultado;
- // Uma fila para evitar que um checkpoint antigo sobreponha o mais recente.
- saveChain=saveChain.catch(()=>{}).then(()=>postV25(request)).then(data=>{
-  if(final){report('Partida encerrada e resultado enviado à V2.5.');currentRun=null;}
-  else{lastCheckpoint=Date.now();report('Progresso salvo automaticamente · reino '+request.reino+' · território '+request.territorio);}
-  return data;
+ const runId=String(currentRun.partida_id),studentId=String(identity.id_aluno),turma=identity.className;
+ const previous=checkpointInFlight;
+ lastCheckpoint=Date.now();
+ const job=Promise.resolve().then(async()=>{
+  if(previous)await previous.catch(()=>{});
+  if(!currentRun||String(currentRun.partida_id)!==runId)
+   throw Error('A partida mudou antes do registro.');
+  const request={acao:final?'finalizar_partida':'salvar_progresso',
+   id_aluno:studentId,turma,partida_id:runId,revisao:++revision,
+   reino:snapshot.reino,territorio:snapshot.territorio,
+   heroi_indice:snapshot.heroi_indice,personagem:snapshot.personagem,
+   hp:snapshot.hp,mana:snapshot.mana,pontuacao:snapshot.pontuacao,tempo:snapshot.tempo};
+  if(final)request.resultado=resultado;
+  const result=await postV25(request,priority?19000:14000);
+  if(final){report('Partida encerrada e confirmada na V2.5.');currentRun=null;}
+  else if(priority)report('Progresso confirmado no Google Sheets.');
+  lastCheckpoint=Date.now();
+  return result;
  }).catch(error=>{
   console.error('[ClassMana V2.5] Falha no salvamento',error);
-  report('⚠ Progresso não confirmado online: '+String(error.message||error));
+  report('⚠ O servidor não confirmou o progresso: '+String(error.message||error));
   if(final)endingRun=false;
   throw error;
+ }).finally(()=>{
+  if(checkpointInFlight===job)checkpointInFlight=null;
+  if(priority)manualCheckpointPending=false;
  });
- // O chamador de salvamentos automáticos não deve provocar unhandled rejection.
- saveChain.catch(()=>{});
- return saveChain;
+ checkpointInFlight=job;
+ job.catch(()=>{});
+ return job;
 }
 function makeElement(tag,css,text){
  const el=document.createElement(tag);
@@ -443,8 +466,8 @@ async function confirmStopAndSave(){
  try{
   const snapshot=currentSnapshot();
   if(!snapshot)throw Error('Não foi possível recuperar o estado da batalha.');
-  if(finishing)await queueCheckpoint(snapshot,true,'ENCERRADA');
-  else await queueCheckpoint(snapshot);
+  if(finishing)await queueCheckpoint(snapshot,true,'ENCERRADA',true);
+  else await queueCheckpoint(snapshot,false,'ENCERRADA',true);
   stopSaveConfirmed=true;
   $('saveMark').textContent='✅';
   $('saveTitle').textContent=finishing?'Partida finalizada!':'Partida salva com sucesso!';
@@ -458,7 +481,7 @@ async function confirmStopAndSave(){
   $('saveExit').hidden=false;$('saveExit').focus();
  }catch(error){
   console.error('[ClassMana V2.5] Registro da partida:',error);
-  notice.textContent='⚠ O servidor não confirmou o registro. Tente novamente ou continue jogando.';
+  notice.textContent='⚠ Salvamento NÃO confirmado. A batalha continua aberta nesta aba. Tente de novo ou volte a jogar; não feche a página enquanto precisar preservar esse progresso.';
   notice.classList.add('error');
   confirm.textContent=finishing?'↻ Tentar finalizar novamente':'↻ Tentar salvar novamente';
   confirm.disabled=false;cancel.disabled=false;
