@@ -142,68 +142,70 @@ function makeElement(tag,css,text){
 function chooseJourney(saved){
  return new Promise(resolve=>{
   const base='https://drjcs2020.github.io/classmana-batalha-dos-monstros-V2/assets/';
-  const backdrop=makeElement('div');
-  backdrop.id='cm25JourneyDialog';
-  backdrop.setAttribute('role','dialog');
-  backdrop.setAttribute('aria-modal','true');
-  backdrop.setAttribute('aria-labelledby','cm25JourneyTitle');
+  const overlay=makeElement('div');overlay.id='cm25JourneyDialog';
+  overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','cm25JourneyTitle');
   const panel=makeElement('div');panel.id='cm25JourneyPanel';
-  const logo=makeElement('img');logo.id='cm25JourneyLogo';logo.src=base+'logo.png';logo.alt='ClassMana';
-  panel.appendChild(logo);
-  const decor=makeElement('div');decor.id='cm25JourneyDecor';
-  for(const item of ['shield.png','crystal.png','potion.png']){
-   const picture=makeElement('img');picture.src=base+'items3d/'+item;picture.alt='';picture.setAttribute('aria-hidden','true');decor.appendChild(picture);
+  const logo=makeElement('img');logo.id='cm25JourneyLogo';logo.src=base+'logo.png';logo.alt='ClassMana';panel.append(logo);
+  const eyebrow=makeElement('div','','⚔ CLASSMANA • BATALHA DOS MONSTROS');eyebrow.className='cm25JourneyEyebrow';panel.append(eyebrow);
+  const deco=makeElement('div');deco.id='cm25JourneyDecor';
+  for(const name of ['shield.png','crystal.png','potion.png']){
+    const img=makeElement('img');img.src=base+'items3d/'+name;img.alt='';img.setAttribute('aria-hidden','true');deco.append(img);
   }
-  panel.appendChild(decor);
-  const title=makeElement('h2','','SUA JORNADA');
-  title.id='cm25JourneyTitle';panel.appendChild(title);
-  const status=makeElement('p','',saved
-   ?'PARTIDA ANTERIOR ENCONTRADA'
-   :'PRONTO PARA COMEÇAR UMA NOVA AVENTURA!');
-  status.id='cm25JourneyStatus';panel.appendChild(status);
-  const description=makeElement('p','',
-   saved?'Reino '+saved.reino+' · Território '+saved.territorio+' · '+Number(saved.pontuacao||0).toLocaleString('pt-BR')+' pontos'+
-    (saved.personagem?' · '+saved.personagem:''):
-    'Seu herói iniciará no Reino 1, Território 1, com a pontuação zerada.');
-  panel.appendChild(description);
-  const note=makeElement('p','','Continuar mantém o herói salvo. Nova partida permite trocar de herói, mas reinicia o progresso atual.');
-  note.className='cm25JourneyNote';panel.appendChild(note);
+  panel.append(deco);
+  const title=makeElement('h2','','ESCOLHA SUA JORNADA');title.id='cm25JourneyTitle';panel.append(title);
+  const status=makeElement('div','',saved?'✦ UMA AVENTURA SALVA ESPERA POR VOCÊ':'✦ SUA AVENTURA COMEÇA AQUI');status.id='cm25JourneyStatus';panel.append(status);
+  const stats=makeElement('div');stats.className='cm25JourneyStats';panel.append(stats);
+  function stat(label,value){const el=makeElement('div');el.className='cm25JourneyStat';el.append(makeElement('strong','',value),makeElement('small','',label));stats.append(el);}
+  if(saved){
+   const re=Math.max(1,Math.min(10,Number(saved.reino)||1));
+   stat('REINO',re+' / 10');stat('TERRITÓRIO',(Number(saved.territorio)||1)+' / '+CAMPAIGN[re-1][1]);stat('PONTOS',Number(saved.pontuacao||0).toLocaleString('pt-BR'));
+  }else{stat('REINOS','10');stat('TERRITÓRIOS','49');stat('HERÓIS','6');}
+  const description=makeElement('p');description.className='cm25JourneyDescription';panel.append(description);
+  const actions=makeElement('div');actions.className='cm25JourneyActions';panel.append(actions);
+  const note=makeElement('p');note.className='cm25JourneyNote';panel.append(note);
   let pending=false,confirmNew=false;
-  const actions=makeElement('div');panel.appendChild(actions);
-  function choose(value,button){
-   if(pending)return;
-   if(value==='new'&&saved&&!confirmNew){
-    confirmNew=true;
-    title.textContent='CONFIRMAR NOVA PARTIDA?';
-    status.textContent='ATENÇÃO: SUA JORNADA ATUAL SERÁ SUBSTITUÍDA';
-    description.textContent='Você começará no Reino 1 com o herói escolhido na seleção. Os pontos da jornada em andamento serão zerados. Resultados anteriores já finalizados permanecerão no histórico.';
-    note.textContent='Se quiser manter seu progresso, escolha Voltar e depois Continuar partida.';
-    [...actions.querySelectorAll('button')].forEach(x=>{x.hidden=x!==button&&x.dataset.action!=='cancel';});
-    button.textContent='✔ CONFIRMAR NOVA JORNADA';
-    const cancel=actions.querySelector('[data-action="cancel"]');
-    if(cancel)cancel.textContent='↩ VOLTAR';
-    return;
-   }
-   if(value==='cancel'&&confirmNew){
-    confirmNew=false;backdrop.remove();resolve('cancel');return;
-   }
-   pending=true;button.classList.add('is-selected');
-   [...actions.querySelectorAll('button')].forEach(x=>x.disabled=true);
-   window.setTimeout(()=>{backdrop.remove();resolve(value);},230);
+  function finish(value,button){
+    if(pending)return;pending=true;button?.classList.add('is-selected');
+    actions.querySelectorAll('button').forEach(x=>x.disabled=true);
+    overlay.remove();resolve(value);
   }
-  function button(label,value,cancel=false){
-   const b=makeElement('button','',label);
-   b.type='button';b.className='cm25JourneyButton'+(cancel?' cm25JourneyCancel':'');
-   b.dataset.action=value;
-   b.onclick=()=>choose(value,b);
-   actions.appendChild(b);
-   return b;
+  function button(label,subtitle,value,kind=''){
+    const b=makeElement('button');b.type='button';b.className='cm25JourneyButton '+kind;b.dataset.action=value;
+    b.append(document.createTextNode(label));
+    if(subtitle){const small=makeElement('span','',subtitle);small.className='cm25ButtonSub';b.append(small);}
+    b.onclick=()=>{
+      if(pending)return;
+      if(value==='cancel'&&confirmNew){confirmNew=false;render();return;}
+      if(value==='new'&&saved&&!confirmNew){confirmNew=true;render();return;}
+      finish(value,b);
+    };
+    actions.append(b);return b;
   }
-  if(saved)button('▶ CONTINUAR COM O HERÓI SALVO','continue');
-  button('✦ COMEÇAR NOVA PARTIDA','new');
-  button('↩ CANCELAR','cancel',true);
-  backdrop.appendChild(panel);document.body.appendChild(backdrop);
-  actions.querySelector('button')?.focus();
+  function render(){
+    actions.replaceChildren();
+    if(confirmNew){
+      title.textContent='REINICIAR AVENTURA?';
+      status.textContent='⚠ SUA PARTIDA SALVA SERÁ SUBSTITUÍDA';
+      stats.hidden=true;
+      description.textContent='Começar do zero reinicia o Reino 1 com zero pontos. O histórico de partidas finalizadas será mantido.';
+      note.textContent='Para não perder a aventura atual, volte às opções e escolha CONTINUAR PARTIDA.';
+      button('✔ SIM, COMEÇAR DO ZERO','Confirmar a nova jornada','new','cm25JourneyPrimary');
+      button('↩ VOLTAR ÀS OPÇÕES','Não reiniciar a partida','cancel','cm25JourneyCancel');
+    }else{
+      title.textContent='ESCOLHA SUA JORNADA';
+      status.textContent=saved?'✦ UMA AVENTURA SALVA ESPERA POR VOCÊ':'✦ SUA AVENTURA COMEÇA AQUI';
+      stats.hidden=false;
+      description.textContent=saved
+       ?'Seu herói '+String(saved.personagem||'')+' e seu progresso estão preservados. Continue do território salvo.'
+       :'Selecione seu herói e comece a aventura no Reino 1.';
+      note.textContent='Continuar preserva a jornada. Nova partida reinicia o progresso atual somente após confirmação.';
+      if(saved)button('▶ CONTINUAR PARTIDA','Reino '+saved.reino+' · Território '+saved.territorio+' · '+Number(saved.pontuacao||0).toLocaleString('pt-BR')+' pontos','continue','cm25JourneyPrimary');
+      button('✦ COMEÇAR NOVA PARTIDA','Iniciar no primeiro território','new',saved?'':'cm25JourneyPrimary');
+      button('↩ VOLTAR À SELEÇÃO','','cancel','cm25JourneyCancel');
+    }
+    actions.querySelector('button')?.focus();
+  }
+  render();overlay.append(panel);document.body.append(overlay);
  });
 }
 async function enterRegisteredStudent(profile){
