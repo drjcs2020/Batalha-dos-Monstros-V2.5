@@ -1,5 +1,5 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ClassMana V2.5 — Teste Mega-Aranha</title>
-<style>body{margin:0;display:grid;min-height:100vh;place-items:center;background:#09142c;color:white;font:17px Arial,sans-serif}.status{max-width:610px;padding:35px;text-align:center;line-height:1.65}h1{color:#a3e1ff}button{padding:12px 18px;background:#2164ab;color:white;border:1px solid #7addff;border-radius:10px;cursor:pointer}</style></head><body><div class="status" id="status"><h1>ClassMana V2.5 — Teste da Mega-Aranha</h1><p>Carregando a V2.4 original e o Reino 3 — Mega-Aranha…</p><p>É necessária conexão com a internet para carregar os recursos do jogo original.</p></div>
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ClassMana — Batalha dos Monstros V2.5 · Reino 3</title>
+<style>body{margin:0;display:grid;min-height:100vh;place-items:center;background:#09142c;color:white;font:17px Arial,sans-serif}.status{max-width:610px;padding:35px;text-align:center;line-height:1.65}h1{color:#a3e1ff}button{padding:12px 18px;background:#2164ab;color:white;border:1px solid #7addff;border-radius:10px;cursor:pointer}</style></head><body><div class="status" id="status"><h1>ClassMana — Batalha dos Monstros V2.5</h1><p>Preparando os recursos do reino e da sua jornada…</p><p>É necessária conexão com a internet para carregar os recursos do jogo original.</p></div>
 <script>
 (async()=>{
 // Abre diretamente no Reino 3: a fase do Fantasma não é executada.
@@ -99,8 +99,6 @@ try{
  // Permite pausar a trilha mesmo que a pré-carga continue em segundo plano.
  original=original.replace('loadingMusic.loop=true;loadingMusic.volume=.35;', 'loadingMusic.loop=true;loadingMusic.volume=.35;window.cm25StopLoadingMusic=()=>{try{loadingMusic.pause();loadingMusic.currentTime=0;}catch(e){}};');
  // Asset path to current local test, independent of remote base URL.
- original=original.replace(/<head([^>]*)>/i,'<head$1><style>#cm25build{position:fixed;right:8px;bottom:5px;z-index:999999;background:#111c33c9;color:#aff;padding:3px 9px;border-radius:8px;font:11px Arial}</style>');
- original=original.replace(/<\/body>/i,'<div id="cm25build">ClassMana V2.5 • MEGA-ARANHA • F6 AVANÇA • F7 CHEFÃO</div></body>');
  // Added assets must resolve locally, even though original HTML uses the original base.
  const localPrefix=new URL('./assets_v25/',location.href).href;
  original=original.replaceAll("'assets_v25/", "'"+localPrefix);
