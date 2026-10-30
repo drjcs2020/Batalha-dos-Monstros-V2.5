@@ -934,7 +934,7 @@ draw=function(){if(stage!==0||!S.active)return orig.draw();if(S.area===4){orig.d
   lootDraw(false);lootHud();drawBossEntrance();return}drawHorde()};
 finishBossDefeat=function(){if(stage!==0||!S.active)return orig.defeat();
  defeatPending=false;playing=false;paused=true;S.active=false;
- changedArea('RAINHA ARANHA DERROTADA!', 'Fim do teste do Reino 9 · V2.5',()=>{
+ changedArea('RAINHA ARANHA DERROTADA!', 'Próximo reino: Dragão de Fogo!',()=>{
   $('#menu').classList.remove('hidden');$('#menu').style.display='grid';$('#start').textContent='↻ TESTAR NOVAMENTE';
   stage=0;expectedStage=0;S.area=0;playing=false;paused=true;
  });
