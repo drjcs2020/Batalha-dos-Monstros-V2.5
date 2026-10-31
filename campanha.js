@@ -349,7 +349,7 @@ function switchRealm(next,target=1,direct=true){
  frame.style.pointerEvents=direct?'none':'auto';
  $('transitionLoading').hidden=!direct;
  $('transitionLabel').textContent='Portal para '+CAMPAIGN[next-1][0]+'…';
- frame.src=`reinos/${String(realm).padStart(2,'0')}/index.html?cm25=${loadId}&direct=${direct?'1':'0'}`;
+ frame.src=`reinos/${String(realm).padStart(2,'0')}/index.html?cm25=${loadId}&direct=${direct?'1':'0'}&rev=20261030-23`;
 }
 // READY confirma o código do iframe, mas não o carregamento das imagens.
 // Aguardar o cenário antes de iniciar uma área nos testes rápidos.
