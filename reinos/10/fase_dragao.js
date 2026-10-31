@@ -529,6 +529,8 @@ window.CM25RealmBridge={
     stage=0;gameEnded=false;defeatPending=false;playing=true;paused=false;
     document.body.classList.add('cm25-test-direct');
     if(!document.getElementById('cm25-direct-style')){const st=document.createElement('style');st.id='cm25-direct-style';st.textContent='body.cm25-test-direct #classmanaSplash,body.cm25-test-direct #openingVideo{display:none!important;visibility:hidden!important;pointer-events:none!important;}';document.head.appendChild(st)}
+    // Reiniciar a conclusão e o portal em uma nova jornada, inclusive após voltar à seleção.
+    cm25CompletionSent=false;cm25VictoryPortalPending=false;
     R.area=i;R.active=true;
     startTerritory();
     try{window.ClassManaNucleo?.audio?.play();}catch(e){console.warn("Áudio do reino",e)}
