@@ -695,7 +695,7 @@
         return image;
       });
       const state={phase:'off',territory:0,started:0,token:0,exitDone:0,
-        heroX:0,groundY:0,portalX:0,entryEndX:0,wasPaused:false,wasFacing:1,portalPainted:false};
+        heroX:0,groundY:0,heroY:0,portalX:0,entryEndX:0,wasPaused:false,wasFacing:1,portalPainted:false};
       const ENTRY_GROW=720,ENTRY_WALK=780,ENTRY_CLOSE=480;
       const EXIT_GROW=720,EXIT_WALK=1350,EXIT_CLOSE=490;
       const ENTRY_MS=ENTRY_GROW+ENTRY_WALK+ENTRY_CLOSE;
@@ -710,7 +710,23 @@
         const g=Number(window.ClassManaV25Test?.getStatus?.()?.ground);
         return Number.isFinite(g)&&g>0?g:(Number(p.y)||H*.75);
       };
+      // A base visual do portal e o apoio fisico dos PES nao sao o mesmo y.
+      // Usar o pouso ja calibrado de cada territorio; nunca reposicionar a
+      // fisica do heroi para a referencia artistica da passarela.
+      const heroFootGround=()=>{
+        try{
+          const y=Number(bridge.realm===10&&typeof feet==='function'?feet():
+            typeof ground==='function'?ground():p.y);
+          if(Number.isFinite(y)&&y>0)return y;
+        }catch(error){console.warn('[ClassMana] Ancora local dos pes',error);}
+        return Number(p.y)||H*.70;
+      };
+      const portalFramesReady=()=>frames.every(image=>image.complete&&image.naturalWidth>0);
+      let queuedExit=null,exitWaitTimer=null;
+      const entryEnd=()=>Math.max(W*.13,entranceX()+Math.min(H*.045,portalSize()*.095));
       const reset=territory=>{
+        if(exitWaitTimer!==null){clearTimeout(exitWaitTimer);exitWaitTimer=null;}
+        queuedExit=null;
         state.portalPainted=false;
         state.token++;
         state.territory=territory;
@@ -719,8 +735,9 @@
         state.started=0;
         state.heroX=Number(p.x)||W*.18;
         state.groundY=territoryGround();
+        state.heroY=heroFootGround();
         state.portalX=entranceX();
-        state.entryEndX=Math.max(W*.15,state.portalX+H*.13);
+        state.entryEndX=entryEnd();
       };
       const oldSelect=bridge.selectArea.bind(bridge);
       bridge.selectArea=(target,profile)=>{
@@ -932,8 +949,13 @@
         const ww=hh*(image.naturalWidth/image.naturalHeight);
         ctx.save();
         ctx.globalAlpha=clamp(alpha,0,1);
-        ctx.drawImage(image,x-ww/2,state.groundY-45-hh/2+
-          (Number(window.cm25HeroFeetOffset)||0),ww,hh);
+        const feetOffset=typeof window.cm25HeroFeetOffset==='function'?
+          Number(window.cm25HeroFeetOffset())||0:Number(window.cm25HeroFeetOffset)||0;
+        const bottomPad=typeof cm25HeroBottomPad==='function'?
+          Number(cm25HeroBottomPad(image,hh))||0:0;
+        // A mesma ancora do desenho normal (p.y-45), nao a linha da passarela.
+        ctx.drawImage(image,x-ww/2,state.heroY-45-hh/2+
+          feetOffset+bottomPad,ww,hh);
         ctx.restore();
       };
       const showFrame=(index,x)=>{
@@ -960,10 +982,17 @@
           ctx.setTransform(DPR,0,0,DPR,0,0);
           if(entering){
             showFrame(frame,state.portalX);
-            // O herói surge SOMENTE após o portal chegar à sexta imagem.
+            // Sai do centro do portal em passos curtos, sem ser projetado
+            // ate a beirada frontal da passarela.
             if(elapsed>=grow){
               drawCharacter(state.portalX+(state.entryEndX-state.portalX)*advance,
                 ease((elapsed-grow)/300));
+              // Um ultimo veu do portal cobre parcialmente a personagem
+              // enquanto ela ainda atravessa a abertura.
+              if(advance<.62){
+                ctx.save();ctx.globalAlpha=.15*(1-advance/.62);
+                showFrame(frame,state.portalX);ctx.restore();
+              }
             }
           }else{
             // Enquanto o portal cresce, o herói permanece na posição real.
@@ -985,14 +1014,15 @@
           if(!st?.active||gameEnded)return;
           const territory=Number(st.territory)||1;
           if(state.territory!==territory)reset(territory);
-          if(state.phase==='pending'&&playing&&!paused&&
+          if(state.phase==='pending'&&playing&&!paused&&portalFramesReady()&&
              document.getElementById('tutorial')?.classList.contains('hidden')!==false){
             state.phase='entry';
             state.started=performance.now();
             state.wasPaused=paused;
             state.groundY=territoryGround();
+            state.heroY=heroFootGround();
             state.portalX=entranceX();
-            state.entryEndX=Math.max(W*.15,state.portalX+H*.13);
+            state.entryEndX=entryEnd();
             paused=true;
             p.inv=Math.max(Number(p.inv)||0,ENTRY_MS/1000+.5);
           }
@@ -1001,9 +1031,14 @@
           this.scoring.draw(ctx);
           if(state.phase==='entry'&&performance.now()-state.started>=ENTRY_MS){
             p.x=state.entryEndX;
-            p.y=state.groundY;
+            p.y=state.heroY; // Nunca colocar o heroi na coordenada do portal.
             paused=state.wasPaused;
             state.phase='off';
+            if(queuedExit){
+              const request=queuedExit;queuedExit=null;
+              if(request.territory===Number(bridge.status()?.territory))
+                requestAnimationFrame(()=>this.portalBeforeExit(request.continueTransition));
+            }
           }
         }catch(error){
           console.error('[ClassMana] Falha visual do portal, liberando batalha',error);
@@ -1013,19 +1048,11 @@
       };
       // A transição aprovada só aparece quando o herói terminou de entrar
       // no portal e a elipse já desapareceu completamente.
-      this.portalBeforeExit=continueTransition=>{
-        if(typeof continueTransition!=='function')return false;
-        const st=bridge.status();
-        const current=Number(st?.territory)||1;
-        if(!st?.active||gameEnded||state.exitDone===current||
-           state.phase==='departed')return false;
-        if(state.phase==='exit')return true;
-        if(state.phase==='entry'||state.phase==='pending')return false;
-        // Falha no download dos frames não pode bloquear o avanço da criança.
-        if(!frames[5]?.complete||!frames[5]?.naturalWidth)return false;
+      const beginExit=(continueTransition,current)=>{
         state.phase='exit';
         state.started=performance.now();
         state.groundY=territoryGround();
+        state.heroY=heroFootGround();
         const diagnostic=window.ClassManaV25Test?.getStatus?.();
         const reported=Number(diagnostic?.camera??diagnostic?.cam);
         const camera=Number.isFinite(reported)?reported:
@@ -1041,13 +1068,52 @@
         setTimeout(()=>{
           if(state.token!==token||state.phase!=='exit')return;
           state.exitDone=current;
-          // A imagem do herói permanece escondida durante a tela de conclusão.
           state.phase='departed';
           window.cm25Facing=state.wasFacing;
           paused=state.wasPaused;
           continueTransition();
         },EXIT_MS);
         return true;
+      };
+      this.portalBeforeExit=continueTransition=>{
+        if(typeof continueTransition!=='function')return false;
+        const st=bridge.status(),current=Number(st?.territory)||1;
+        if(!st?.active||gameEnded||state.exitDone===current||
+           state.phase==='departed')return false;
+        if(state.phase==='exit'||state.phase==='waiting-exit')return true;
+        // Se o jogador chegou a uma passagem enquanto o portal inicial
+        // ainda terminava, NAO pular a saida: executa-la depois da entrada.
+        if(state.phase==='pending'||state.phase==='entry'){
+          if(!queuedExit)queuedExit={territory:current,continueTransition};
+          return true;
+        }
+        if(!portalFramesReady()){
+          // O codigo anterior retornava FALSE aqui e pulava a animacao
+          // inteira quando o navegador ainda nao tinha o WEBP final.
+          state.phase='waiting-exit';state.wasPaused=paused;paused=true;
+          const token=state.token,start=performance.now();
+          let warned=false;
+          const retry=()=>{
+            exitWaitTimer=null;
+            if(state.token!==token||state.phase!=='waiting-exit')return;
+            if(Number(bridge.status()?.territory)!==current){state.phase='off';paused=state.wasPaused;return;}
+            if(portalFramesReady()){
+              state.phase='off';
+              paused=state.wasPaused;
+              beginExit(continueTransition,current);
+              return;
+            }
+            if(!warned&&performance.now()-start>6500){
+              warned=true;
+              try{say('⚠ Preparando o portal de saída. Aguarde...',3)}catch(error){}
+              console.warn('[ClassMana] Aguardando os quadros da animacao do portal',current);
+            }
+            exitWaitTimer=setTimeout(retry,120);
+          };
+          exitWaitTimer=setTimeout(retry,120);
+          return true;
+        }
+        return beginExit(continueTransition,current);
       };
       // A saída do último território de cada reino ocorre no próprio cenário.
       // O portal elíptico é o mesmo já usado nas outras passagens.
