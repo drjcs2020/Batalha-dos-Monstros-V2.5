@@ -662,9 +662,10 @@
         reset(Number(selected)||Number(target)+1||1);
         // O motor oculta o tutorial ao selecionar a area; reaproveitar
         // a tela verde sem reiniciar o tempo de leitura.
-        if(earlyTutorial&&tutorialPending){
+        if(earlyTutorial&&(tutorialPending||noticeActive)){
           playing=false;paused=true;
-          document.getElementById('tutorial')?.classList.remove('hidden');
+          // Nao reabrir Como Jogar se o aluno ja escolheu Comecar Agora.
+          document.getElementById('tutorial')?.classList.toggle('hidden',!tutorialPending);
         }
         return selected;
       };
@@ -686,55 +687,66 @@
           }
         }catch(error){console.warn('[ClassMana] Fechamento da preparacao',error);}
       };
+      let noticeStarted=0;
+      const enterWhenReady=()=>{
+        if(!noticeActive||!entryReady||noticeTimer!==null)return;
+        // Reutilizar a barra cintilante original durante o carregamento.
+        const remaining=Math.max(0,1100-(performance.now()-noticeStarted));
+        noticeTimer=setTimeout(()=>{
+          noticeTimer=null;
+          if(!noticeActive||!entryReady)return;
+          // Iniciar por tras da espera; o portal e desenhado dentro da cena
+          // antes que a janela seja removida.
+          oldBeginBattle();
+          requestAnimationFrame(()=>requestAnimationFrame(()=>{
+            if(!noticeActive)return;
+            closeNotice();
+            noticeActive=false;
+          }));
+        },remaining);
+      };
       const beginAfterTutorial=(...args)=>{
         if(noticeActive)return;
         if(!tutorialPending)return oldBeginBattle(...args);
-        // Comecar Agora/cronometro antes do salvamento: manter a tela
-        // verde ate o cenario estar pronto, sem expor um fundo vazio.
-        if(!entryReady){
-          clearInterval(tutorialTimer);tutorialTimer=null;
-          earlyStartRequested=true;
-          return;
-        }
-        earlyStartRequested=false;
+        clearInterval(tutorialTimer);tutorialTimer=null;
         tutorialPending=false;
         noticeActive=true;
-        clearInterval(tutorialTimer);
-        document.getElementById('tutorial')?.classList.add('hidden');
+        noticeStarted=performance.now();
+        // Exibir a janela azul aprovada ANTES de esconder Como Jogar.
+        // Assim nunca se ve a arena nem o fundo vazio entre as etapas.
         let shown=false;
         try{
           const host=window.parent!==window?window.parent.document:null;
           const loading=host?.getElementById('transitionLoading');
           const label=host?.getElementById('transitionLabel');
           if(loading&&label){
-            label.textContent='O reino já vai se abrir. Aguarde...';
+            label.textContent='O portal já vai se abrir. Aguarde...';
             const subtitle=host.getElementById('transitionSubTitle');
-            if(subtitle)subtitle.textContent='O portal de mana vai se abrir para seu herói.';
+            if(subtitle)subtitle.textContent='Preparando a entrada do seu herói pelo portal de mana.';
             loading.dataset.cm25TutorialPortal='1';
             loading.hidden=false;
             shown=true;
           }
         }catch(error){console.warn('[ClassMana] Preparacao visual indisponivel',error);}
+        document.getElementById('tutorial')?.classList.add('hidden');
         if(!shown){
+          if(!entryReady){earlyStartRequested=true;return;}
           noticeActive=false;
           return oldBeginBattle(...args);
         }
-        noticeTimer=setTimeout(()=>{
-          noticeActive=false;
-          closeNotice();
-          oldBeginBattle(...args);
-        },1450);
+        earlyStartRequested=!entryReady;
+        enterWhenReady();
       };
       beginBattle=beginAfterTutorial;
       const skipTutorial=document.getElementById('skipTutorial');
       if(skipTutorial)skipTutorial.onclick=beginAfterTutorial;
       const oldTutorial=bridge.startTutorial?.bind(bridge);
       if(oldTutorial)bridge.startTutorial=(options={})=>{
-        if(earlyTutorial&&tutorialPending){
-          // A preparacao confirmou o territorio: continuar o mesmo
-          // tutorial em andamento, sem repetir a tela nem o cronometro.
+        if(earlyTutorial&&(tutorialPending||noticeActive)){
+          // Territorio pronto durante a leitura ou a espera pelo portal.
+          // Nao reiniciar o tutorial nem revelar a arena antes da hora.
           playing=false;paused=true;
-          document.getElementById('tutorial')?.classList.remove('hidden');
+          document.getElementById('tutorial')?.classList.toggle('hidden',!tutorialPending);
           return true;
         }
         state.phase='pending';
@@ -746,11 +758,12 @@
         if(!tutorialPending){earlyTutorial=false;entryReady=true;}
         return started;
       };
+      bridge.isTutorialTransitionActive=()=>noticeActive;
       bridge.markTutorialReady=()=>{
         entryReady=true;
-        if(earlyStartRequested&&tutorialPending){
+        if(noticeActive){
           earlyStartRequested=false;
-          beginAfterTutorial();
+          enterWhenReady();
         }
       };
       const canceled=()=>{
