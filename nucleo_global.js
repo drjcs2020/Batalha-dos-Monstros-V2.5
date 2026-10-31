@@ -37,6 +37,34 @@
         return territory>=0&&territory<3?Math.max(3,Math.min(9,height*.012)):0;
       }
     },
+    // Recompensa crescente por subordinado em todos os reinos.
+    // Cada vida que passa de HP positivo para zero paga uma unica vez.
+    scoring:{
+      pointsFor(realm,territory=0){
+        const r=Math.max(1,Math.min(10,Number(realm)||1));
+        return r===10?180+Math.max(0,Math.min(4,Number(territory)||0))*30:45+(r-1)*15;
+      },
+      track(mob,realm,onDefeat){
+        if(!mob||typeof onDefeat!=='function'||!(Number(mob.hp)>0))return mob;
+        const points=this.pointsFor(realm,mob.territory);
+        let hp=mob.hp,credited=false;
+        Object.defineProperty(mob,'hp',{
+          enumerable:true,configurable:true,
+          get(){return hp;},
+          set(value){
+            const previous=Number(hp);
+            hp=value;
+            if(!credited&&previous>0&&Number(value)<=0){
+              credited=true;
+              try{onDefeat(points)}catch(error){
+                console.error('[ClassMana] Falha ao creditar subordinado',error);
+              }
+            }
+          }
+        });
+        return mob;
+      }
+    },
     // REGRAS CENTRAIS V2.5: os reinos só informam qual alvo foi atingido.
     fullRestoration(){return {hp:100,mana:100};},
     weapon:{

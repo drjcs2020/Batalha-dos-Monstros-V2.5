@@ -266,6 +266,15 @@ function createMob(id,i,n){
 }
 
 
+// Pontuacao progressiva por monstro derrotado, qualquer ataque.
+const cm25OriginalCreateMob=createMob;
+createMob=function(...args){
+ const mob=cm25OriginalCreateMob(...args);
+ return window.ClassManaNucleo.scoring.track(mob,9,points=>{
+  score+=points;
+  try{updateHUD()}catch(error){console.warn('[ClassMana] HUD',error)}
+ });
+};
 function setHud(){
  $('#ename').textContent=S.area===4?'RAINHA ARANHA':S.names[S.area];
  $('#round').textContent='RAINHA ARANHA · TERRITÓRIO '+(S.area+1)+'/5';

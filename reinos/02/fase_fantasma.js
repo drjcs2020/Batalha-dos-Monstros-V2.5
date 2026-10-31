@@ -258,6 +258,15 @@ function createMob(id,i,n){
 }
 
 
+// Pontuacao progressiva por monstro derrotado, qualquer ataque.
+const cm25OriginalCreateMob=createMob;
+createMob=function(...args){
+ const mob=cm25OriginalCreateMob(...args);
+ return window.ClassManaNucleo.scoring.track(mob,2,points=>{
+  score+=points;
+  try{updateHUD()}catch(error){console.warn('[ClassMana] HUD',error)}
+ });
+};
 function setHud(){
  $('#ename').textContent=S.area===4?'GOLEM DE LAVA':S.names[S.area];
  $('#round').textContent='GOLEM DE LAVA · TERRITÓRIO '+(S.area+1)+'/5';
@@ -559,7 +568,7 @@ function cm25BossMinions(dt){
    if(Math.hypot(ox+vx*t-cx,oy+vy*t-cy)>m.size*.32+(q.r||9)*.6)continue;
    q.life=0;m.hp=Math.max(0,m.hp-(q.dmg));
    m.hit=.18;burst(cx,cy,q.col||'#ffdc90',10);
-   if(m.hp===0){S.total=Math.max(0,S.total-1);score+=45;setHud();burst(cx,cy,'#fce6ac',20)}
+   if(m.hp===0){S.total=Math.max(0,S.total-1);setHud();burst(cx,cy,'#fce6ac',20)}
    break;
   }
  }

@@ -66,7 +66,7 @@ const feet=()=>floor()+45-heroHeight()/2;
 const bossFeet=()=>floor();
 // O heroi ja usa coordenadas do mundo; R.cam serve apenas para renderizar.
 const getShotAim=m=>({x:p.x,y:p.y-52});
-const killMob=m=>{if(m.hp<=0&&m.alive){m.alive=false;score+=120+(m.territory*30);burst(m.x-R.cam,m.y-m.size*.52,'#ffd56b',19)}};
+const killMob=m=>{if(m.hp<=0&&m.alive){m.alive=false;burst(m.x-R.cam,m.y-m.size*.52,'#ffd56b',19)}};
 const imageDraw=(im,x,y,w,h)=>{if(im&&im.complete&&im.naturalWidth)ctx.drawImage(im,x,y,w,h)};
 function mobFrame(m){return dragon[m.territory][Math.floor(R.clock*8+m.seed)%4]}
 // Os dragões patrulham seus setores; somente três fazem investidas simultâneas.
@@ -96,6 +96,15 @@ function createMob(territory,x,id,bossGuard=false){
 
 function updateHud(){document.getElementById('ename').textContent=R.area===4?'DRAGÃO DE FOGO':names[R.area];document.getElementById('round').textContent='REINO 10 · TERRITÓRIO '+(R.area+1)+'/5';document.getElementById('stageText').textContent=names[R.area];document.getElementById('difficulty').textContent=R.area===4?'CHEFÃO + QUATRO DRAGÕES GUARDIÕES':'SUBALTERNOS RESTANTES: '+R.mobs.filter(x=>x.alive).length;
  if(R.area<4){const alive=R.mobs.filter(x=>x.alive).length;document.getElementById('ehp').style.width=100*alive/R.mobs.length+'%';}}
+// Pontuacao progressiva por monstro derrotado, qualquer ataque.
+const cm25OriginalCreateMob=createMob;
+createMob=function(...args){
+ const mob=cm25OriginalCreateMob(...args);
+ return window.ClassManaNucleo.scoring.track(mob,10,points=>{
+  score+=points;
+  try{updateHUD()}catch(error){console.warn('[ClassMana] HUD',error)}
+ });
+};
 function startTerritory(){R.active=true;R.shift=false;R.cleared=false;R.cam=0;R.clock=0;R.jumpV=0;R.jumpHold=false;R.damageGrace=2.0;R.loot=null;R.lootClock=0;R.lootNext=11+Math.random()*4;R.lootCount=0;R.heartUsed=false;R.chestThisTerritory=false;R.projectiles=[];R.mobs=[];R.world=W*4.3;
  window.cm25DragonBoss=R.area===4;
  stages[0]={...stages[9]};

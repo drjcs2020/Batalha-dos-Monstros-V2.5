@@ -237,6 +237,15 @@ function createMob(id,i,n){
 }
 
 
+// Pontuacao progressiva por monstro derrotado, qualquer ataque.
+const cm25OriginalCreateMob=createMob;
+createMob=function(...args){
+ const mob=cm25OriginalCreateMob(...args);
+ return window.ClassManaNucleo.scoring.track(mob,1,points=>{
+  score+=points;
+  try{updateHUD()}catch(error){console.warn('[ClassMana] HUD',error)}
+ });
+};
 function setHud(){
  $('#ename').textContent=S.area===3?'FANTASMA':S.names[S.area];
  $('#round').textContent='FANTASMA · TERRITÓRIO '+(S.area+1)+'/4';
@@ -428,7 +437,7 @@ function cm25ApplyHeroContact(dt,includeBoss=false){
     if(Math.hypot(ox+vx*t-cx,oy+vy*t-cy)>m.size*.32+q.r*.58)continue;
     q.life=0;m.hp=Math.max(0,m.hp-(q.dmg*((S.lootBuffs.sword||0)>0?1.35:1)));
     m.hit=.22;burst(cx,cy,q.col||'#a4f2ff',12);
-    if(m.hp===0){S.total=Math.max(0,S.total-1);score+=45;burst(cx,cy,'#d2f5ff',22);setHud();try{updateHUD()}catch(e){}}
+    if(m.hp===0){S.total=Math.max(0,S.total-1);burst(cx,cy,'#d2f5ff',22);setHud();try{updateHUD()}catch(e){}}
     break;
    }
   }
