@@ -15,7 +15,7 @@ const S={area:0,active:false,transition:false,mobs:[],fx:[],camera:0,lastCamera:
   [1,5,10,1, 0,4,8,11, 2,6,9,2, 3,7,0,4, 11,8,10,9]
  ],
  files:['01_fantasma_encantado.png','02_bruxinha_fantasma.png','03_zumbizinho_espectral.png','04_fantasma_lanterna.png','05_fantasma_ataque.png','06_bruxinha_ataque.png','07_zumbizinho_ataque.png','08_fantasma_lanterna_ataque.png','09_fantasma_gelatinoso.png','10_zumbi_mago.png','11_bruxinha_fantasma_nova.png','12_fantasma_azul_investida.png'],
- bg:[],imgs:[],facing:1,total:0,clock:0,advanceReady:false,idleSeconds:0,arrowPulse:0,vy:0,jumpWasDown:false,shotDirection:1,shotHits:0,loot:null,lootClock:0,lootNext:14,lootCount:0,lootHeartUsed:false,lootChestUsed:false,lootPhaseChest:false,lootBuffs:{},lootNotice:"",lootNoticeTime:0,lootMapUntil:0,bossMovement:0,bossFace:1,bossHealthAtStart:0,previousBossHP:0,lootGuarantees:{},spriteFeet:0
+ bg:[],imgs:[],facing:1,total:0,clock:0,advanceReady:false,idleSeconds:0,arrowPulse:0,vy:0,jumpWasDown:false,shotDirection:1,shotHits:0,loot:null,lootClock:0,lootNext:14,lootCount:0,lootHeartUsed:false,lootChestUsed:false,lootPhaseChest:false,lootBuffs:{},lootNotice:"",lootNoticeTime:0,lootMapUntil:0,bossMovement:0,bossFace:1,bossHealthAtStart:0,previousBossHP:0,lootGuarantees:{},spriteFeet:0,bossMinionQueue:[],bossSpawnCooldown:0,bossSpawnCounter:0
 };
 const getAsset=f=>new URL('assets_v25/'+f,location.href).href;
 for(let i=1;i<=4;i++){const im=new Image(); im.src=getAsset('cenarios/cenario_'+i+'.jpg');S.bg.push(im)}
@@ -253,26 +253,67 @@ function setHud(){
  $('#difficulty').textContent=S.area===3?'CHEFÃO + '+S.total+' SUBORDINADOS':'DERROTE OS SUBORDINADOS · '+S.total+' RESTANTES';
  $('#ehp').style.width=S.area===3?(boss.max>0?Math.max(0,boss.hp/boss.max*100):0)+'%':(S.mobs.length?S.total/S.mobs.length*100:0)+'%';
 }
+// Subordinados da arena final: mesma arte e dano, mas movimentacao
+// escalonada para deixar a heroina enxergar e reagir aos ataques.
+function createBossMinion(id,index){
+ const m=createMob(id,index,8);
+ m.size*=.68;
+ m.speed=46+(id%4)*6;
+ m.cool=4.1+(index%3)*.9;
+ m.baseY=platformY()-(m.airborne?18+(index%2)*12:0);
+ m.y=m.baseY;
+ m.cm25Chasing=true;
+ return m;
+}
+function spawnBossReinforcement(dt){
+ if(S.area!==3||!S.active||bossDefeated||defeatPending)return;
+ S.bossSpawnCooldown=Math.max(0,(S.bossSpawnCooldown||0)-dt);
+ // Remover apenas os inimigos mortos da arena; S.total ainda inclui
+ // todos os subordinados que estao na fila.
+ S.mobs=S.mobs.filter(m=>m.hp>0);
+ if(S.mobs.length>=3||!S.bossMinionQueue.length||S.bossSpawnCooldown>0)return;
+ const id=S.bossMinionQueue.shift();
+ const m=createBossMinion(id,S.bossSpawnCounter++);
+ // Iniciar o reforco LONGE da heroina e dos inimigos presentes.
+ // Nao usar a coordenada p.x como ponto de spawn.
+ const candidates=[W*.87,W*.68,W*.48,W*.29];
+ let best=candidates[0],highest=-Infinity;
+ for(const x of candidates){
+  const heroDistance=Math.abs(x-p.x);
+  const enemyDistance=S.mobs.length?Math.min(...S.mobs.map(other=>Math.abs(x-other.x))):W;
+  const bossDistance=Math.abs(x-boss.x);
+  const rank=Math.min(heroDistance,W*.65)+Math.min(enemyDistance,W*.28)*.7-
+    (bossDistance<W*.085?W*.15:0);
+  if(rank>highest){highest=rank;best=x;}
+ }
+ m.x=best;
+ S.mobs.push(m);
+ S.bossSpawnCooldown=3.0;
+}
 function startTerritory(){
  lootResetTerritory();
- S.mobs=[];S.fx=[];S.camera=0;S.lastCamera=0;S.advanceReady=false;S.world=worldLen();S.clock=0;S.idleSeconds=0;S.arrowPulse=0;S.fx=[];S.vy=0;S.jumpWasDown=false;
+ S.mobs=[];S.fx=[];S.camera=0;S.lastCamera=0;S.advanceReady=false;S.world=worldLen();S.clock=0;S.idleSeconds=0;S.arrowPulse=0;S.fx=[];S.vy=0;S.jumpWasDown=false;S.bossMinionQueue=[];S.bossSpawnCooldown=0;S.bossSpawnCounter=0;
  p.x=W*.19;p.y=ground();window.cm25HeroFeetOffset=0;p.hp=100;p.mana=100;p.inv=1.5;
  shots=[];bad=[];parts=[];superCooldown=0;superUses=0;
  if(S.area<3){let ids=S.waves[S.area];S.mobs=ids.map((id,i)=>createMob(id,i,ids.length));S.total=S.mobs.length}
  else {
-  boss.max=Math.round(stages[0].hp*4.1);boss.hp=boss.max;boss.x=W*.78;boss.y=H*.49;boss.cool=3.1;
-  // Um exemplar de cada um dos doze subordinados, sem repetição.
-  S.mobs=S.files.map((_,id)=>{
-   const m=createMob(id,id,S.files.length),column=id%6,row=Math.floor(id/6);
-   m.x=W*(.27+column*.105+(row?-.025:0));
-   m.size*=.68;m.speed=46+(id%4)*6;
-   m.cool=3.0+(id%6)*.70+row*.38;
-   m.baseY=platformY()-(m.airborne?18+row*12:0);
-   m.y=m.baseY;m.cm25Chasing=true;return m;
+  // Primeiro chefao: menos resistencia e ondas legiveis, sem a muralha
+  // simultanea de 12 subordinados que encurralava os jogadores.
+  boss.max=Math.round(stages[0].hp*3.1);boss.hp=boss.max;boss.x=W*.78;boss.y=H*.49;boss.cool=3.1;
+  // Oito criaturas variadas, tres em campo e cinco como reforcos graduais.
+  // As tres hordas anteriores, seus 20 inimigos e recompensas ficam intactos.
+  const bossRoster=[0,1,2,4,5,6,9,11];
+  S.bossMinionQueue=bossRoster.slice(3);
+  S.bossSpawnCounter=3;
+  S.bossSpawnCooldown=3.0;
+  S.mobs=bossRoster.slice(0,3).map((id,index)=>{
+   const m=createBossMinion(id,index);
+   m.x=W*([.47,.67,.87][index]);
+   return m;
   });
-  S.total=S.mobs.length;S.bossIntroTime=1.85;S.bossPhase=1;S.bossPhaseNotice=0;
+  // Inclui reforcos ainda nao aparecidos na quantidade total.
+  S.total=bossRoster.length;S.bossIntroTime=1.85;S.bossPhase=1;S.bossPhaseNotice=0;
   S.camera=0;S.bossMovement=0;S.bossFace=-1;S.bossHealthAtStart=boss.hp;S.previousBossHP=boss.hp;
-  
  }
  setHud();say25('👻 '+S.names[S.area]+' — '+(S.area===3?'CHEFÃO!':'avance e vença a horda!'),3);
 }
@@ -372,8 +413,21 @@ function updateMobs(dt){
   // Após detectar o jogador, persegue em ambos os sentidos até ser derrotado.
   m.cm25Chasing ||= Math.abs(distance)<W*.85;
   if(m.cm25Chasing){
-   const desire=clamp(distance,-1,1);
-   m.x=clamp(m.x+desire*m.speed*dt*slowdown,W*.09,S.world-W*.12);
+   if(S.area===3){
+    // Na arena, nao empilhar tres criaturas no mesmo ponto do heroi.
+    // A distancia deixa espaço para as armas atingirem os subordinados.
+    const room=Math.max(62,m.size*.86),gap=Math.abs(distance);
+    if(gap>room){
+     const move=Math.min(gap-room,m.speed*dt*slowdown);
+     m.x=clamp(m.x+Math.sign(distance)*move,W*.09,W*.91);
+    }else if(gap<room){
+     const away=Math.sign(m.x-p.x)||1;
+     m.x=clamp(m.x+away*Math.min(room-gap,dt*100),W*.09,W*.91);
+    }
+   }else{
+    const desire=clamp(distance,-1,1);
+    m.x=clamp(m.x+desire*m.speed*dt*slowdown,W*.09,S.world-W*.12);
+   }
    if(Math.abs(distance)<m.size*.60&&Math.abs((p.y-45)-(m.y-m.size*.5))<m.size*.8&&m.contact<=0){hurtHero(3+S.area,p.x,p.y);m.contact=1.8}
   }
   // Tempo de recarga individual, inclusive para monstros à esquerda.
@@ -385,7 +439,7 @@ function updateMobs(dt){
    if(dist<W*.95){
     // Até 18 projéteis simultâneos. Se lotado, tentar novamente em 0,3 s,
     // sem transformar o inimigo em personagem figurativo.
-    if(bad.length<18){
+    if(bad.length<(S.area===3?10:18)){
      const speed=185+S.area*14;
      const emoji=attackEmojiById[m.id],col=attackColorById[m.id];
      bad.push({x:sx,y:sy,vx:dx/dist*speed,vy:dy/dist*speed,life:Math.max(3.0,dist/speed+1),r:13,kind:'ghost',col,emoji,ownerId:m.id,special:false});
@@ -540,7 +594,7 @@ update=function(dt){
   try{orig.update(dt)}finally{[keys.ArrowUp,keys.w,keys.ArrowDown,keys.s,joy.y]=old}
   if(playing&&!paused&&!gameEnded&&!defeatPending){
    applyVerticalPhysics(dt);lootStep(dt);
-   updateMobs(dt);cm25SeparateMobs(dt);hitBossMinions(dt);cm25ApplyHeroContact(dt,true);
+   spawnBossReinforcement(dt);updateMobs(dt);cm25SeparateMobs(dt);hitBossMinions(dt);cm25ApplyHeroContact(dt,true);
    stepMobEffects(dt);
    // Chefe se move em arcos, alterna direção e persegue o jogador em toda a arena.
    // Controla a velocidade para haver espaço de reação entre as investidas.
