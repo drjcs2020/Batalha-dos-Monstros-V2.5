@@ -640,11 +640,14 @@ function returnToCharacterSelection(){
  let win,doc,menu;
  try{
   win=frame.contentWindow;doc=win.document;menu=doc.getElementById('menu');
-  if(!menu||typeof win.cmLimparAluno!=='function')
+  const bridge=win.CM25RealmBridge;
+  if(!menu||typeof win.cmLimparAluno!=='function'||typeof bridge?.returnToSelection!=='function')
    throw Error('Seleção de personagens ainda não está disponível.');
-  // Desfazer a identidade selecionada, mas preservar o motor e os heróis em memória.
+  // Interromper a cena e remover a classe de modo direto que mantém
+  // o menu invisível com display:none!important nos reinos 2 a 10.
+  if(bridge.returnToSelection()!==true)throw Error('Falha ao encerrar a cena anterior.');
+  // O progresso salvo online é preservado; apenas a seleção atual é limpa.
   win.cmLimparAluno();
-  // Retornar ao cadastro não equivale a selecionar automaticamente o herói anterior.
   win.cm25ResetHeroCarousel?.();
   const video=doc.getElementById('openingVideo');
   const movie=doc.getElementById('openingMovie');
@@ -656,6 +659,10 @@ function returnToCharacterSelection(){
   menu.classList.remove('hidden');
   menu.style.display='grid';
   menu.scrollTop=0;
+  // Evitar fechar o resultado e exibir uma arena congelada caso
+  // algum outro estilo ainda esteja escondendo o menu.
+  if(win.getComputedStyle(menu).display==='none')
+   throw Error('O menu continua oculto por estilos da batalha.');
  }catch(error){
   report('⚠ Não foi possível abrir a seleção: '+String(error.message||error));
   return false;
