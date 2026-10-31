@@ -279,12 +279,12 @@ async function enterRegisteredStudent(profile){
   // Seleção não pode reaparecer enquanto o servidor confirma e prepara a batalha.
   const introMenu=frame.contentWindow.document.getElementById('menu');
   const introMenuState=introMenu?{display:introMenu.style.display,hidden:introMenu.classList.contains('hidden')}:null;
-  if(introMenu){introMenu.classList.add('hidden');introMenu.style.display='none';}
-  $('transitionLoading').hidden=false;
-  $('transitionLabel').textContent=choice==='new'?'Preparando a tela COMO JOGAR…':'Reunindo suas conquistas…';
-  $('transitionSubTitle').textContent=choice==='new'
-   ?'Primeiro, as instruções. Depois, o portal de mana se abrirá.'
-   :'Preparando sua partida para continuar de onde parou.';
+  // Nova partida: conservar a selecao visivel durante o pedido ao servidor.
+  // A tela de preparacao original aparecera SOMENTE apos COMO JOGAR.
+  if(introMenu&&choice!=='new'){introMenu.classList.add('hidden');introMenu.style.display='none';}
+  $('transitionLoading').hidden=choice==='new';
+  $('transitionLabel').textContent='Reunindo suas conquistas…';
+  $('transitionSubTitle').textContent='Preparando sua partida para continuar de onde parou.';
   frame.style.pointerEvents='none';
   let journeyEntered=false;
   try{
@@ -348,13 +348,13 @@ function switchRealm(next,target=1,direct=true){
  info();report(`Carregando ${CAMPAIGN[realm-1][0]} · território ${target}…`);
  // A entrada inicial preserva o carregamento/vídeo originais.
  // Só as mudanças de reino usam a transição discreta, sem recarregar a abertura.
+ const initialTutorial=!!(pendingSnapshot?.showTutorial&&next===1&&target===1);
  frame.style.opacity=direct?'0':'1';
  frame.style.pointerEvents=direct?'none':'auto';
- $('transitionLoading').hidden=!direct;
- $('transitionLabel').textContent=pendingSnapshot?.showTutorial?'Preparando a tela COMO JOGAR…':'Preparando o reino '+CAMPAIGN[next-1][0]+'…';
- $('transitionSubTitle').textContent=pendingSnapshot?.showTutorial
-  ?'Primeiro, as instruções. O aviso do portal aparece depois.'
-  :'Carregando o próximo território e seu cenário…';
+ // Nao cobrir COMO JOGAR com uma tela de preparacao antecipada.
+ $('transitionLoading').hidden=!direct||initialTutorial;
+ $('transitionLabel').textContent='Preparando o reino '+CAMPAIGN[next-1][0]+'…';
+ $('transitionSubTitle').textContent='Carregando o próximo território e seu cenário…';
  frame.src=`reinos/${String(realm).padStart(2,'0')}/index.html?cm25=${loadId}&direct=${direct?'1':'0'}&rev=20261030-23`;
 }
 // READY confirma o código do iframe, mas não o carregamento das imagens.
