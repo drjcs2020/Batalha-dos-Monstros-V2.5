@@ -422,7 +422,7 @@ async function area(n){
   return false;
  }finally{if(token===loadId)entering=false;}
 }
-async function returnFromBonus(fromDefeat){
+async function returnFromBonus(fromDefeat,showRanking=false){
  if(bonusExitBusy)return;
  bonusExitBusy=true;
  const loading=$('transitionLoading'),label=$('transitionLabel');
@@ -437,6 +437,12 @@ async function returnFromBonus(fromDefeat){
    await queueCheckpoint(snapshot,true,fromDefeat?'DERROTA':'VITORIA',true);
   }
   if(currentRun)throw Error('A finalização ainda não foi confirmada.');
+  if(showRanking){
+   // Consultar o ranking online da V2.5 na própria saída da tela bônus.
+   loading.hidden=true;frame.style.pointerEvents='auto';
+   frame.contentWindow.postMessage({namespace:'CM25',action:'BONUS_RANKING_READY',realm,token:loadId},location.origin);
+   return;
+  }
   sessionStorage.removeItem('cm25TesteIdentidade');
   location.reload();
  }catch(error){
@@ -446,6 +452,8 @@ async function returnFromBonus(fromDefeat){
   try{
    const btn=frame.contentWindow.document.getElementById('bonusViewRanking');
    if(btn){btn.disabled=false;btn.textContent='↻ TENTAR CONFIRMAR E VOLTAR';}
+   const ranking=frame.contentWindow.document.getElementById('cm25BonusRanking');
+   if(ranking){ranking.disabled=false;ranking.textContent='↻ CONSULTAR PLACAR';}
   }catch(e){}
   alert('O resultado ainda não foi confirmado no Google Sheets. Verifique a conexão e clique em TENTAR CONFIRMAR E VOLTAR. A partida será preservada.');
  }finally{bonusExitBusy=false;}
@@ -471,6 +479,9 @@ window.addEventListener('message',e=>{
  else if(data.action==='INTRO_DONE'){cm25StopLoadingMusic();report('Selecione seu herói, sua turma e seu nome cadastrado.');}
  else if(data.action==='BONUS_EXIT'){
   returnFromBonus(data.fromDefeat===true);
+ }
+ else if(data.action==='BONUS_RANKING'){
+  returnFromBonus(data.fromDefeat===true,true);
  }
  else if(data.action==='START'){
    if(automaticEntry||campaignStarted)return;
