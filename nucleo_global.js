@@ -209,7 +209,25 @@
         if(!document.getElementById(markerId)){
           const style=document.createElement('style');
           style.id=markerId;
-          style.textContent='#menu .menuActions #openRanking{display:inline-flex!important;align-items:center;justify-content:center;min-height:48px;padding:10px 19px!important;cursor:pointer;visibility:visible!important}';
+          style.textContent=`/* Acesso ao placar SEM iniciar, fixo no topo: os heróis ampliados não podem escondê-lo abaixo da rolagem. */
+#menu .menuActions #openRanking{
+ position:fixed!important;top:max(12px,env(safe-area-inset-top))!important;
+ right:max(12px,env(safe-area-inset-right))!important;
+ z-index:200!important;display:inline-flex!important;align-items:center!important;
+ justify-content:center!important;visibility:visible!important;opacity:1!important;
+ pointer-events:auto!important;min-width:145px!important;min-height:52px!important;
+ margin:0!important;padding:12px 18px!important;
+ border:2px solid #ffeb96!important;border-radius:17px!important;
+ background:linear-gradient(155deg,#ffe6a0,#edac32 65%,#cd8325)!important;
+ box-shadow:0 0 0 2px #11234ea8,0 9px 24px #00112fb0,0 0 24px #ffe8a47a!important;
+ font:900 clamp(16px,1.9vw,21px)/1.1 "Trebuchet MS",Arial,sans-serif!important;
+ color:#173358!important;text-shadow:0 1px 1px #ffffffb0!important;
+ cursor:pointer!important;
+}
+@media(max-width:600px){
+ #menu .menuActions #openRanking{min-width:121px!important;min-height:46px!important;
+ font-size:16px!important;padding:10px 12px!important}
+}`;
           document.head.appendChild(style);
         }
         placarButton.removeAttribute('hidden');
