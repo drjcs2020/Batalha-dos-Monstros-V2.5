@@ -628,10 +628,15 @@ async function confirmStopAndSave(){
 }
 
 
-// Encerramento confirmado: voltar à seleção já carregada no iframe.
+// Guardar ou finalizar: voltar à seleção já carregada no iframe.
+// Guardar conserva o registro EM_ANDAMENTO no Google Sheets para CONTINUAR.
 // Nunca refazer a barra, o vídeo ou a inicialização do jogo nesta ação.
 function returnToCharacterSelection(){
- if(!stopSaveConfirmed||stopSaveMode!=='finish'||currentRun)return false;
+ if(!stopSaveConfirmed)return false;
+ // Só liberar o menu quando o salvamento ou a finalização foi confirmado.
+ if(stopSaveMode==='finish'&&currentRun)return false;
+ if(stopSaveMode==='save'&&!currentRun)return false;
+ const wasSaved=stopSaveMode==='save';
  let win,doc,menu;
  try{
   win=frame.contentWindow;doc=win.document;menu=doc.getElementById('menu');
@@ -663,7 +668,9 @@ function returnToCharacterSelection(){
  $('transitionLoading').hidden=true;
  $('stopSave').hidden=true;$('finishRun').hidden=true;
  frame.style.opacity='1';frame.style.pointerEvents='auto';
- report('Escolha sua turma, seu herói e seu nome para iniciar outra jornada.');
+ report(wasSaved
+  ?'Progresso guardado! Escolha seu aluno para continuar a partida ou consultar o placar.'
+  :'Escolha sua turma, seu herói e seu nome para iniciar outra jornada.');
  return true;
 }
 
@@ -708,8 +715,8 @@ $('saveConfirm').addEventListener('click',confirmStopAndSave);
 $('saveRanking').addEventListener('click',showRankingAfterFinish);
 $('saveExit').addEventListener('click',()=>{
  if(!stopSaveConfirmed)return;
- if(stopSaveMode==='finish')returnToCharacterSelection();
- else location.reload(); // Guardar (não finalizar) preserva o fluxo existente.
+ // Retorno direto para seleção em ambos os casos; não reiniciar a aplicação.
+ returnToCharacterSelection();
 });
 
 setInterval(()=>{
