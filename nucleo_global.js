@@ -397,7 +397,8 @@
         if(Number.isInteger(snapshot.heroi_indice))heroIdx=snapshot.heroi_indice;
         score=Math.max(0,Number(snapshot.pontuacao)||0);
         p.hp=Math.max(0,Math.min(100,Number(snapshot.hp??100)));
-        p.mana=Math.max(0,Math.min(100,Number(snapshot.mana??100)));
+        // Na retomada, garantir reserva mínima de mana sem alterar pontos.
+        p.mana=Math.max(50,Math.min(100,Number(snapshot.mana??100)));
         elapsedMs=Math.max(0,(Number(snapshot.tempo)||0)*1000);
         try{setHud()}catch(e){}
         try{updateHUD()}catch(e){}
