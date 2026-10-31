@@ -662,74 +662,9 @@
         reset(Number(selected)||Number(target)+1||1);
         return selected;
       };
-      // Reutilizar a tela ORIGINAL de preparação, sem criar overlay novo.
-      // Ordem: COMO JOGAR -> PREPARE-SE, O PORTAL JÁ VAI ABRIR -> animação.
-      let tutorialPortalPending=false,tutorialPortalShowing=false,portalNoticeTimer=null;
-      const oldBeginBattle=beginBattle;
-      const finishPortalNotice=(...args)=>{
-        if(!tutorialPortalShowing)return;
-        tutorialPortalShowing=false;
-        if(portalNoticeTimer!==null)clearTimeout(portalNoticeTimer);
-        portalNoticeTimer=null;
-        try{
-          if(window.parent!==window){
-            const loading=window.parent.document.getElementById('transitionLoading');
-            if(loading&&loading.dataset.cm25PortalNotice==='1'){
-              delete loading.dataset.cm25PortalNotice;
-              loading.hidden=true;
-            }
-          }
-        }catch(e){console.warn('[ClassMana] Tela de preparação',e);}
-        oldBeginBattle(...args);
-      };
-      const beginAfterPortalNotice=(...args)=>{
-        if(tutorialPortalShowing)return;
-        if(!tutorialPortalPending)return oldBeginBattle(...args);
-        tutorialPortalPending=false;
-        tutorialPortalShowing=true;
-        clearInterval(tutorialTimer);
-        document.getElementById('tutorial')?.classList.add('hidden');
-        try{
-          const host=window.parent!==window?window.parent.document:null;
-          const loading=host?.getElementById('transitionLoading');
-          const label=host?.getElementById('transitionLabel');
-          if(loading&&label){
-            label.textContent='PREPARE-SE! O PORTAL JÁ VAI ABRIR';
-            const subtitle=host.getElementById('transitionSubTitle');
-            if(subtitle)subtitle.textContent='A passagem de mana está despertando…';
-            loading.dataset.cm25PortalNotice='1';
-            loading.hidden=false;
-            portalNoticeTimer=setTimeout(()=>finishPortalNotice(...args),1350);
-            return;
-          }
-        }catch(e){console.warn('[ClassMana] Preparação do portal indisponível',e);}
-        // A partida também funciona se a arena for aberta fora do controlador.
-        finishPortalNotice(...args);
-      };
-      beginBattle=beginAfterPortalNotice;
-      const skipTutorial=document.getElementById('skipTutorial');
-      if(skipTutorial)skipTutorial.onclick=beginAfterPortalNotice;
-      const oldTutorial=bridge.startTutorial?.bind(bridge);
-      if(oldTutorial)bridge.startTutorial=()=>{
-        state.phase='pending';
-        const started=oldTutorial();
-        tutorialPortalPending=started===true;
-        return started;
-      };
+      // Apos COMO JOGAR, o proprio inicio da batalha ativa diretamente
+      // os seis quadros do portal. Nenhuma tela intermediaria.
       const canceled=()=>{
-        tutorialPortalPending=false;
-        tutorialPortalShowing=false;
-        if(portalNoticeTimer!==null)clearTimeout(portalNoticeTimer);
-        portalNoticeTimer=null;
-        try{
-          if(window.parent!==window){
-            const loading=window.parent.document.getElementById('transitionLoading');
-            if(loading?.dataset.cm25PortalNotice==='1'){
-              delete loading.dataset.cm25PortalNotice;
-              loading.hidden=true;
-            }
-          }
-        }catch(e){}
         state.token++;
         state.phase='off';
         state.exitDone=0;
