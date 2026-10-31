@@ -401,7 +401,9 @@
           tempo:Math.max(0,Math.round(Number(elapsedMs||0)/1000)),
           gameEnded:!!gameEnded,
           // A derrota é finalizada no Sheets SOMENTE após incluir os pontos bônus.
-          bonusApplied:!!cmBonusApplied
+          bonusApplied:!!cmBonusApplied,
+          // Apenas consulta o cálculo original de pontos bônus, sem aplicar ou alterar o placar.
+          bonusPreview:cmBonusApplied?0:Math.max(0,Number(cmBonusValue())||0)
         };
       };
       bridge.selectArea=(target,profile)=>{
