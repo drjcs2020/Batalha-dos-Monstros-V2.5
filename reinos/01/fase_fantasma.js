@@ -15,7 +15,7 @@ const S={area:0,active:false,transition:false,mobs:[],fx:[],camera:0,lastCamera:
   [1,5,10,1, 0,4,8,11, 2,6,9,2, 3,7,0,4, 11,8,10,9]
  ],
  files:['01_fantasma_encantado.png','02_bruxinha_fantasma.png','03_zumbizinho_espectral.png','04_fantasma_lanterna.png','05_fantasma_ataque.png','06_bruxinha_ataque.png','07_zumbizinho_ataque.png','08_fantasma_lanterna_ataque.png','09_fantasma_gelatinoso.png','10_zumbi_mago.png','11_bruxinha_fantasma_nova.png','12_fantasma_azul_investida.png'],
- bg:[],imgs:[],facing:1,total:0,clock:0,advanceReady:false,idleSeconds:0,arrowPulse:0,vy:0,jumpWasDown:false,shotDirection:1,shotHits:0,loot:null,lootClock:0,lootNext:14,lootCount:0,lootHeartUsed:false,lootChestUsed:false,lootPhaseChest:false,lootBuffs:{},lootNotice:"",lootNoticeTime:0,lootMapUntil:0,bossMovement:0,bossFace:1,bossHealthAtStart:0,previousBossHP:0,bossGuardTime:0,bossGuardCooldown:12,lootGuarantees:{},spriteFeet:0
+ bg:[],imgs:[],facing:1,total:0,clock:0,advanceReady:false,idleSeconds:0,arrowPulse:0,vy:0,jumpWasDown:false,shotDirection:1,shotHits:0,loot:null,lootClock:0,lootNext:14,lootCount:0,lootHeartUsed:false,lootChestUsed:false,lootPhaseChest:false,lootBuffs:{},lootNotice:"",lootNoticeTime:0,lootMapUntil:0,bossMovement:0,bossFace:1,bossHealthAtStart:0,previousBossHP:0,lootGuarantees:{},spriteFeet:0
 };
 const getAsset=f=>new URL('assets_v25/'+f,location.href).href;
 for(let i=1;i<=4;i++){const im=new Image(); im.src=getAsset('cenarios/cenario_'+i+'.jpg');S.bg.push(im)}
@@ -237,36 +237,6 @@ function createMob(id,i,n){
 }
 
 
-// Escudo REAL dos subordinados: o dano consome a barreira primeiro.
-// O HP só diminui quando a barreira acabar; sem recarga infinita.
-const cm25OriginalCreateMob=createMob;
-createMob=function(...args){
- const m=cm25OriginalCreateMob(...args);
- m.cm25ShieldMax=Math.max(14,Math.round(m.max*.32));
- m.cm25Shield=m.cm25ShieldMax;
- return m;
-};
-function cm25AbsorbMobShield(m,damage){
- damage=Math.max(0,Number(damage)||0);
- if(!m||!Number.isFinite(m.cm25Shield)||m.cm25Shield<=0)return damage;
- const blocked=Math.min(m.cm25Shield,damage);
- m.cm25Shield=Math.max(0,m.cm25Shield-blocked);
- m.hit=Math.max(m.hit||0,.22);
- return damage-blocked;
-}
-function cm25RenderMobShield(m,x,y,z){
- if(!m||m.hp<=0||!(m.cm25Shield>0))return;
- const pct=m.cm25Shield/Math.max(1,m.cm25ShieldMax),radius=Math.max(28,z*.52);
- ctx.save();ctx.globalAlpha=.42+.33*pct;
- ctx.strokeStyle='#65e9ff';ctx.lineWidth=Math.max(2,3*pct);
- ctx.shadowColor='#3bd8ff';ctx.shadowBlur=13;
- ctx.beginPath();ctx.ellipse(x,y,radius,radius*.93,0,0,Math.PI*2);ctx.stroke();
- ctx.fillStyle='#092745';ctx.fillRect(x-radius*.56,y-radius-18,radius*1.12,6);
- ctx.fillStyle='#78e9ff';ctx.fillRect(x-radius*.56,y-radius-18,radius*1.12*pct,6);
- ctx.font='bold 16px "Segoe UI Emoji",Arial';ctx.textAlign='center';ctx.textBaseline='middle';
- ctx.shadowBlur=0;ctx.globalAlpha=1;ctx.fillText('🛡️',x,y-radius-24);ctx.restore();
-}
-
 function setHud(){
  $('#ename').textContent=S.area===3?'FANTASMA':S.names[S.area];
  $('#round').textContent='FANTASMA · TERRITÓRIO '+(S.area+1)+'/4';
@@ -293,7 +263,7 @@ function startTerritory(){
   });
   S.total=S.mobs.length;S.bossIntroTime=1.85;S.bossPhase=1;S.bossPhaseNotice=0;
   S.camera=0;S.bossMovement=0;S.bossFace=-1;S.bossHealthAtStart=boss.hp;S.previousBossHP=boss.hp;
-  S.bossGuardTime=0;S.bossGuardCooldown=11;
+  
  }
  setHud();say25('👻 '+S.names[S.area]+' — '+(S.area===3?'CHEFÃO!':'avance e vença a horda!'),3);
 }
@@ -369,7 +339,7 @@ if(cm25OriginalUltimate){
   const damage=Math.max(1,Math.ceil(target.max*.84));
   // O alvo mantém colisão e visibilidade: não há dano em monstros já derrotados.
   setTimeout(()=>{if(!S.active||S.area>=3||target.hp<=0||!playing)return;
-   target.hp=Math.max(0,target.hp-cm25AbsorbMobShield(target,damage));target.hit=.22;burst(aim.x,aim.y,'#a8f0ff',55);
+   target.hp=Math.max(0,target.hp-(damage));target.hit=.22;burst(aim.x,aim.y,'#a8f0ff',55);
    if(target.hp===0){S.total--;setHud()}},420);
   say25('⚡ MAGIA SUPREMA NO ALVO!',2);return {ok:true};
  };
@@ -431,7 +401,7 @@ function cm25ApplyHeroContact(dt,includeBoss=false){
   if(m.hp<=0)continue;
   const cy=m.y-m.size*.52, radius=Math.max(13,m.size*.29);
   if(Math.hypot(m.x-hit.x,cy-hit.y)>hit.radius+radius)continue;
-  m.hp=Math.max(0,m.hp-cm25AbsorbMobShield(m,hit.damage));m.hit=.22;
+  m.hp=Math.max(0,m.hp-(hit.damage));m.hit=.22;
   burst(m.x,cy,'#ffe7ac',11);
   cm25MeleeCooldown=window.ClassManaNucleo.weapon.interval;
   if(m.hp===0){S.total=Math.max(0,S.total-1);burst(m.x,cy,'#d2f5ff',20);setHud()}
@@ -456,7 +426,7 @@ function cm25ApplyHeroContact(dt,includeBoss=false){
     const cx=m.x,cy=m.y-m.size*.52;
     const t=clamp(((cx-ox)*vx+(cy-oy)*vy)/(vx*vx+vy*vy||1),0,1);
     if(Math.hypot(ox+vx*t-cx,oy+vy*t-cy)>m.size*.32+q.r*.58)continue;
-    q.life=0;m.hp=Math.max(0,m.hp-cm25AbsorbMobShield(m,q.dmg*((S.lootBuffs.sword||0)>0?1.35:1)));
+    q.life=0;m.hp=Math.max(0,m.hp-(q.dmg*((S.lootBuffs.sword||0)>0?1.35:1)));
     m.hit=.22;burst(cx,cy,q.col||'#a4f2ff',12);
     if(m.hp===0){S.total=Math.max(0,S.total-1);score+=45;burst(cx,cy,'#d2f5ff',22);setHud();try{updateHUD()}catch(e){}}
     break;
@@ -464,33 +434,10 @@ function cm25ApplyHeroContact(dt,includeBoss=false){
   }
   shots=shots.filter(q=>q.life>0);
  }
- function updateGhostGuard(dt,previousHp){
-  S.bossGuardCooldown=Math.max(0,S.bossGuardCooldown-dt);
-  S.bossGuardTime=Math.max(0,S.bossGuardTime-dt);
-  if(S.bossGuardCooldown<=0&&boss.hp>boss.max*.18&&!bossDefeated){
-   S.bossGuardTime=2.3;S.bossGuardCooldown=S.bossPhase>=3?9.5:12.5;
-   say25('🛡 O FANTASMA ERGUEU UM ESCUDO ESPECTRAL!',2);
-   burst(boss.x,boss.y,'#86eaff',19);
-  }
-  if(S.bossGuardTime>0&&boss.hp>0&&!bossDefeated&&boss.hp<previousHp){
-   boss.hp=Math.min(boss.max,boss.hp+(previousHp-boss.hp)*.45);
-   $('#ehp').style.width=Math.max(0,boss.hp/boss.max*100)+'%';
-  }
- }
- function drawGhostGuard(){
-  if(S.area!==3||S.bossGuardTime<=0||boss.hp<=0)return;
-  const radius=Math.min(W*.15,116)*(1+Math.sin(S.bossMovement*10)*.055);
-  ctx.save();ctx.globalAlpha=.74;ctx.strokeStyle='#9beeff';ctx.lineWidth=5;
-  ctx.shadowColor='#72dbff';ctx.shadowBlur=24;
-  ctx.beginPath();ctx.arc(boss.x,boss.y,radius,0,Math.PI*2);ctx.stroke();
-  ctx.strokeStyle='#e8faff';ctx.lineWidth=2;
-  ctx.beginPath();ctx.arc(boss.x,boss.y,radius*.83,0,Math.PI*2);ctx.stroke();
-  ctx.restore();
- }
-function collision(dt){
+ function collision(dt){
  for(const q of shots){const ox=q.x,oy=q.y;q.x+=q.vx*dt;q.y+=q.vy*dt;q.life-=dt;if(q.life<=0)continue;
   for(const m of S.mobs){if(m.hp<=0)continue;
-   if((()=>{const cx=m.x,cy=m.y-m.size*.52,vx=q.x-ox,vy=q.y-oy,t=clamp(((cx-ox)*vx+(cy-oy)*vy)/(vx*vx+vy*vy||1),0,1);return Math.hypot(ox+vx*t-cx,oy+vy*t-cy)<m.size*.30+q.r*.55})()){q.life=0;m.hp=Math.max(0,m.hp-cm25AbsorbMobShield(m,q.dmg*((S.lootBuffs.sword||0)>0?1.35:1)));m.hit=.14;burst(m.x,m.y-m.size*.5,q.col,9);
+   if((()=>{const cx=m.x,cy=m.y-m.size*.52,vx=q.x-ox,vy=q.y-oy,t=clamp(((cx-ox)*vx+(cy-oy)*vy)/(vx*vx+vy*vy||1),0,1);return Math.hypot(ox+vx*t-cx,oy+vy*t-cy)<m.size*.30+q.r*.55})()){q.life=0;m.hp=Math.max(0,m.hp-(q.dmg*((S.lootBuffs.sword||0)>0?1.35:1)));m.hit=.14;burst(m.x,m.y-m.size*.5,q.col,9);
     if(m.hp===0){burst(m.x,m.y-m.size*.5,'#d2f5ff',25);S.total--;setHud()}break;
    }
   }
@@ -580,13 +527,12 @@ update=function(dt){
   updateFacing((keys.ArrowRight||keys.d?1:0)-(keys.ArrowLeft||keys.a?1:0)+joy.x);
   // Na arena do chefão, preservar o combate original mas substituir a física vertical.
   const old=[keys.ArrowUp,keys.w,keys.ArrowDown,keys.s,joy.y];
-  const previousBossHp=boss.hp;
   keys.ArrowUp=keys.w=keys.ArrowDown=keys.s=false;joy.y=0;
   try{orig.update(dt)}finally{[keys.ArrowUp,keys.w,keys.ArrowDown,keys.s,joy.y]=old}
   if(playing&&!paused&&!gameEnded&&!defeatPending){
    applyVerticalPhysics(dt);lootStep(dt);
    updateMobs(dt);cm25SeparateMobs(dt);hitBossMinions(dt);cm25ApplyHeroContact(dt,true);
-   updateGhostGuard(dt,previousBossHp);stepMobEffects(dt);
+   stepMobEffects(dt);
    // Chefe se move em arcos, alterna direção e persegue o jogador em toda a arena.
    // Controla a velocidade para haver espaço de reação entre as investidas.
    S.bossMovement+=dt;
@@ -645,8 +591,6 @@ function drawMob(m){
  ctx.fillStyle='rgba(3,15,34,.8)';ctx.fillRect(m.x-z*.37,barY,z*.74,6);
  ctx.fillStyle='#ff9abb';ctx.fillRect(m.x-z*.37,barY,z*.74*(m.hp/m.max),6);
 }
-const cm25OriginalDrawMob=drawMob;
-drawMob=function(m){cm25OriginalDrawMob(m);cm25RenderMobShield(m,m.x,m.y-m.size*.5,m.size)};
 function drawHorde(){ctx.save();if(shake){ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake*=.84}
  drawBG();
  // Mundo usa coordenadas próprias. Apenas o desenho é deslocado pela câmera.
@@ -706,7 +650,7 @@ draw=function(){if(stage!==0||!S.active)return orig.draw();if(S.area===3){
  orig.draw();
  // Os 12 subordinados aparecem realmente na arena, com sprites aprovados e HP.
  for(const m of S.mobs){if(m.hp>0)drawMob(m)}
- drawMobEffects();drawGhostGuard();
+ drawMobEffects();
  // Os ataques originais do chefe já são desenhados pelo motor.
  // Emojis identificam somente projéteis criados pelos subordinados.
  if(S.bossIntroTime<=0){
@@ -720,7 +664,7 @@ draw=function(){if(stage!==0||!S.active)return orig.draw();if(S.area===3){
 }drawHorde()};
 finishBossDefeat=function(){if(stage!==0||!S.active)return orig.defeat();
  defeatPending=false;playing=false;paused=true;S.active=false;
- S.mobs=[];S.total=0;S.bossGuardTime=0;
+ S.mobs=[];S.total=0;
  changedArea('FANTASMA DERROTADO!', 'Próximo reino: Golem de Lava!',()=>{
   $('#menu').classList.remove('hidden');$('#menu').style.display='grid';$('#start').textContent='↻ TESTAR NOVAMENTE';
   stage=0;expectedStage=0;S.area=0;playing=false;paused=true;
