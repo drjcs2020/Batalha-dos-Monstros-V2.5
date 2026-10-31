@@ -380,7 +380,9 @@
           personagem:String(heroes[heroIdx]?.name||''),
           hp:Number(p.hp)||0,mana:Number(p.mana)||0,
           tempo:Math.max(0,Math.round(Number(elapsedMs||0)/1000)),
-          gameEnded:!!gameEnded
+          gameEnded:!!gameEnded,
+          // A derrota é finalizada no Sheets SOMENTE após incluir os pontos bônus.
+          bonusApplied:!!cmBonusApplied
         };
       };
       bridge.selectArea=(target,profile)=>{
@@ -464,6 +466,34 @@
       this.estilizarHud();
       this.integrarProgresso();
       this.criarEntradaCampanha();
+      // A V2.4 escondia o botão de pontos bônus nos reinos e enviava a
+      // classificação ao placar antigo. Na V2.5 ele volta a ser a saída.
+      const bonusButton=document.getElementById('bonusViewRanking');
+      const bonusOverlay=document.getElementById('bonusOverlay');
+      if(bonusButton&&bonusOverlay){
+        bonusButton.style.setProperty('display','block','important');
+        bonusButton.style.setProperty('visibility','visible','important');
+        // Captura antes do onclick legado, evitando consultar ou salvar na V2.4.
+        bonusButton.addEventListener('click',event=>{
+          event.preventDefault();event.stopImmediatePropagation();
+          if(bonusButton.disabled)return;
+          bonusButton.disabled=true;
+          bonusButton.textContent='⏳ CONFIRMANDO RESULTADO NA V2.5...';
+          this.send('BONUS_EXIT',{fromDefeat:bonusOverlay.dataset.fromDefeat==='1'});
+        },true);
+        const oldShowBonus=cmShowBonus;
+        cmShowBonus=function(...args){
+          const result=oldShowBonus(...args);
+          // A contagem original usa animação de 6 segundos. O botão também
+          // deve liberar a saída se o navegador suspender requestAnimationFrame.
+          setTimeout(()=>{
+            if(bonusOverlay.classList.contains('hidden'))return;
+            bonusButton.disabled=false;
+            bonusButton.textContent='🏠 VOLTAR À SELEÇÃO';
+          },6500);
+          return result;
+        };
+      }
       // Quando a campanha já começou, nunca reabrir o menu de cadastro
       // no curto intervalo entre a derrota de um chefão e o próximo reino.
       if(!document.getElementById('cm25-campaign-visuals')){
