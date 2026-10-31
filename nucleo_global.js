@@ -598,6 +598,11 @@
         playing=false;
         paused=false;
         try{if(typeof stopMediaAudio==='function')stopMediaAudio();}catch(e){}
+        // Nos reinos carregados com direct=1 a splash original nunca
+        // foi removida (só estava invisível por causa de um CSS).
+        // Impedir que ela cubra o cadastro ao liberar o modo direto.
+        const splash=document.getElementById('classmanaSplash');
+        if(splash){splash.hidden=true;splash.style.display='none';}
         document.body.classList.remove('cm25-test-direct');
         try{if(soundOn&&typeof playMediaAudio==='function')
           playMediaAudio(cmAudio.selecao,true,.48);
