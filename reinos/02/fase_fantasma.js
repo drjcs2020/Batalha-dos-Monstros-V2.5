@@ -301,7 +301,9 @@ function startTerritory(){
  p.x=W*.19;p.y=ground();window.cm25HeroFeetOffset=0;p.hp=100;p.mana=100;p.inv=1.5;
  shots=[];bad=[];parts=[];superCooldown=0;superUses=0;
  if(S.area<4){let ids=S.waves[S.area];S.mobs=ids.map((id,i)=>createMob(id,i,ids.length));S.total=S.mobs.length}
- else {boss.max=Math.round(stages[0].hp*2.9);boss.hp=boss.max;boss.x=W*.78;boss.y=platformY()-bossHeight()/2-3+bossVisualFootPad();boss.cool=3.1;S.total=0;S.bossIntroTime=1.85;S.bossPhase=1;S.bossPhaseNotice=0;S.camera=0;S.bossMovement=0;S.bossFace=-1;window.cm25GolemFacing=-1;S.bossHealthAtStart=boss.hp;S.previousBossHP=boss.hp}
+ else {boss.max=Math.round(stages[0].hp*2.9);boss.hp=boss.max;boss.x=W*.78;boss.y=platformY()-bossHeight()/2-3+bossVisualFootPad();boss.cool=3.1;S.bossIntroTime=1.85;S.bossPhase=1;S.bossPhaseNotice=0;S.camera=0;S.bossMovement=0;S.bossFace=-1;window.cm25GolemFacing=-1;S.bossHealthAtStart=boss.hp;S.previousBossHP=boss.hp;
+ // Um de cada onze tipos do Golem, em levas para não esconder o chefão.
+ S.mobs=[];S.bossMinionQueue=Array.from({length:S.files.length},(_,id)=>id);S.total=S.bossMinionQueue.length;S.guardianSpawnCooldown=.6;}
  setHud();say25('🔥 '+S.names[S.area]+' — '+(S.area===4?'CHEFÃO!':'avance e vença a horda!'),3);
 }
 resetStage=function(){orig.reset();if(stage!==0)return;S.area=0;S.active=true;S.lootChestUsed=false;S.lootPhaseChest=false;startTerritory()};
@@ -561,6 +563,38 @@ function moveHorde(dt){
    }
   }
  }
+
+function cm25BossMinions(dt){
+ if(bossDefeated||defeatPending){S.mobs=[];S.bossMinionQueue=[];return}
+ S.guardianSpawnCooldown=Math.max(0,(S.guardianSpawnCooldown||0)-dt);
+ S.mobs=S.mobs.filter(m=>m.hp>0);
+ const alive=S.mobs.length;
+ if(alive<3&&S.bossMinionQueue?.length&&S.guardianSpawnCooldown<=0){
+  const id=S.bossMinionQueue.shift(),m=createMob(id,id,S.files.length);
+  m.x=clamp(W*(.34+alive*.19),W*.27,W*.75);
+  m.y=platformY()-(m.airborne?36+alive*17:0);
+  m.baseY=m.y;m.size=Math.min(m.size,H*.16);
+  m.cm25Chasing=true;m.cool=2.3+alive*.6;
+  S.mobs.push(m);S.guardianSpawnCooldown=2.2;
+ }
+ updateMobs(dt);cm25SeparateMobs(dt);cm25ApplyHeroContact(dt,true);
+ // Projéteis já foram movidos no update original: testar trajetória uma vez.
+ for(const q of shots){
+  if(q.life<=0)continue;
+  const ox=q.x-q.vx*dt,oy=q.y-q.vy*dt,vx=q.x-ox,vy=q.y-oy;
+  for(const m of S.mobs){
+   if(m.hp<=0)continue;
+   const cx=m.x,cy=m.y-m.size*.52;
+   const t=clamp(((cx-ox)*vx+(cy-oy)*vy)/(vx*vx+vy*vy||1),0,1);
+   if(Math.hypot(ox+vx*t-cx,oy+vy*t-cy)>m.size*.32+(q.r||9)*.6)continue;
+   q.life=0;m.hp=Math.max(0,m.hp-cm25AbsorbMobShield(m,q.dmg));
+   m.hit=.18;burst(cx,cy,q.col||'#ffdc90',10);
+   if(m.hp===0){S.total=Math.max(0,S.total-1);score+=45;setHud();burst(cx,cy,'#fce6ac',20)}
+   break;
+  }
+ }
+ shots=shots.filter(q=>q.life>0);
+}
 update=function(dt){
  if(stage===0&&S.active&&S.area<4){const result=moveHorde(dt);cm25SeparateMobs(dt);return result;}
  if(stage===0&&S.active&&S.area===4){
@@ -575,8 +609,8 @@ update=function(dt){
   const old=[keys.ArrowUp,keys.w,keys.ArrowDown,keys.s,joy.y];
   keys.ArrowUp=keys.w=keys.ArrowDown=keys.s=false;joy.y=0;
   try{orig.update(dt)}finally{[keys.ArrowUp,keys.w,keys.ArrowDown,keys.s,joy.y]=old}
-  if(playing&&!paused){
-   applyVerticalPhysics(dt);lootStep(dt);cm25ApplyHeroContact(dt,true);
+  if(playing&&!paused&&!gameEnded&&!defeatPending){
+   applyVerticalPhysics(dt);lootStep(dt);cm25BossMinions(dt);
    // Chefe se move em arcos, alterna direção e persegue o jogador em toda a arena.
    // Controla a velocidade para haver espaço de reação entre as investidas.
    S.bossMovement+=dt;
@@ -599,7 +633,7 @@ update=function(dt){
     try{tone(newPhase===2?450:310,.40,'triangle',.06)}catch(e){}
    }
    S.bossPhaseNotice=Math.max(0,(S.bossPhaseNotice||0)-dt);
-   boss.cool=Math.max(boss.cool,.92); // Evita rajadas injustas na luta ampliada.
+   // Deixar o tempo de recarga zerar para liberar os ataques do Golem.
   }
   return;
  }
@@ -702,6 +736,7 @@ function playBossSignal(){
  try{if(soundOn){tone(196,.45,'triangle',.09);setTimeout(()=>tone(247,.45,'triangle',.09),460);setTimeout(()=>tone(330,.68,'sawtooth',.07),900)}}catch(e){}
 }
 draw=function(){if(stage!==0||!S.active)return orig.draw();if(S.area===4){orig.draw();
+  for(const m of S.mobs)if(m.hp>0)drawMob(m);
   // Chefão também lança emojis ofensivos, acompanhando os projéteis reais.
   if(S.bossIntroTime<=0){ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='32px "Segoe UI Emoji","Apple Color Emoji",sans-serif';for(let i=0;i<bad.length;i++){const q=bad[i];if(q.life>0)ctx.fillText(['🔥','💣','💥','☄️'][i%4],q.x,q.y)}ctx.restore()}
   lootDraw(false);lootHud();drawBossEntrance();return}drawHorde()};
