@@ -627,6 +627,46 @@ async function confirmStopAndSave(){
  }
 }
 
+
+// Encerramento confirmado: voltar à seleção já carregada no iframe.
+// Nunca refazer a barra, o vídeo ou a inicialização do jogo nesta ação.
+function returnToCharacterSelection(){
+ if(!stopSaveConfirmed||stopSaveMode!=='finish'||currentRun)return false;
+ let win,doc,menu;
+ try{
+  win=frame.contentWindow;doc=win.document;menu=doc.getElementById('menu');
+  if(!menu||typeof win.cmLimparAluno!=='function')
+   throw Error('Seleção de personagens ainda não está disponível.');
+  // Desfazer a identidade selecionada, mas preservar o motor e os heróis em memória.
+  win.cmLimparAluno();
+  const video=doc.getElementById('openingVideo');
+  const movie=doc.getElementById('openingMovie');
+  try{movie?.pause()}catch(e){}
+  if(video){video.hidden=true;video.style.display='none';}
+  for(const id of ['rankingOverlay','bonusOverlay','gameOverOverlay','tutorial','question']){
+   doc.getElementById(id)?.classList.add('hidden');
+  }
+  menu.classList.remove('hidden');
+  menu.style.display='grid';
+  menu.scrollTop=0;
+ }catch(error){
+  report('⚠ Não foi possível abrir a seleção: '+String(error.message||error));
+  return false;
+ }
+ sessionStorage.removeItem('cm25TesteIdentidade');
+ identity=null;currentRun=null;revision=0;finalSnapshot=null;
+ pendingSnapshot=null;pendingAutoSnapshot=null;manualCheckpointPending=false;
+ campaignStarted=false;automaticEntry=false;entering=false;endingRun=false;
+ stopSaveOpen=false;stopSaveConfirmed=false;stopPauseState=null;finishRankingOpen=false;
+ if(autoTimer){clearTimeout(autoTimer);autoTimer=null;}
+ $('saveOverlay').hidden=true;
+ $('transitionLoading').hidden=true;
+ $('stopSave').hidden=true;$('finishRun').hidden=true;
+ frame.style.opacity='1';frame.style.pointerEvents='auto';
+ report('Escolha sua turma, seu herói e seu nome para iniciar outra jornada.');
+ return true;
+}
+
 function showRankingAfterFinish(){
  if(!stopSaveConfirmed||stopSaveMode!=='finish'||finishRankingOpen)return;
  let documentFrame=null,open=null,ranking=null,close=null;
@@ -641,30 +681,36 @@ function showRankingAfterFinish(){
   return;
  }
  const originalCloseText=close.textContent;
- function returnToFinalResult(event){
+ function returnToSelectionFromRanking(event){
   if(!finishRankingOpen)return;
   event.preventDefault();
   event.stopImmediatePropagation();
-  close.removeEventListener('click',returnToFinalResult,true);
+  close.removeEventListener('click',returnToSelectionFromRanking,true);
   ranking.classList.add('hidden');
   close.textContent=originalCloseText;
   finishRankingOpen=false;
-  $('saveOverlay').hidden=false;
-  $('saveRanking').focus();
+  if(!returnToCharacterSelection()){
+   $('saveOverlay').hidden=false;
+   $('saveRanking').focus();
+  }
  }
- close.addEventListener('click',returnToFinalResult,true);
+ close.addEventListener('click',returnToSelectionFromRanking,true);
  finishRankingOpen=true;
  $('saveOverlay').hidden=true;
  frame.style.pointerEvents='auto';
  open.click(); // Ranking online V2.5; não usa a classificação da V2.4.
- close.textContent='↩ VOLTAR AO RESULTADO';
+ close.textContent='↩ VOLTAR À SELEÇÃO';
 }
 $('stopSave').addEventListener('click',()=>openStopAndSave('save'));
 $('finishRun').addEventListener('click',()=>openStopAndSave('finish'));
 $('saveCancel').addEventListener('click',closeStopAndResume);
 $('saveConfirm').addEventListener('click',confirmStopAndSave);
 $('saveRanking').addEventListener('click',showRankingAfterFinish);
-$('saveExit').addEventListener('click',()=>{if(stopSaveConfirmed)location.reload();});
+$('saveExit').addEventListener('click',()=>{
+ if(!stopSaveConfirmed)return;
+ if(stopSaveMode==='finish')returnToCharacterSelection();
+ else location.reload(); // Guardar (não finalizar) preserva o fluxo existente.
+});
 
 setInterval(()=>{
  if(!ready)return;
