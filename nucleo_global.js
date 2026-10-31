@@ -662,47 +662,55 @@
         reset(Number(selected)||Number(target)+1||1);
         return selected;
       };
-      // Na primeira partida: COMO JOGAR -> aviso -> portal -> batalha.
-      // O aviso só é exibido depois que a criança fecha o tutorial.
+      // Reutilizar a tela ORIGINAL de preparação, sem criar overlay novo.
+      // Ordem: COMO JOGAR -> PREPARE-SE, O PORTAL JÁ VAI ABRIR -> animação.
       let tutorialPortalPending=false,tutorialPortalShowing=false,portalNoticeTimer=null;
-      const portalNotice=document.createElement('div');
-      portalNotice.id='cm25-portal-opening-notice';
-      portalNotice.setAttribute('role','status');
-      portalNotice.setAttribute('aria-live','polite');
-      portalNotice.hidden=true;
-      portalNotice.style.cssText='position:fixed;inset:0;z-index:999999;display:grid;place-items:center;background:radial-gradient(circle at center,#143f79f2,#06152bee);pointer-events:none;color:#b8f4ff;text-align:center;font:900 clamp(21px,4.2vw,40px) Georgia,serif;text-shadow:0 0 20px #33d4ff';
-      portalNotice.innerHTML='<div>✦ O PORTAL DE MANA ESTÁ SE ABRINDO… ✦</div>';
-      document.body.appendChild(portalNotice);
-      // CSS display:grid é explícito; usar style.display para respeitar o estado oculto.
-      portalNotice.style.display='none';
       const oldBeginBattle=beginBattle;
+      const finishPortalNotice=(...args)=>{
+        if(!tutorialPortalShowing)return;
+        tutorialPortalShowing=false;
+        if(portalNoticeTimer!==null)clearTimeout(portalNoticeTimer);
+        portalNoticeTimer=null;
+        try{
+          if(window.parent!==window){
+            const loading=window.parent.document.getElementById('transitionLoading');
+            if(loading&&loading.dataset.cm25PortalNotice==='1'){
+              delete loading.dataset.cm25PortalNotice;
+              loading.hidden=true;
+            }
+          }
+        }catch(e){console.warn('[ClassMana] Tela de preparação',e);}
+        oldBeginBattle(...args);
+      };
       const beginAfterPortalNotice=(...args)=>{
-        if(!tutorialPortalPending){
-          if(tutorialPortalShowing)return;
-          return oldBeginBattle(...args);
-        }
+        if(tutorialPortalShowing)return;
+        if(!tutorialPortalPending)return oldBeginBattle(...args);
         tutorialPortalPending=false;
         tutorialPortalShowing=true;
         clearInterval(tutorialTimer);
-        const tutorial=document.getElementById('tutorial');
-        tutorial?.classList.add('hidden');
-        portalNotice.hidden=false;
-        portalNotice.style.display='grid';
-        portalNoticeTimer=setTimeout(()=>{
-          portalNoticeTimer=null;
-          portalNotice.hidden=true;
-          portalNotice.style.display='none';
-          tutorialPortalShowing=false;
-          // A primeira elipse será desenhada apenas após esse aviso desaparecer.
-          oldBeginBattle(...args);
-        },850);
+        document.getElementById('tutorial')?.classList.add('hidden');
+        try{
+          const host=window.parent!==window?window.parent.document:null;
+          const loading=host?.getElementById('transitionLoading');
+          const label=host?.getElementById('transitionLabel');
+          if(loading&&label){
+            label.textContent='PREPARE-SE! O PORTAL JÁ VAI ABRIR';
+            const subtitle=host.getElementById('transitionSubTitle');
+            if(subtitle)subtitle.textContent='A passagem de mana está despertando…';
+            loading.dataset.cm25PortalNotice='1';
+            loading.hidden=false;
+            portalNoticeTimer=setTimeout(()=>finishPortalNotice(...args),1350);
+            return;
+          }
+        }catch(e){console.warn('[ClassMana] Preparação do portal indisponível',e);}
+        // A partida também funciona se a arena for aberta fora do controlador.
+        finishPortalNotice(...args);
       };
       beginBattle=beginAfterPortalNotice;
       const skipTutorial=document.getElementById('skipTutorial');
       if(skipTutorial)skipTutorial.onclick=beginAfterPortalNotice;
       const oldTutorial=bridge.startTutorial?.bind(bridge);
       if(oldTutorial)bridge.startTutorial=()=>{
-        // O tutorial deve terminar antes do primeiro quadro do portal.
         state.phase='pending';
         const started=oldTutorial();
         tutorialPortalPending=started===true;
@@ -713,8 +721,15 @@
         tutorialPortalShowing=false;
         if(portalNoticeTimer!==null)clearTimeout(portalNoticeTimer);
         portalNoticeTimer=null;
-        portalNotice.hidden=true;
-        portalNotice.style.display='none';
+        try{
+          if(window.parent!==window){
+            const loading=window.parent.document.getElementById('transitionLoading');
+            if(loading?.dataset.cm25PortalNotice==='1'){
+              delete loading.dataset.cm25PortalNotice;
+              loading.hidden=true;
+            }
+          }
+        }catch(e){}
         state.token++;
         state.phase='off';
         state.exitDone=0;
