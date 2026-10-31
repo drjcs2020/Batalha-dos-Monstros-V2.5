@@ -644,6 +644,8 @@ function returnToCharacterSelection(){
    throw Error('Seleção de personagens ainda não está disponível.');
   // Desfazer a identidade selecionada, mas preservar o motor e os heróis em memória.
   win.cmLimparAluno();
+  // Retornar ao cadastro não equivale a selecionar automaticamente o herói anterior.
+  win.cm25ResetHeroCarousel?.();
   const video=doc.getElementById('openingVideo');
   const movie=doc.getElementById('openingMovie');
   try{movie?.pause()}catch(e){}
