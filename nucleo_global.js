@@ -692,7 +692,7 @@
           const loading=host?.getElementById('transitionLoading');
           const label=host?.getElementById('transitionLabel');
           if(loading&&label){
-            label.textContent='AGUARDE, O REINO JÁ VAI SE ABRIR…';
+            label.textContent='O reino já vai se abrir. Aguarde...';
             const subtitle=host.getElementById('transitionSubTitle');
             if(subtitle)subtitle.textContent='O portal de mana vai se abrir para seu herói.';
             loading.dataset.cm25TutorialPortal='1';
@@ -871,6 +871,20 @@
         },EXIT_MS);
         return true;
       };
+      // A saída do último território de cada reino ocorre no próprio cenário.
+      // O portal elíptico é o mesmo já usado nas outras passagens.
+      // O reino 10 possui sua própria integração para o portal final.
+      if(bridge.realm>=1&&bridge.realm<10){
+        const concluirChefao=finishBossDefeat;
+        finishBossDefeat=function(...args){
+          const status=bridge.status();
+          const ultimoTerritorio=Number(status?.territory)===Number(bridge.maxTerritories);
+          if(stage===0&&status?.active&&ultimoTerritorio&&defeatPending&&
+             Number(boss.hp)<=0&&
+             core.portalBeforeExit?.(()=>finishBossDefeat(...args)))return;
+          return concluirChefao(...args);
+        };
+      }
       this.portalCancel=()=>canceled();
     },
     send(action, extras) {
