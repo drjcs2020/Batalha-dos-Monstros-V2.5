@@ -396,7 +396,7 @@ function switchRealm(next,target=1,direct=true){
   $('transitionLoading').hidden=!direct||initialTutorial;
  $('transitionLabel').textContent='Preparando o reino '+CAMPAIGN[next-1][0]+'…';
  $('transitionSubTitle').textContent='Carregando o próximo território e seu cenário…';
- frame.src=`reinos/${String(realm).padStart(2,'0')}/index.html?cm25=${loadId}&direct=${direct?'1':'0'}&rev=20261031-portal-solo-transicao`;
+ frame.src=`reinos/${String(realm).padStart(2,'0')}/index.html?cm25=${loadId}&direct=${direct?'1':'0'}&rev=20261031-bonus-placar-unico`;
 }
 // READY confirma o código do iframe, mas não o carregamento das imagens.
 // Aguardar o cenário antes de iniciar uma área nos testes rápidos.
@@ -517,11 +517,9 @@ async function returnFromBonus(fromDefeat,showRanking=false){
   loading.hidden=true;frame.style.pointerEvents='auto';
   try{
    const btn=frame.contentWindow.document.getElementById('bonusViewRanking');
-   if(btn){btn.disabled=false;btn.textContent='↻ TENTAR CONFIRMAR E VOLTAR';}
-   const ranking=frame.contentWindow.document.getElementById('cm25BonusRanking');
-   if(ranking){ranking.disabled=false;ranking.textContent='↻ CONSULTAR PLACAR';}
+   if(btn){btn.disabled=false;btn.textContent='↻ TENTAR CONFIRMAR E VER PLACAR';}
   }catch(e){}
-  alert('O resultado ainda não foi confirmado no Google Sheets. Verifique a conexão e clique em TENTAR CONFIRMAR E VOLTAR. A partida será preservada.');
+  alert('O resultado ainda não foi confirmado no Google Sheets. Verifique a conexão e clique em TENTAR CONFIRMAR E VER PLACAR. A partida será preservada.');
  }finally{bonusExitBusy=false;}
 }
 window.addEventListener('message',e=>{

@@ -1162,67 +1162,75 @@
       this.integrarProgresso();
       this.integrarPortais();
       this.criarEntradaCampanha();
-      // A V2.4 escondia o botão de pontos bônus nos reinos e enviava a
-      // classificação ao placar antigo. Na V2.5 ele volta a ser a saída.
+      // Tela de bonus: uma unica acao. Confirmar resultado na V2.5,
+      // abrir o ranking ONLINE e so voltar ao inicio ao fechar o placar.
       const bonusButton=document.getElementById('bonusViewRanking');
       const bonusOverlay=document.getElementById('bonusOverlay');
       if(bonusButton&&bonusOverlay){
         bonusButton.style.setProperty('display','block','important');
         bonusButton.style.setProperty('visibility','visible','important');
-        // Captura antes do onclick legado, evitando consultar ou salvar na V2.4.
+        // Remover o comando redundante do DOM gerado pelo motor V2.4.
+        // O motor-base permanece intocado para nao afetar os 10 reinos.
+        document.getElementById('cm25BonusRanking')?.remove();
+        let rankingOpenedFromBonus=false;
         bonusButton.addEventListener('click',event=>{
-          event.preventDefault();event.stopImmediatePropagation();
+          // O onclick antigo direcionava "VER PLACAR FINAL" para o retorno
+          // direto ao cadastro. Interceptar antes do handler legado.
+          event.preventDefault();
+          event.stopImmediatePropagation();
           if(bonusButton.disabled)return;
           bonusButton.disabled=true;
-          bonusButton.textContent='⏳ CONFIRMANDO RESULTADO NA V2.5...';
-          this.send('BONUS_EXIT',{fromDefeat:bonusOverlay.dataset.fromDefeat==='1'});
+          bonusButton.textContent='⏳ CONFIRMANDO RESULTADO E PLACAR…';
+          this.send('BONUS_RANKING',{
+            fromDefeat:bonusOverlay.dataset.fromDefeat==='1'
+          });
         },true);
-        // Segundo comando solicitado: consultar o ranking V2.5 nesta mesma
-        // tela de pontos bônus, sem passar pelo cadastro.
-        // Já está no HTML original da tela Pontos Bônus, DEPOIS dos pontos.
-        // Não criar botões no cabeçalho nem na seleção.
-        const rankingFromBonus=document.getElementById('cm25BonusRanking');
-        if(!rankingFromBonus)throw Error('Botão Consultar Placar ausente na tela Pontos Bônus');
-        let rankingOpenedFromBonus=false;
-        rankingFromBonus.addEventListener('click',()=>{
-          if(rankingFromBonus.disabled)return;
-          rankingFromBonus.disabled=true;
-          rankingFromBonus.textContent='⏳ CONFIRMANDO PONTOS…';
-          this.send('BONUS_RANKING',{fromDefeat:bonusOverlay.dataset.fromDefeat==='1'});
-        });
-        // Depois da confirmação, abrir o ranking já existente da V2.5.
+        // A campanha confirma o resultado no Sheets ANTES de autorizar o
+        // ranking. O placar online V2.5 ja tem sua propria rotina de busca.
         window.addEventListener('message',event=>{
           const d=event.data;
           if(event.origin!==location.origin||event.source!==window.parent||
              d?.namespace!=='CM25'||d.action!=='BONUS_RANKING_READY'||
-             String(d.token)!==String(buildToken)||d.realm!==window.CM25RealmBridge?.realm)return;
+             String(d.token)!==String(buildToken)||
+             d.realm!==window.CM25RealmBridge?.realm)return;
+          const placar=document.getElementById('openRanking');
+          if(!placar){
+            bonusButton.disabled=false;
+            bonusButton.textContent='↻ TENTAR ABRIR PLACAR';
+            console.error('[ClassMana V2.5] Placar online nao encontrado');
+            return;
+          }
           rankingOpenedFromBonus=true;
           bonusOverlay.classList.add('hidden');
-          const placar=document.getElementById('openRanking');
-          if(placar)placar.click();
+          try{
+            placar.click();
+            const close=document.getElementById('closeRanking');
+            if(close)close.textContent='↩ VOLTAR AO INÍCIO';
+          }catch(error){
+            rankingOpenedFromBonus=false;
+            bonusOverlay.classList.remove('hidden');
+            bonusButton.disabled=false;
+            bonusButton.textContent='↻ TENTAR ABRIR PLACAR';
+            console.error('[ClassMana V2.5] Falha ao abrir placar final',error);
+          }
         });
+        // O retorno ao inicio ocorre SOMENTE apos o jogador fechar o
+        // ranking. O controlador principal ja confirmou a partida.
         document.getElementById('closeRanking')?.addEventListener('click',event=>{
           if(!rankingOpenedFromBonus)return;
-          event.preventDefault();event.stopImmediatePropagation();
+          event.preventDefault();
+          event.stopImmediatePropagation();
           rankingOpenedFromBonus=false;
-          this.send('BONUS_EXIT',{fromDefeat:bonusOverlay.dataset.fromDefeat==='1'});
+          this.send('BONUS_EXIT',{
+            fromDefeat:bonusOverlay.dataset.fromDefeat==='1'
+          });
         },true);
         const oldShowBonus=cmShowBonus;
         cmShowBonus=function(...args){
           rankingOpenedFromBonus=false;
-          rankingFromBonus.disabled=true;
-          rankingFromBonus.textContent='🏆 CONSULTAR PLACAR';
-          const result=oldShowBonus(...args);
-          // A contagem original usa animação de 6 segundos; não mostrar
-          // pontuação parcial nem liberar ação durante essa animação.
-          setTimeout(()=>{
-            if(bonusOverlay.classList.contains('hidden'))return;
-            bonusButton.disabled=false;
-            bonusButton.textContent='🏠 VOLTAR À SELEÇÃO';
-            rankingFromBonus.disabled=false;
-            rankingFromBonus.textContent='🏆 CONSULTAR PLACAR';
-          },6500);
-          return result;
+          // A contagem original preserva os 6 segundos e so depois
+          // habilita "VER PLACAR FINAL". Nao sobrescrever seu rotulo.
+          return oldShowBonus(...args);
         };
       }
       // Quando a campanha já começou, nunca reabrir o menu de cadastro
