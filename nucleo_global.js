@@ -660,12 +660,19 @@
       bridge.selectArea=(target,profile)=>{
         const selected=oldSelect(target,profile);
         reset(Number(selected)||Number(target)+1||1);
+        // O motor oculta o tutorial ao selecionar a area; reaproveitar
+        // a tela verde sem reiniciar o tempo de leitura.
+        if(earlyTutorial&&tutorialPending){
+          playing=false;paused=true;
+          document.getElementById('tutorial')?.classList.remove('hidden');
+        }
         return selected;
       };
       // O tutorial verde vem primeiro. Ao concluir, reutilizar APENAS
       // a tela original de preparacao ja existente no controlador da campanha.
       // Nenhum novo overlay e nenhuma tela "Preparando Como Jogar".
       let tutorialPending=false,noticeActive=false,noticeTimer=null;
+      let earlyTutorial=false,entryReady=true,earlyStartRequested=false;
       const oldBeginBattle=beginBattle;
       const closeNotice=()=>{
         if(noticeTimer!==null)clearTimeout(noticeTimer);
@@ -682,6 +689,14 @@
       const beginAfterTutorial=(...args)=>{
         if(noticeActive)return;
         if(!tutorialPending)return oldBeginBattle(...args);
+        // Comecar Agora/cronometro antes do salvamento: manter a tela
+        // verde ate o cenario estar pronto, sem expor um fundo vazio.
+        if(!entryReady){
+          clearInterval(tutorialTimer);tutorialTimer=null;
+          earlyStartRequested=true;
+          return;
+        }
+        earlyStartRequested=false;
         tutorialPending=false;
         noticeActive=true;
         clearInterval(tutorialTimer);
@@ -714,20 +729,44 @@
       const skipTutorial=document.getElementById('skipTutorial');
       if(skipTutorial)skipTutorial.onclick=beginAfterTutorial;
       const oldTutorial=bridge.startTutorial?.bind(bridge);
-      if(oldTutorial)bridge.startTutorial=()=>{
+      if(oldTutorial)bridge.startTutorial=(options={})=>{
+        if(earlyTutorial&&tutorialPending){
+          // A preparacao confirmou o territorio: continuar o mesmo
+          // tutorial em andamento, sem repetir a tela nem o cronometro.
+          playing=false;paused=true;
+          document.getElementById('tutorial')?.classList.remove('hidden');
+          return true;
+        }
         state.phase='pending';
+        earlyTutorial=!!options.early;
+        entryReady=!earlyTutorial;
+        earlyStartRequested=false;
         const started=oldTutorial();
         tutorialPending=started===true;
+        if(!tutorialPending){earlyTutorial=false;entryReady=true;}
         return started;
       };
+      bridge.markTutorialReady=()=>{
+        entryReady=true;
+        if(earlyStartRequested&&tutorialPending){
+          earlyStartRequested=false;
+          beginAfterTutorial();
+        }
+      };
       const canceled=()=>{
+        if(earlyTutorial){
+          clearInterval(tutorialTimer);tutorialTimer=null;
+          document.getElementById('tutorial')?.classList.add('hidden');
+        }
         tutorialPending=false;
+        earlyTutorial=false;entryReady=true;earlyStartRequested=false;
         noticeActive=false;
         closeNotice();
         state.token++;
         state.phase='off';
         state.exitDone=0;
       };
+      bridge.cancelEntryTutorial=()=>canceled();
       const oldReturn=bridge.returnToSelection?.bind(bridge);
       if(oldReturn)bridge.returnToSelection=()=>{
         canceled();
