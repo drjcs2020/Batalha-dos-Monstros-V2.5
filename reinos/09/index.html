@@ -48,7 +48,7 @@ try{
  for(const url of sources){try{const res=await fetch(url,{cache:'no-cache'});if(!res.ok)throw Error('HTTP '+res.status);original=await res.text();if(original.includes('function resetStage')&&original.includes('function drawHero'))break;original=''}catch(e){error=String(e)}}
  if(!original)throw Error('Não foi possível recuperar o HTML original da V2.4. '+error);
  const globalScript=await fetch('../../nucleo_global.js',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Núcleo global não encontrado');return r.text()});
- const extension=await fetch('./fase_fantasma.js').then(r=>{if(!r.ok)throw Error('O arquivo da extensão não foi encontrado');return r.text()});
+ const extension=await fetch('./fase_fantasma.js',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('O arquivo da extensão não foi encontrado');return r.text()});
  // Integra o módulo de Magia Suprema original ao alvo real da V2.5.
  // Mantém a lógica, sons, botão e custo originais e desloca só a área visual.
  try{
