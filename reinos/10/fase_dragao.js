@@ -8,7 +8,7 @@ const bg=[],dragon=[],projectile=[];
 for(let t=1;t<=5;t++){const i=new Image();i.src=new URL('assets_v25/cenarios/cenario_'+t+'.jpg',location.href).href;bg.push(i)}
 for(let t=1;t<=4;t++){let di=[],pi=[];for(let f=1;f<=4;f++){let a=new Image(),b=new Image();a.src=new URL('assets_v25/inimigos/t'+t+'_'+f+'.png',location.href).href;b.src=new URL('assets_v25/projeteis/t'+t+'_'+f+'.png',location.href).href;di.push(a);pi.push(b)}dragon.push(di);projectile.push(pi)}
 // V2.5 Reino 1: itens de apoio e limite de especial duplicado pelo baú.
-const lootDefs={heart:{name:'CORAÇÃO',file:'heart.png',ttl:11},crystal:{name:'CRISTAL DE MANA',file:'crystal.png',ttl:10},chest:{name:'BAÚ DA MAGIA',file:'chest.png',ttl:12}};
+const lootDefs={heart:{name:'CORAÇÃO',file:'heart.png',ttl:11},crystal:{name:'CRISTAL DE MANA',file:'crystal.png',ttl:14},chest:{name:'BAÚ DA MAGIA',file:'chest.png',ttl:12}};
 const lootImages={};for(const [k,v] of Object.entries(lootDefs)){const img=new Image();img.src=AS+'items3d/'+v.file;lootImages[k]=img}
 R.loot=null;R.lootClock=0;R.lootNext=11;R.lootCount=0;R.chestThisTerritory=false;R.chestEver=false;R.heartUsed=false;
 const r10OriginalSuperLimit=superLimit;
@@ -17,9 +17,9 @@ function lootSpawn(type){if(R.loot||!playing||paused||R.shift)return;const def=l
  R.loot={type,x:clamp(p.x+W*.24,W*.19,R.world-W*.10),y:floor()-8,time:def.ttl,age:0};R.lootCount++;say('✨ '+def.name+' APARECEU! ALCANCE A TEMPO!',2.2)}
 function lootCollect(){const item=R.loot;if(!item)return;R.loot=null;R.lootClock=0;R.lootNext=20+Math.random()*10;
  if(item.type==='heart')p.hp=Math.min(100,p.hp+20);
- if(item.type==='crystal')p.mana=Math.min(100,p.mana+25);
+ if(item.type==='crystal')p.mana=Math.min(100,p.mana+40);
  if(item.type==='chest'){R.chestThisTerritory=true;R.chestEver=true}
- const labels={heart:'💖 +1 CORAÇÃO',crystal:'🧪 +25 MANA',chest:'🎁 SUPER x2 ATÉ O FIM DO TERRITÓRIO'};
+ const labels={heart:'💖 +1 CORAÇÃO',crystal:'🧪 +40 MANA',chest:'🎁 SUPER x2 ATÉ O FIM DO TERRITÓRIO'};
  say(labels[item.type],2.8);burst(p.x,p.y-75,'#83dfff',20)}
 function lootStep(dt){if(R.bossIntro>0||R.shift||!playing||paused)return;
  if(R.loot){const a=R.loot;a.age+=dt;a.time-=dt;
