@@ -281,7 +281,10 @@ async function enterRegisteredStudent(profile){
   const introMenuState=introMenu?{display:introMenu.style.display,hidden:introMenu.classList.contains('hidden')}:null;
   if(introMenu){introMenu.classList.add('hidden');introMenu.style.display='none';}
   $('transitionLoading').hidden=false;
-  $('transitionLabel').textContent=choice==='new'?'Preparando a jornada e as instruções…':'Reunindo suas conquistas…';
+  $('transitionLabel').textContent=choice==='new'?'Preparando a tela COMO JOGAR…':'Reunindo suas conquistas…';
+  $('transitionSubTitle').textContent=choice==='new'
+   ?'Primeiro, as instruções. Depois, o portal de mana se abrirá.'
+   :'Preparando sua partida para continuar de onde parou.';
   frame.style.pointerEvents='none';
   let journeyEntered=false;
   try{
@@ -349,6 +352,9 @@ function switchRealm(next,target=1,direct=true){
  frame.style.pointerEvents=direct?'none':'auto';
  $('transitionLoading').hidden=!direct;
  $('transitionLabel').textContent=pendingSnapshot?.showTutorial?'Preparando a tela COMO JOGAR…':'Preparando o reino '+CAMPAIGN[next-1][0]+'…';
+ $('transitionSubTitle').textContent=pendingSnapshot?.showTutorial
+  ?'Primeiro, as instruções. O aviso do portal aparece depois.'
+  :'Carregando o próximo território e seu cenário…';
  frame.src=`reinos/${String(realm).padStart(2,'0')}/index.html?cm25=${loadId}&direct=${direct?'1':'0'}&rev=20261030-23`;
 }
 // READY confirma o código do iframe, mas não o carregamento das imagens.
