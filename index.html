@@ -122,12 +122,18 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050c1b;col
     <div class="cm25SaveStat"><strong id="saveTerritory">1</strong><small>⚔ Território</small></div>
     <div class="cm25SaveStat"><strong id="saveScore">0</strong><small>✦ Pontos</small></div>
   </div>
+  <div id="finishScoreBreakdown" class="cm25FinishScores" hidden role="group" aria-label="Resultado final da partida">
+    <div class="cm25FinishScore"><strong id="finishBattleScore">0</strong><small>⚔ Pontos da batalha</small></div>
+    <div class="cm25FinishScore"><strong id="finishBonusScore">+0</strong><small>💎 Pontos bônus</small></div>
+    <div class="cm25FinishScore cm25FinishTotal"><strong id="finishTotalScore">0</strong><small>🏆 Total final</small></div>
+  </div>
   <p id="saveDetails"></p>
   <p id="saveNotice" role="status" aria-live="polite">Seu herói aguarda sua decisão.</p>
   <div id="saveSyncTrack" class="cm25SyncTrack" hidden aria-hidden="true"><span></span></div>
   <div class="saveActions">
     <button id="saveCancel" type="button">▶ Voltar à batalha</button>
     <button id="saveConfirm" type="button" class="primary">✦ Guardar progresso</button>
+    <button id="saveRanking" type="button" class="primary" hidden>🏆 Ver placar e minha posição</button>
     <button id="saveExit" type="button" class="primary" hidden>↩ Voltar ao início</button>
   </div>
 </div>
