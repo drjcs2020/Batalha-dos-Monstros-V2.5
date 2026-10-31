@@ -53,17 +53,12 @@ try{
  // Mantém a lógica, sons, botão e custo originais e desloca só a área visual.
  try{
   const magicUrl=new URL('../../assets/magia-suprema.js',location.href).href;
-  const magicRes=await fetch(magicUrl,{cache:'no-cache'});
-  if(magicRes.ok){
-   let magicCode=await magicRes.text();
-   const fixed="let zoneMin=e.fromMonster?innerWidth*.08:innerWidth*.57,zoneMax=e.fromMonster?innerWidth*.47:innerWidth*.94;";
-   const aimed="let cmAim=!e.fromMonster&&window.cm25UltimateTargetScreen?.();let zoneMin=e.fromMonster?innerWidth*.08:(cmAim==null?innerWidth*.57:Math.max(20,cmAim-85)),zoneMax=e.fromMonster?innerWidth*.47:(cmAim==null?innerWidth*.94:Math.min(innerWidth-20,cmAim+85));";
-   if(magicCode.includes(fixed)){
-    magicCode=magicCode.replace(fixed,aimed);
-    const magicBlob=URL.createObjectURL(new Blob([magicCode],{type:'text/javascript'}));
-    original=original.replace(/src=["']assets\/magia-suprema\.js["']/i,'src="'+magicBlob+'"');
-   }
-  }
+ const magicRes=await fetch(magicUrl,{cache:'no-store'});
+ if(!magicRes.ok)throw Error('Modulo local da Magia Suprema indisponivel');
+ // O modulo global unico evita o recorte dos raios nos cantos.
+ const magicCode=await magicRes.text();
+ const magicBlob=URL.createObjectURL(new Blob([magicCode],{type:'text/javascript'}));
+ original=original.replace('src="assets/magia-suprema.js"','src="'+magicBlob+'"');
  }catch(error){console.warn('Ajuste visual da Magia Suprema indisponível',error)}
 
  // REINO 10: a pre-carga completa da V2.4 pode ficar em 99% aguardando
