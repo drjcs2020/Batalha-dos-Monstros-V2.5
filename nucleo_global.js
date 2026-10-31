@@ -662,9 +662,68 @@
         reset(Number(selected)||Number(target)+1||1);
         return selected;
       };
-      // Apos COMO JOGAR, o proprio inicio da batalha ativa diretamente
-      // os seis quadros do portal. Nenhuma tela intermediaria.
+      // O tutorial verde vem primeiro. Ao concluir, reutilizar APENAS
+      // a tela original de preparacao ja existente no controlador da campanha.
+      // Nenhum novo overlay e nenhuma tela "Preparando Como Jogar".
+      let tutorialPending=false,noticeActive=false,noticeTimer=null;
+      const oldBeginBattle=beginBattle;
+      const closeNotice=()=>{
+        if(noticeTimer!==null)clearTimeout(noticeTimer);
+        noticeTimer=null;
+        try{
+          const host=window.parent!==window?window.parent.document:null;
+          const loading=host?.getElementById('transitionLoading');
+          if(loading?.dataset.cm25TutorialPortal==='1'){
+            delete loading.dataset.cm25TutorialPortal;
+            loading.hidden=true;
+          }
+        }catch(error){console.warn('[ClassMana] Fechamento da preparacao',error);}
+      };
+      const beginAfterTutorial=(...args)=>{
+        if(noticeActive)return;
+        if(!tutorialPending)return oldBeginBattle(...args);
+        tutorialPending=false;
+        noticeActive=true;
+        clearInterval(tutorialTimer);
+        document.getElementById('tutorial')?.classList.add('hidden');
+        let shown=false;
+        try{
+          const host=window.parent!==window?window.parent.document:null;
+          const loading=host?.getElementById('transitionLoading');
+          const label=host?.getElementById('transitionLabel');
+          if(loading&&label){
+            label.textContent='AGUARDE, O REINO JÁ VAI SE ABRIR…';
+            const subtitle=host.getElementById('transitionSubTitle');
+            if(subtitle)subtitle.textContent='O portal de mana vai se abrir para seu herói.';
+            loading.dataset.cm25TutorialPortal='1';
+            loading.hidden=false;
+            shown=true;
+          }
+        }catch(error){console.warn('[ClassMana] Preparacao visual indisponivel',error);}
+        if(!shown){
+          noticeActive=false;
+          return oldBeginBattle(...args);
+        }
+        noticeTimer=setTimeout(()=>{
+          noticeActive=false;
+          closeNotice();
+          oldBeginBattle(...args);
+        },1450);
+      };
+      beginBattle=beginAfterTutorial;
+      const skipTutorial=document.getElementById('skipTutorial');
+      if(skipTutorial)skipTutorial.onclick=beginAfterTutorial;
+      const oldTutorial=bridge.startTutorial?.bind(bridge);
+      if(oldTutorial)bridge.startTutorial=()=>{
+        state.phase='pending';
+        const started=oldTutorial();
+        tutorialPending=started===true;
+        return started;
+      };
       const canceled=()=>{
+        tutorialPending=false;
+        noticeActive=false;
+        closeNotice();
         state.token++;
         state.phase='off';
         state.exitDone=0;
