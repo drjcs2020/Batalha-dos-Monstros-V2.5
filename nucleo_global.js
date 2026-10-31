@@ -500,15 +500,54 @@
           bonusButton.textContent='⏳ CONFIRMANDO RESULTADO NA V2.5...';
           this.send('BONUS_EXIT',{fromDefeat:bonusOverlay.dataset.fromDefeat==='1'});
         },true);
+        // Segundo comando solicitado: consultar o ranking V2.5 nesta mesma
+        // tela de pontos bônus, sem passar pelo cadastro.
+        const rankingFromBonus=document.createElement('button');
+        rankingFromBonus.id='cm25BonusRanking';
+        rankingFromBonus.type='button';
+        rankingFromBonus.className='rankBtn bonusViewRanking';
+        rankingFromBonus.textContent='🏆 CONSULTAR PLACAR';
+        rankingFromBonus.disabled=true;
+        rankingFromBonus.style.cssText='display:block!important;margin:10px auto!important;min-height:48px;padding:12px 24px;border:2px solid #ffe39a;border-radius:12px;background:linear-gradient(#ffe8a2,#e5a83e);color:#173358;font:900 19px Trebuchet MS,Arial;cursor:pointer';
+        bonusButton.insertAdjacentElement('beforebegin',rankingFromBonus);
+        let rankingOpenedFromBonus=false;
+        rankingFromBonus.addEventListener('click',()=>{
+          if(rankingFromBonus.disabled)return;
+          rankingFromBonus.disabled=true;
+          rankingFromBonus.textContent='⏳ CONFIRMANDO PONTOS…';
+          this.send('BONUS_RANKING',{fromDefeat:bonusOverlay.dataset.fromDefeat==='1'});
+        });
+        // Depois da confirmação, abrir o ranking já existente da V2.5.
+        window.addEventListener('message',event=>{
+          const d=event.data;
+          if(event.origin!==location.origin||event.source!==window.parent||
+             d?.namespace!=='CM25'||d.action!=='BONUS_RANKING_READY'||
+             String(d.token)!==String(buildToken)||d.realm!==window.CM25RealmBridge?.realm)return;
+          rankingOpenedFromBonus=true;
+          bonusOverlay.classList.add('hidden');
+          const placar=document.getElementById('openRanking');
+          if(placar)placar.click();
+        });
+        document.getElementById('closeRanking')?.addEventListener('click',event=>{
+          if(!rankingOpenedFromBonus)return;
+          event.preventDefault();event.stopImmediatePropagation();
+          rankingOpenedFromBonus=false;
+          this.send('BONUS_EXIT',{fromDefeat:bonusOverlay.dataset.fromDefeat==='1'});
+        },true);
         const oldShowBonus=cmShowBonus;
         cmShowBonus=function(...args){
+          rankingOpenedFromBonus=false;
+          rankingFromBonus.disabled=true;
+          rankingFromBonus.textContent='🏆 CONSULTAR PLACAR';
           const result=oldShowBonus(...args);
-          // A contagem original usa animação de 6 segundos. O botão também
-          // deve liberar a saída se o navegador suspender requestAnimationFrame.
+          // A contagem original usa animação de 6 segundos; não mostrar
+          // pontuação parcial nem liberar ação durante essa animação.
           setTimeout(()=>{
             if(bonusOverlay.classList.contains('hidden'))return;
             bonusButton.disabled=false;
             bonusButton.textContent='🏠 VOLTAR À SELEÇÃO';
+            rankingFromBonus.disabled=false;
+            rankingFromBonus.textContent='🏆 CONSULTAR PLACAR';
           },6500);
           return result;
         };
