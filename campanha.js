@@ -752,16 +752,22 @@ $('saveExit').addEventListener('click',()=>{
 });
 
 setInterval(()=>{
- if(!ready)return;
+ const stopBtn=$('stopSave'),finishBtn=$('finishRun');
+ if(!ready){stopBtn.hidden=finishBtn.hidden=true;return;}
  try{
   const s=frame.contentWindow.CM25RealmBridge?.status();
   if(!s||s.realm!==realm||!s.active){
    $('stopSave').hidden=true;$('finishRun').hidden=true;
    return;
   }
-  const stopBtn=$('stopSave'),finishBtn=$('finishRun');
-  stopBtn.hidden=finishBtn.hidden=!(currentRun&&campaignStarted&&!stopSaveOpen&&!endingRun);
-  if(!stopBtn.hidden)stopBtn.disabled=finishBtn.disabled=!s.playing||s.paused||entering;
+  // Tutorial verde e portal nao sao batalha: ocultar os comandos,
+  // em vez de apenas desabilita-los sobre a tela Como Jogar.
+  const tutorial=frame.contentWindow.document.getElementById('tutorial');
+  const tutorialVisible=!!tutorial&&!tutorial.classList.contains('hidden');
+  const battleReady=!!(currentRun&&campaignStarted&&!stopSaveOpen&&!endingRun&&
+   !entering&&s.playing&&!s.paused&&!tutorialVisible);
+  stopBtn.hidden=finishBtn.hidden=!battleReady;
+  if(battleReady)stopBtn.disabled=finishBtn.disabled=false;
   // Sem atualização de tempo/pontos enquanto a confirmação está aberta.
   if(stopSaveOpen)return;
   if(s.territory!==territory){
