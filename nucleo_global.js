@@ -620,6 +620,65 @@
       };
 
     },
+    integrarPortais(){
+      // Efeito puramente visual de entrada/saída, independente da física e salvamento.
+      const bridge=window.CM25RealmBridge;
+      if(!bridge||bridge.cm25PortalInstalled)return;
+      bridge.cm25PortalInstalled=true;
+      const portalImgs={};
+      for(const type of ['entrada','saida']){
+        const im=new Image();
+        im.src=new URL('../../assets/portais/'+type+'.webp',location.href).href;
+        portalImgs[type]=im;
+      }
+      const state={territory:null,phaseStart:0,groundY:0,active:false};
+      const reset=(territory)=>{
+        state.territory=territory;
+        state.phaseStart=performance.now();
+        state.groundY=Number(p.y)||H*.78;
+        state.active=true;
+      };
+      const oldSelect=bridge.selectArea.bind(bridge);
+      bridge.selectArea=(target,profile)=>{
+        const out=oldSelect(target,profile);
+        reset(Number(out)||Number(target)+1||1);
+        return out;
+      };
+      const oldReturn=bridge.returnToSelection?.bind(bridge);
+      if(oldReturn)bridge.returnToSelection=()=>{
+        state.active=false;
+        return oldReturn();
+      };
+      const oldDrawHook=this.hooks.afterDraw;
+      this.hooks.afterDraw=()=>{
+        try{oldDrawHook?.()}catch(e){console.warn('[ClassMana] hook anterior do desenho',e);}
+        try{
+          if(!state.active)return;
+          const st=bridge.status();
+          if(!st.active||!st.playing||paused||gameEnded)return;
+          const current=Number(st.territory)||1;
+          if(current!==state.territory)reset(current);
+          const remain=Number(st.monstersRemaining);
+          const exit=Number.isFinite(remain)&&remain===0&&current<(Number(bridge.maxTerritories)||5);
+          const age=performance.now()-state.phaseStart;
+          if(!exit&&age>1850)return;
+          const image=portalImgs[exit?'saida':'entrada'];
+          if(!image?.complete||!image.naturalWidth)return;
+          // Mesma linha do chão utilizada no nascimento do herói.
+          const height=Math.min(220,Math.max(115,H*.30));
+          const width=height*(image.naturalWidth/image.naturalHeight);
+          const x=exit?W-width*.98:Math.max(-width*.10,W*.16-width*.50);
+          const ground=Math.min(H*.95,state.groundY+H*.035);
+          const fade=exit?Math.min(1,.55+.45*Math.sin(performance.now()/320)**2):
+            Math.min(1,Math.max(0,(1850-age)/900));
+          ctx.save();
+          ctx.setTransform(DPR,0,0,DPR,0,0);
+          ctx.globalAlpha=fade;
+          ctx.drawImage(image,x,ground-height,width,height);
+          ctx.restore();
+        }catch(e){console.warn('[ClassMana] Portal visual ignorado',e);}
+      };
+    },
     send(action, extras) {
       if (window.parent !== window) window.parent.postMessage({namespace:'CM25',action,realm:window.CM25RealmBridge?.realm||null,token:buildToken,...(extras||{})},location.origin);
     },
@@ -649,6 +708,7 @@
       draw=function(){const r=oldDraw();try{core.hooks.afterDraw?.()}catch(e){console.error('Hook global visual',e)}return r};
       this.estilizarHud();
       this.integrarProgresso();
+      this.integrarPortais();
       this.criarEntradaCampanha();
       // A V2.4 escondia o botão de pontos bônus nos reinos e enviava a
       // classificação ao placar antigo. Na V2.5 ele volta a ser a saída.
