@@ -621,63 +621,169 @@
 
     },
     integrarPortais(){
-      // Efeito puramente visual de entrada/saída, independente da física e salvamento.
+      // ClassMana V2.5 — animação reutilizável nos 10 reinos, sem tocar nas regras.
       const bridge=window.CM25RealmBridge;
       if(!bridge||bridge.cm25PortalInstalled)return;
       bridge.cm25PortalInstalled=true;
-      const portalImgs={};
-      for(const type of ['entrada','saida']){
-        const im=new Image();
-        im.src=new URL('../../assets/portais/'+type+'.webp',location.href).href;
-        portalImgs[type]=im;
-      }
-      const state={territory:null,phaseStart:0,groundY:0,active:false};
-      const reset=(territory)=>{
+      const frames=Array.from({length:6},(_,i)=>{
+        const image=new Image();
+        image.src=new URL('../../assets/portais/animacao/portal_mana_'+String(i+1).padStart(2,'0')+'.webp',location.href).href;
+        return image;
+      });
+      const state={phase:'off',territory:0,started:0,token:0,exitDone:0,
+        heroX:0,groundY:0,portalX:0,wasPaused:false};
+      const ENTRY_GROW=700, ENTRY_WALK=760, ENTRY_CLOSE=520;
+      const EXIT_GROW=700, EXIT_WALK=690, EXIT_CLOSE=510;
+      const ENTRANCE_MS=ENTRY_GROW+ENTRY_WALK+ENTRY_CLOSE;
+      const EXIT_MS=EXIT_GROW+EXIT_WALK+EXIT_CLOSE;
+      const ease=t=>{t=Math.max(0,Math.min(1,t));return t*t*(3-2*t)};
+      const reset=territory=>{
+        state.token++;
         state.territory=territory;
-        state.phaseStart=performance.now();
-        state.groundY=Number(p.y)||H*.78;
-        state.active=true;
+        state.exitDone=0;
+        state.phase='pending';
+        state.started=0;
+        state.heroX=Number(p.x)||W*.19;
+        state.groundY=Number(p.y)||H*.75;
+        state.portalX=W*.19;
       };
       const oldSelect=bridge.selectArea.bind(bridge);
       bridge.selectArea=(target,profile)=>{
-        const out=oldSelect(target,profile);
-        reset(Number(out)||Number(target)+1||1);
-        return out;
+        const selected=oldSelect(target,profile);
+        reset(Number(selected)||Number(target)+1||1);
+        return selected;
+      };
+      const canceled=()=>{
+        state.token++;
+        state.phase='off';
+        if(window.cm25PortalHideOriginalHero)window.cm25PortalHideOriginalHero=null;
       };
       const oldReturn=bridge.returnToSelection?.bind(bridge);
       if(oldReturn)bridge.returnToSelection=()=>{
-        state.active=false;
+        canceled();
         return oldReturn();
       };
-      const oldDrawHook=this.hooks.afterDraw;
-      this.hooks.afterDraw=()=>{
-        try{oldDrawHook?.()}catch(e){console.warn('[ClassMana] hook anterior do desenho',e);}
-        try{
-          if(!state.active)return;
-          const st=bridge.status();
-          if(!st.active||!st.playing||paused||gameEnded)return;
-          const current=Number(st.territory)||1;
-          if(current!==state.territory)reset(current);
-          const remain=Number(st.monstersRemaining);
-          const exit=Number.isFinite(remain)&&remain===0&&current<(Number(bridge.maxTerritories)||5);
-          const age=performance.now()-state.phaseStart;
-          if(!exit&&age>1850)return;
-          const image=portalImgs[exit?'saida':'entrada'];
-          if(!image?.complete||!image.naturalWidth)return;
-          // Mesma linha do chão utilizada no nascimento do herói.
-          const height=Math.min(220,Math.max(115,H*.30));
-          const width=height*(image.naturalWidth/image.naturalHeight);
-          const x=exit?W-width*.98:Math.max(-width*.10,W*.16-width*.50);
-          const ground=Math.min(H*.95,state.groundY+H*.035);
-          const fade=exit?Math.min(1,.55+.45*Math.sin(performance.now()/320)**2):
-            Math.min(1,Math.max(0,(1850-age)/900));
-          ctx.save();
-          ctx.setTransform(DPR,0,0,DPR,0,0);
-          ctx.globalAlpha=fade;
-          ctx.drawImage(image,x,ground-height,width,height);
-          ctx.restore();
-        }catch(e){console.warn('[ClassMana] Portal visual ignorado',e);}
+      const oldPause=bridge.pauseForSave?.bind(bridge);
+      if(oldPause)bridge.pauseForSave=()=>{
+        if(state.phase==='entry'||state.phase==='exit'){
+          // Pausa voluntária cancela somente o efeito, não o estado da jornada.
+          state.token++;
+          state.phase='off';
+          paused=false;
+        }
+        return oldPause();
       };
+      // Este hook é consultado pelo renderizador original de todos os heróis.
+      // A imagem real do herói é redesenhada durante a travessia, sem duplicação.
+      window.cm25PortalHideOriginalHero=()=>{
+        const st=bridge.status();
+        if(!st?.active||gameEnded)return false;
+        const territory=Number(st.territory)||1;
+        if(state.territory!==territory)reset(territory);
+        return state.phase==='pending'||state.phase==='entry'||state.phase==='exit';
+      };
+      const drawCharacter=(x,alpha,scale=1)=>{
+        const image=typeof heroImgs!=='undefined'&&heroImgs[heroIdx];
+        if(!image?.complete||!image.naturalWidth)return;
+        const hh=Math.min(142,H*.225)*scale;
+        const ww=hh*(image.naturalWidth/image.naturalHeight);
+        ctx.save();
+        ctx.globalAlpha=Math.max(0,Math.min(1,alpha));
+        ctx.drawImage(image,x-ww/2,state.groundY-45-hh/2,ww,hh);
+        ctx.restore();
+      };
+      const showFrame=(index,x)=>{
+        const image=frames[Math.max(0,Math.min(5,index))];
+        if(!image?.complete||!image.naturalWidth)return;
+        const size=Math.min(325,H*.51);
+        // Na arte de 320px, a base da elipse está em Y=291.
+        ctx.drawImage(image,x-size/2,state.groundY+H*.035-size*291/320,size,size);
+      };
+      const drawAnimation=()=>{
+        const elapsed=performance.now()-state.started;
+        if(state.phase!=='entry'&&state.phase!=='exit')return;
+        ctx.save();
+        try{
+          ctx.setTransform(DPR,0,0,DPR,0,0);
+          if(state.phase==='entry'){
+            const growth=Math.min(5,Math.floor(Math.max(0,elapsed)/ENTRY_GROW*6));
+            const walk=ease((elapsed-ENTRY_GROW)/ENTRY_WALK);
+            const closing=Math.max(0,elapsed-ENTRY_GROW-ENTRY_WALK);
+            const frame=closing>0?Math.max(0,5-Math.floor(closing/ENTRY_CLOSE*6)):growth;
+            showFrame(frame,state.portalX);
+            if(elapsed>=ENTRY_GROW){
+              drawCharacter(state.portalX+W*.105*walk,
+                ease((elapsed-ENTRY_GROW)/Math.min(340,ENTRY_WALK)),1);
+            }
+          }else{
+            const growth=Math.min(5,Math.floor(Math.max(0,elapsed)/EXIT_GROW*6));
+            const walk=ease((elapsed-EXIT_GROW)/EXIT_WALK);
+            const closing=Math.max(0,elapsed-EXIT_GROW-EXIT_WALK);
+            const frame=closing>0?Math.max(0,5-Math.floor(closing/EXIT_CLOSE*6)):growth;
+            showFrame(frame,state.portalX);
+            // O herói original caminha para dentro, perde opacidade e some.
+            if(elapsed<EXIT_GROW+EXIT_WALK){
+              drawCharacter(state.portalX-W*.11*(1-walk),
+                1-ease((elapsed-EXIT_GROW)/EXIT_WALK),1-.16*walk);
+            }
+          }
+        }finally{ctx.restore()}
+      };
+      const previousDraw=this.hooks.afterDraw;
+      this.hooks.afterDraw=()=>{
+        try{previousDraw?.()}catch(e){console.error('[ClassMana] Hook visual anterior',e)}
+        try{
+          const st=bridge.status();
+          if(!st?.active||gameEnded)return;
+          const territory=Number(st.territory)||1;
+          if(state.territory!==territory)reset(territory);
+          if(state.phase==='pending'&&playing&&!paused){
+            state.phase='entry';
+            state.started=performance.now();
+            state.wasPaused=paused;
+            state.heroX=Number(p.x)||W*.19;
+            state.groundY=Number(p.y)||H*.75;
+            state.portalX=W*.19;
+            paused=true; // A batalha aguarda o herói atravessar o portal.
+            p.inv=Math.max(Number(p.inv)||0,2.0);
+          }
+          drawAnimation();
+          if(state.phase==='entry'&&performance.now()-state.started>=ENTRANCE_MS){
+            // Aparecer do lado direito do portal, com o personagem já visível.
+            p.x=state.heroX+W*.105;
+            paused=state.wasPaused;
+            state.phase='off';
+          }
+        }catch(error){console.error('[ClassMana] Efeito do portal ignorado',error);state.phase='off';paused=false}
+      };
+      // A cena só muda DEPOIS que o herói entrou e o portal fechou.
+      this.portalBeforeExit=(continueTransition)=>{
+        if(typeof continueTransition!=='function')return false;
+        const st=bridge.status();
+        const current=Number(st?.territory)||1;
+        if(!st?.active||gameEnded||state.exitDone===current)return false;
+        if(state.phase==='exit')return true;
+        if(state.phase==='entry'||state.phase==='pending')return false;
+        state.phase='exit';
+        state.started=performance.now();
+        state.groundY=Number(p.y)||H*.75;
+        state.portalX=W*.84;
+        state.wasPaused=paused;
+        paused=true;
+        p.inv=Math.max(Number(p.inv)||0,2.0);
+        const token=++state.token;
+        setTimeout(()=>{
+          if(state.token!==token||state.phase!=='exit')return;
+          state.exitDone=current;
+          state.phase='off';
+          paused=state.wasPaused;
+          // Utiliza a mesma transição aprovada do território.
+          continueTransition();
+        },EXIT_MS);
+        return true;
+      };
+      // Desativações e salvamentos não reabrem o jogo silenciosamente.
+      this.portalCancel=()=>{canceled()};
     },
     send(action, extras) {
       if (window.parent !== window) window.parent.postMessage({namespace:'CM25',action,realm:window.CM25RealmBridge?.realm||null,token:buildToken,...(extras||{})},location.origin);
