@@ -253,6 +253,37 @@ function createMob(id,i,n){
   batch,activationX,activeBatch:false};
 }
 
+
+// Escudo REAL dos subordinados: o dano consome a barreira primeiro.
+// O HP só diminui quando a barreira acabar; sem recarga infinita.
+const cm25OriginalCreateMob=createMob;
+createMob=function(...args){
+ const m=cm25OriginalCreateMob(...args);
+ m.cm25ShieldMax=Math.max(14,Math.round(m.max*.32));
+ m.cm25Shield=m.cm25ShieldMax;
+ return m;
+};
+function cm25AbsorbMobShield(m,damage){
+ damage=Math.max(0,Number(damage)||0);
+ if(!m||!Number.isFinite(m.cm25Shield)||m.cm25Shield<=0)return damage;
+ const blocked=Math.min(m.cm25Shield,damage);
+ m.cm25Shield=Math.max(0,m.cm25Shield-blocked);
+ m.hit=Math.max(m.hit||0,.22);
+ return damage-blocked;
+}
+function cm25RenderMobShield(m,x,y,z){
+ if(!m||m.hp<=0||!(m.cm25Shield>0))return;
+ const pct=m.cm25Shield/Math.max(1,m.cm25ShieldMax),radius=Math.max(28,z*.52);
+ ctx.save();ctx.globalAlpha=.42+.33*pct;
+ ctx.strokeStyle='#65e9ff';ctx.lineWidth=Math.max(2,3*pct);
+ ctx.shadowColor='#3bd8ff';ctx.shadowBlur=13;
+ ctx.beginPath();ctx.ellipse(x,y,radius,radius*.93,0,0,Math.PI*2);ctx.stroke();
+ ctx.fillStyle='#092745';ctx.fillRect(x-radius*.56,y-radius-18,radius*1.12,6);
+ ctx.fillStyle='#78e9ff';ctx.fillRect(x-radius*.56,y-radius-18,radius*1.12*pct,6);
+ ctx.font='bold 16px "Segoe UI Emoji",Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.shadowBlur=0;ctx.globalAlpha=1;ctx.fillText('🛡️',x,y-radius-24);ctx.restore();
+}
+
 function setHud(){
  $('#ename').textContent=S.area===4?'MORCEGO VAMPIRO':S.names[S.area];
  $('#round').textContent='MORCEGO VAMPIRO · TERRITÓRIO '+(S.area+1)+'/5';
@@ -347,7 +378,7 @@ function cm25CastUltimate(){
  $('#php').style.width=p.hp+'%';
  const x=S.area===4?boss.x:target.x, y=S.area===4?boss.y:target.y-target.size*.52;
  const damage=S.area===4?Math.max(1,Math.ceil(boss.max*.21)):Math.max(1,Math.ceil(target.max*.84));
- target.hp=Math.max(0,target.hp-damage);
+ target.hp=Math.max(0,target.hp-cm25AbsorbMobShield(target,damage));
  burst(x,y,'#f6ddff',55);shake=13;try{tone(760,.42,'sine',.08)}catch(_e){}
  if(S.area===4){$('#ehp').style.width=(boss.hp/boss.max*100)+'%';
    if(boss.hp<=0){defeatPending=true;finishBossDefeat();}
@@ -384,7 +415,7 @@ if(cm25OriginalUltimate){
   const damage=Math.max(1,Math.ceil(target.max*.84));
   // O alvo mantém colisão e visibilidade: não há dano em monstros já derrotados.
   setTimeout(()=>{if(!S.active||S.area>=4||target.hp<=0||!playing)return;
-   target.hp=Math.max(0,target.hp-damage);target.hit=.22;burst(aim.x,aim.y,'#a8f0ff',55);
+   target.hp=Math.max(0,target.hp-cm25AbsorbMobShield(target,damage));target.hit=.22;burst(aim.x,aim.y,'#a8f0ff',55);
    if(target.hp===0){S.total--;setHud()}},420);
   say25('⚡ MAGIA SUPREMA NO ALVO!',2);return {ok:true};
  };
@@ -416,7 +447,7 @@ function cm25ApplyHeroContact(dt,includeBoss=false){
   const radius=Math.max(12,m.size*.29);
   const deltaX=m.x-h.x,deltaY=targetY-h.y;
   if(deltaX*deltaX+deltaY*deltaY>(radius+h.radius)**2)continue;
-  m.hp=Math.max(0,m.hp-damage);m.hit=.22;
+  m.hp=Math.max(0,m.hp-cm25AbsorbMobShield(m,damage));m.hit=.22;
   burst(m.x,targetY,'#ffeaa7',9);
   cm25MeleeCooldown=cm25ContactInterval;
   if(m.hp<=0){S.total=Math.max(0,S.total-1);burst(m.x,targetY,'#d2f5ff',20);setHud()}
@@ -542,7 +573,7 @@ function updateMobs(dt){
 function collision(dt){
  for(const q of shots){const ox=q.x,oy=q.y;q.x+=q.vx*dt;q.y+=q.vy*dt;q.life-=dt;if(q.life<=0)continue;
   for(const m of S.mobs){if(m.hp<=0)continue;
-   if((()=>{const cx=m.x,cy=m.y,vx=q.x-ox,vy=q.y-oy,t=clamp(((cx-ox)*vx+(cy-oy)*vy)/(vx*vx+vy*vy||1),0,1);return Math.hypot(ox+vx*t-cx,oy+vy*t-cy)<m.size*.30+q.r*.55})()){q.life=0;m.hp=Math.max(0,m.hp-q.dmg*((S.lootBuffs.sword||0)>0?1.35:1));m.hit=.14;burst(m.x,m.y,q.col,9);
+   if((()=>{const cx=m.x,cy=m.y,vx=q.x-ox,vy=q.y-oy,t=clamp(((cx-ox)*vx+(cy-oy)*vy)/(vx*vx+vy*vy||1),0,1);return Math.hypot(ox+vx*t-cx,oy+vy*t-cy)<m.size*.30+q.r*.55})()){q.life=0;m.hp=Math.max(0,m.hp-cm25AbsorbMobShield(m,q.dmg*((S.lootBuffs.sword||0)>0?1.35:1)));m.hit=.14;burst(m.x,m.y,q.col,9);
     if(m.hp===0){burst(m.x,m.y,'#d2f5ff',25);S.total--;setHud()}break;
    }
   }
@@ -614,7 +645,7 @@ function updateMotherGuardians(dt){
    const ox=q.x-q.vx*dt,oy=q.y-q.vy*dt,vx=q.x-ox,vy=q.y-oy;
    const t=clamp(((cx-ox)*vx+(cy-oy)*vy)/(vx*vx+vy*vy||1),0,1);
    if(Math.min(d,Math.hypot(ox+vx*t-cx,oy+vy*t-cy))<m.size*.32+(q.r||8)*.5){
-    q.life=0;m.hp=Math.max(0,m.hp-q.dmg);m.hit=.18;
+    q.life=0;m.hp=Math.max(0,m.hp-cm25AbsorbMobShield(m,q.dmg));m.hit=.18;
     burst(cx,cy,q.col||'#bb8cff',11);
     if(m.hp===0){S.total=Math.max(0,S.total-1);burst(cx,cy,'#d2f5ff',25)}
     break;
@@ -806,6 +837,8 @@ function drawMob(m){
  ctx.fillStyle='#f2a5ff';ctx.fillRect(m.x-z*.34,m.y-z*.59,z*.68*(m.hp/m.max),5);
 }
 
+const cm25OriginalDrawMob=drawMob;
+drawMob=function(m){cm25OriginalDrawMob(m);cm25RenderMobShield(m,m.x,m.y,m.size)};
 function drawHorde(){ctx.save();if(shake){ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake*=.84}
  drawBG();
  // Mundo usa coordenadas próprias. Apenas o desenho é deslocado pela câmera.
