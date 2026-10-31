@@ -656,7 +656,8 @@
       const canceled=()=>{
         state.token++;
         state.phase='off';
-        if(window.cm25PortalHideOriginalHero)window.cm25PortalHideOriginalHero=null;
+        state.exitDone=0;
+        // O hook global permanece instalado para uma nova escolha de herói.
       };
       const oldReturn=bridge.returnToSelection?.bind(bridge);
       if(oldReturn)bridge.returnToSelection=()=>{
