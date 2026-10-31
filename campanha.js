@@ -283,6 +283,9 @@ async function enterRegisteredStudent(profile){
   // Nova partida mostra COMO JOGAR apenas quando o primeiro território estiver pronto.
   // Evita que o cadastro reapareça durante a confirmação do servidor.
   if(introMenu){introMenu.classList.add('hidden');introMenu.style.display='none';}
+  // O Reino 1 ja esta carregado atras do cadastro. Nao mostrar o canvas
+  // com heroi/chefao antes da tela COMO JOGAR estar pronta.
+  if(choice==='new')frame.style.opacity='0';
   $('transitionLoading').hidden=choice==='new';
   $('transitionLabel').textContent='Reunindo suas conquistas…';
   $('transitionSubTitle').textContent='Preparando sua partida para continuar de onde parou.';
@@ -316,6 +319,7 @@ async function enterRegisteredStudent(profile){
    // Se o carregamento falhar, permitir nova tentativa sem novo cadastro.
    if(!journeyEntered){
     $('transitionLoading').hidden=true;
+    frame.style.opacity='1';
     frame.style.pointerEvents='auto';
     if(introMenu&&introMenu.isConnected&&introMenuState){
      if(!introMenuState.hidden)introMenu.classList.remove('hidden');
@@ -397,8 +401,13 @@ async function area(n){
   if(pendingSnapshot){
    if(!bridge.restoreProgress?.({...pendingSnapshot,id_aluno:identity?.id_aluno}))
     throw Error('Não foi possível restaurar o herói e a pontuação.');
-   if(pendingSnapshot.showTutorial&&realm===1&&n===1)
-    bridge.startTutorial?.();
+   if(pendingSnapshot.showTutorial&&realm===1&&n===1){
+    // Liberar o canvas so quando a tela verde original estiver aberta.
+    const started=bridge.startTutorial?.();
+    const green=frame.contentWindow.document.getElementById('tutorial');
+    if(started!==true||!green||green.classList.contains('hidden'))
+     throw Error('Nao foi possivel exibir a tela Como Jogar.');
+   }
   }
   const status=bridge.status();
   if(confirmed!==n||!status.active||status.territory!==n)throw Error('O jogo não confirmou a entrada no território');
