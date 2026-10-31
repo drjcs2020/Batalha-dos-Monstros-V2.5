@@ -219,12 +219,25 @@ function chooseJourney(saved){
   layout.append(portrait,details);panel.append(layout);
   let pending=false,confirmNew=false;
   function finish(value,button){
-    if(pending)return;pending=true;button?.classList.add('is-selected');
+    if(pending)return;pending=true;
+    // Abrir Como Jogar neste MESMO clique, antes da gravacao da partida.
+    // Nao deixar o botao congelado durante a chamada ao servidor.
+    let tutorialStartedEarly=false;
+    if(value==='new'&&ready&&!campaignStarted){
+      try{
+        const bridge=frame.contentWindow.CM25RealmBridge;
+        if(bridge?.realm===1){
+          const started=bridge.startTutorial?.({early:true});
+          const green=frame.contentWindow.document.getElementById('tutorial');
+          tutorialStartedEarly=started===true&&!!green&&!green.classList.contains('hidden');
+          if(!tutorialStartedEarly)bridge.cancelEntryTutorial?.();
+        }
+      }catch(error){console.warn('[ClassMana] Tutorial no clique',error);}
+    }
+    button?.classList.add('is-selected');
     actions.querySelectorAll('button').forEach(x=>x.disabled=true);
-    // Nova partida: manter o diálogo de jornada já existente na tela
-    // até Como Jogar abrir; evita expor o fundo azul vazio.
-    if(value!=='new')overlay.remove();
-    resolve(value);
+    if(value!=='new'||tutorialStartedEarly)overlay.remove();
+    resolve({choice:value,tutorialStartedEarly});
   }
   function button(label,subtitle,value,kind=''){
     const b=makeElement('button');b.type='button';b.className='cm25JourneyButton '+kind;b.dataset.action=value;
@@ -277,7 +290,8 @@ async function enterRegisteredStudent(profile){
   // Só partidas em andamento podem oferecer a opção CONTINUAR.
   const storedStatus=String(found.partida?.status||found.partida?.STATUS||'EM_ANDAMENTO').toUpperCase();
   const existing=found.existe&&storedStatus==='EM_ANDAMENTO'?found.partida:null;
-  const choice=await chooseJourney(existing);
+  const selectedJourney=await chooseJourney(existing);
+  const choice=selectedJourney.choice;
   if(choice==='cancel'){report('Escolha cancelada. Seu progresso está preservado.');return;}
   // Seleção não pode reaparecer enquanto o servidor confirma e prepara a batalha.
   const introMenu=frame.contentWindow.document.getElementById('menu');
@@ -289,8 +303,8 @@ async function enterRegisteredStudent(profile){
   // Nova partida: abrir IMEDIATAMENTE a tela verde original, antes
   // de consultar/gravar o progresso no servidor e carregar o cenario.
   const introBridge=ready&&!campaignStarted?frame.contentWindow.CM25RealmBridge:null;
-  let tutorialStartedEarly=false;
-  if(choice==='new'&&introBridge?.realm===1){
+  let tutorialStartedEarly=selectedJourney.tutorialStartedEarly===true;
+  if(choice==='new'&&!tutorialStartedEarly&&introBridge?.realm===1){
    try{
     const started=introBridge.startTutorial?.({early:true});
     const green=frame.contentWindow.document.getElementById('tutorial');
@@ -422,11 +436,13 @@ async function area(n){
    if(!bridge.restoreProgress?.({...pendingSnapshot,id_aluno:identity?.id_aluno}))
     throw Error('Não foi possível restaurar o herói e a pontuação.');
    if(pendingSnapshot.showTutorial&&realm===1&&n===1){
-    // Liberar o canvas so quando a tela verde original estiver aberta.
+    // Quem clicou Comecar Agora cedo ja esta na espera azul.
+    // Nao reabrir a tela verde nem expor o cenario prematuramente.
     const started=bridge.startTutorial?.();
     const green=frame.contentWindow.document.getElementById('tutorial');
-    if(started!==true||!green||green.classList.contains('hidden'))
-     throw Error('Nao foi possivel exibir a tela Como Jogar.');
+    const visible=!!green&&!green.classList.contains('hidden');
+    if(started!==true||(!visible&&!bridge.isTutorialTransitionActive?.()))
+     throw Error('Nao foi possivel preservar o fluxo Como Jogar.');
    }
   }
   const status=bridge.status();
@@ -448,7 +464,10 @@ async function area(n){
   if(currentRun&&!endingRun){
    const entered=currentSnapshot(true);if(entered)queueCheckpoint(entered).catch(()=>{});
   }
-  $('transitionLoading').hidden=true;
+  // Se o aluno ja apertou Comecar Agora, preservar a espera animada
+  // ate o portal estar sendo desenhado no cenario real.
+  if($('transitionLoading').dataset.cm25TutorialPortal!=='1')
+   $('transitionLoading').hidden=true;
   frame.style.opacity='1';frame.style.pointerEvents='auto';
   // Revelar a tela verde pronta e fechar o próprio diálogo no mesmo ciclo.
   $('cm25JourneyDialog')?.remove();
