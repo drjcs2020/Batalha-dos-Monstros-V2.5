@@ -662,13 +662,59 @@
         reset(Number(selected)||Number(target)+1||1);
         return selected;
       };
+      // Na primeira partida: COMO JOGAR -> aviso -> portal -> batalha.
+      // O aviso só é exibido depois que a criança fecha o tutorial.
+      let tutorialPortalPending=false,tutorialPortalShowing=false,portalNoticeTimer=null;
+      const portalNotice=document.createElement('div');
+      portalNotice.id='cm25-portal-opening-notice';
+      portalNotice.setAttribute('role','status');
+      portalNotice.setAttribute('aria-live','polite');
+      portalNotice.hidden=true;
+      portalNotice.style.cssText='position:fixed;inset:0;z-index:999999;display:grid;place-items:center;background:radial-gradient(circle at center,#143f79f2,#06152bee);pointer-events:none;color:#b8f4ff;text-align:center;font:900 clamp(21px,4.2vw,40px) Georgia,serif;text-shadow:0 0 20px #33d4ff';
+      portalNotice.innerHTML='<div>✦ O PORTAL DE MANA ESTÁ SE ABRINDO… ✦</div>';
+      document.body.appendChild(portalNotice);
+      // CSS display:grid é explícito; usar style.display para respeitar o estado oculto.
+      portalNotice.style.display='none';
+      const oldBeginBattle=beginBattle;
+      const beginAfterPortalNotice=(...args)=>{
+        if(!tutorialPortalPending){
+          if(tutorialPortalShowing)return;
+          return oldBeginBattle(...args);
+        }
+        tutorialPortalPending=false;
+        tutorialPortalShowing=true;
+        clearInterval(tutorialTimer);
+        const tutorial=document.getElementById('tutorial');
+        tutorial?.classList.add('hidden');
+        portalNotice.hidden=false;
+        portalNotice.style.display='grid';
+        portalNoticeTimer=setTimeout(()=>{
+          portalNoticeTimer=null;
+          portalNotice.hidden=true;
+          portalNotice.style.display='none';
+          tutorialPortalShowing=false;
+          // A primeira elipse será desenhada apenas após esse aviso desaparecer.
+          oldBeginBattle(...args);
+        },850);
+      };
+      beginBattle=beginAfterPortalNotice;
+      const skipTutorial=document.getElementById('skipTutorial');
+      if(skipTutorial)skipTutorial.onclick=beginAfterPortalNotice;
       const oldTutorial=bridge.startTutorial?.bind(bridge);
       if(oldTutorial)bridge.startTutorial=()=>{
         // O tutorial deve terminar antes do primeiro quadro do portal.
         state.phase='pending';
-        return oldTutorial();
+        const started=oldTutorial();
+        tutorialPortalPending=started===true;
+        return started;
       };
       const canceled=()=>{
+        tutorialPortalPending=false;
+        tutorialPortalShowing=false;
+        if(portalNoticeTimer!==null)clearTimeout(portalNoticeTimer);
+        portalNoticeTimer=null;
+        portalNotice.hidden=true;
+        portalNotice.style.display='none';
         state.token++;
         state.phase='off';
         state.exitDone=0;
@@ -711,7 +757,7 @@
         if(!image?.complete||!image.naturalWidth)return;
         const size=portalSize();
         // Base visual da elipse PNG/WebP no piso; sem degraus e sem moldura.
-        ctx.drawImage(image,x-size/2,state.groundY+H*.035-size*291/320,size,size);
+        ctx.drawImage(image,x-size/2,state.groundY+H*.019-size*291/320,size,size);
       };
       const drawAnimation=()=>{
         if(state.phase!=='entry'&&state.phase!=='exit')return;
