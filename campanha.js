@@ -335,7 +335,11 @@ function switchRealm(next,target=1,direct=true){
  // A próxima fase é uma intenção de navegação, não uma fase alcançada.
  // Só registrar reino/território depois de confirmar a abertura em area().
  const before=campaignStarted?(currentSnapshot(true)||pendingSnapshot):pendingSnapshot;
- if(currentRun&&before)pendingSnapshot={...before,reino:next,territorio:target};
+ if(currentRun&&before){
+  // O reino recém-alcançado começa com 100% de mana; manter pontos/herói.
+  const changingRealm=Number(next)!==Number(realm);
+  pendingSnapshot={...before,reino:next,territorio:target,mana:changingRealm?100:before.mana};
+ }
  if(autoTimer){clearTimeout(autoTimer);autoTimer=null;}
  realm=next;territory=target;pendingArea=target;ready=false;entering=false;automaticEntry=direct;loadId++;
  info();report(`Carregando ${CAMPAIGN[realm-1][0]} · território ${target}…`);
