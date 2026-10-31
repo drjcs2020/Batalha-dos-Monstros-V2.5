@@ -287,11 +287,11 @@ function startTerritory(){
   // Rainha: 3.998 HP da tabela global, com a redução proporcional de 20% aprovada.
   boss.max=Math.round(3998*.80);boss.hp=boss.max;
   boss.x=W*.78;boss.y=platformY()-queenDisplayHeight()/2-2+bossVisualFootPad()+window.ClassManaNucleo.grounding.spiderInset(4,H);boss.cool=3.1;
-  S.total=16;S.bossIntroTime=1.85;S.bossPhase=1;S.bossPhaseNotice=0;S.camera=0;
+  S.total=S.defenderQueue.length;S.bossIntroTime=1.85;S.bossPhase=1;S.bossPhaseNotice=0;S.camera=0;
   S.bossMovement=0;S.bossWebCooldown=4.1;S.bossSuperClock=9.5;
   S.bossFace=-1;S.bossHealthAtStart=boss.hp;S.previousBossHP=boss.hp;
   // As MESMAS 16 aranhas guardiãs da Duquesa — sem alterar sprites/comportamento.
-  S.defenderQueue=Array.from({length:16},(_,i)=>i);S.guardianSpawnCooldown=.8;S.mobs=[];
+  S.defenderQueue=Array.from({length:S.files.length},(_,i)=>i);S.guardianSpawnCooldown=.8;S.mobs=[];
   // Mecânicas exclusivas da Rainha, isoladas na arena 5.
   S.queenGroundX=W*.78;S.queenStrideClock=0;S.queenJumpClock=6.3;
   S.queenJumpElapsed=-1;S.queenLeapDuration=1.25;S.queenLeapHeight=Math.min(135,H*.20);
