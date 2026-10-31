@@ -263,6 +263,10 @@
               id:String(r.id_aluno||i)
             })).filter(r=>r.name);
             players.sort((a,b)=>b.pontos-a.pontos||b.fase-a.fase||a.tempo-b.tempo||a.name.localeCompare(b.name,'pt-BR'));
+            // Dar destaque à posição do aluno quando o ranking online a informar.
+            const myRank=playerId?players.findIndex(p=>p.id===String(playerId)):-1;
+            if(myRank>=0)
+              summary.textContent='Ranking ClassMana V2.5 • Sua posição: '+(myRank+1)+'º • '+players[myRank].pontos.toLocaleString('pt-BR')+' pontos.';
             tableContainer.replaceChildren();
             if(!players.length){
               const empty=document.createElement('p');
@@ -280,6 +284,7 @@
             const tbody=document.createElement('tbody');
             for(const [index,p] of players.slice(0,50).entries()){
               const tr=document.createElement('tr');
+              if(p.id===String(playerId||''))tr.classList.add('rankMe');
               const seconds=Math.max(0,Math.round(p.tempo));
               const values=[index<3?['🥇','🥈','🥉'][index]:String(index+1),p.name,p.turma||'—',
                 p.hero||'—',String(p.fase),p.pontos.toLocaleString('pt-BR'),
