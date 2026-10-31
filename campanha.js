@@ -48,7 +48,7 @@ document.addEventListener('keydown',()=>{if(!cm25OpeningDone&&cm25LoadingMusic.p
 cm25LoadingMusic.load();
 cm25StartLoadingMusic();
 
-let currentRun=null,revision=0,pendingSnapshot=null,checkpointInFlight=null,pendingAutoSnapshot=null,manualCheckpointPending=false,lastCheckpoint=0,entryBusy=false,endingRun=false;
+let currentRun=null,revision=0,pendingSnapshot=null,checkpointInFlight=null,pendingAutoSnapshot=null,manualCheckpointPending=false,lastCheckpoint=0,entryBusy=false,endingRun=false,finalSnapshot=null,bonusExitBusy=false;
 let cm25GetSequence=0;
 function getV25(params,timeoutMs=16000){
  return new Promise((resolve,reject)=>{
@@ -295,7 +295,7 @@ async function enterRegisteredStudent(profile){
   sessionStorage.setItem('cm25TesteIdentidade',JSON.stringify(identity));
   currentRun={partida_id:String(game.partida_id)};
   revision=Number(game.revisao)||0;endingRun=false;lastCheckpoint=0;
-  pendingAutoSnapshot=null;
+  pendingAutoSnapshot=null;finalSnapshot=null;bonusExitBusy=false;
   pendingSnapshot={reino:Math.max(1,Math.min(10,Number(game.reino)||1)),territorio:Math.max(1,Number(game.territorio)||1),
    heroi_indice:identity.hero,personagem:game.personagem||'',
    hp:game.hp??100,mana:game.mana??100,pontuacao:game.pontuacao||0,tempo:game.tempo||0,
@@ -418,6 +418,34 @@ async function area(n){
   return false;
  }finally{if(token===loadId)entering=false;}
 }
+async function returnFromBonus(fromDefeat){
+ if(bonusExitBusy)return;
+ bonusExitBusy=true;
+ const loading=$('transitionLoading'),label=$('transitionLabel');
+ loading.hidden=false;label.textContent='Confirmando suas conquistas na V2.5…';
+ frame.style.pointerEvents='none';
+ try{
+  // Não duplicar a finalização enquanto o primeiro pedido está em andamento.
+  if(checkpointInFlight)await checkpointInFlight.catch(()=>{});
+  if(currentRun){
+   const snapshot=currentSnapshot(true)||finalSnapshot;
+   if(!snapshot)throw Error('Resultado indisponível para confirmar.');
+   await queueCheckpoint(snapshot,true,fromDefeat?'DERROTA':'VITORIA',true);
+  }
+  if(currentRun)throw Error('A finalização ainda não foi confirmada.');
+  sessionStorage.removeItem('cm25TesteIdentidade');
+  location.reload();
+ }catch(error){
+  console.error('[ClassMana V2.5] Saída dos bônus:',error);
+  report('⚠ Resultado não confirmado: '+String(error.message||error));
+  loading.hidden=true;frame.style.pointerEvents='auto';
+  try{
+   const btn=frame.contentWindow.document.getElementById('bonusViewRanking');
+   if(btn){btn.disabled=false;btn.textContent='↻ TENTAR CONFIRMAR E VOLTAR';}
+  }catch(e){}
+  alert('O resultado ainda não foi confirmado no Google Sheets. Verifique a conexão e clique em TENTAR CONFIRMAR E VOLTAR. A partida será preservada.');
+ }finally{bonusExitBusy=false;}
+}
 window.addEventListener('message',e=>{
  if(e.origin!==location.origin||e.source!==frame.contentWindow||e.data?.namespace!=='CM25')return;
  const data=e.data;if(String(data.token)!==String(loadId)||data.realm!==realm)return;
@@ -437,6 +465,9 @@ window.addEventListener('message',e=>{
  }
  else if(data.action==='OPENING_VIDEO'){cm25StopLoadingMusic();}
  else if(data.action==='INTRO_DONE'){cm25StopLoadingMusic();report('Selecione seu herói, sua turma e seu nome cadastrado.');}
+ else if(data.action==='BONUS_EXIT'){
+  returnFromBonus(data.fromDefeat===true);
+ }
  else if(data.action==='START'){
    if(automaticEntry||campaignStarted)return;
    enterRegisteredStudent(data.profile||{});
@@ -447,6 +478,7 @@ window.addEventListener('message',e=>{
   // Gravar somente o reino que foi vencido, jamais antecipar o próximo.
   const completed=currentSnapshot(true);
   if(completed){
+   finalSnapshot={...completed};
    completed.reino=realm;
    completed.territorio=CAMPAIGN[realm-1][1];
    if(realm<10)queueCheckpoint(completed).catch(()=>{});
@@ -583,8 +615,11 @@ setInterval(()=>{
   }
   if(currentRun&&!endingRun){
    const snapshot=currentSnapshot();
-   if(snapshot?.gameEnded)queueCheckpoint(snapshot,true,'DERROTA').catch(()=>{});
-   else if(snapshot&&Date.now()-lastCheckpoint>15000&&!entering){
+   if(snapshot?.gameEnded){
+    finalSnapshot={...snapshot};
+    // Contabilizar os pontos bônus antes de finalizar a derrota na planilha.
+    if(s.bonusApplied)queueCheckpoint(snapshot,true,'DERROTA').catch(()=>{});
+   }else if(snapshot&&Date.now()-lastCheckpoint>15000&&!entering){
     lastCheckpoint=Date.now();queueCheckpoint(snapshot).catch(()=>{});
    }
   }
