@@ -270,7 +270,7 @@ function startTerritory(){
  p.x=W*.19;p.y=ground();window.cm25HeroFeetOffset=0;p.hp=100;p.mana=100;p.inv=1.5;
  shots=[];bad=[];parts=[];superCooldown=0;superUses=0;
  if(S.area<4){let ids=S.waves[S.area];S.mobs=ids.map((id,i)=>createMob(id,i,ids.length));S.total=S.mobs.length}
- else {boss.max=Math.round(stages[0].hp*2.9);boss.hp=boss.max;boss.x=W*.78;boss.y=platformY()-bossHeight()/2-3+bossVisualFootPad();boss.cool=3.1;S.total=0;S.bossIntroTime=1.85;S.bossPhase=1;S.bossPhaseNotice=0;S.camera=0;S.bossMovement=0;S.bossDescent=0;S.bossWalkDirection=-1;window.cm25SpiderGrounded=false;S.bossWebCooldown=4.1;S.bossSuperClock=9.5;S.bossFace=-1;window.cm25GolemFacing=-1;S.bossHealthAtStart=boss.hp;S.previousBossHP=boss.hp;S.defenderQueue=Array.from({length:16},(_,i)=>i);S.guardianSpawnCooldown=.8;S.bossAnchorX=W*.67;S.bossSwingSpeed=1.1;S.mobs=[];S.total=16}
+ else {boss.max=Math.round(stages[0].hp*2.9);boss.hp=boss.max;boss.x=W*.78;boss.y=platformY()-bossHeight()/2-3+bossVisualFootPad();boss.cool=3.1;S.total=0;S.bossIntroTime=1.85;S.bossPhase=1;S.bossPhaseNotice=0;S.camera=0;S.bossMovement=0;S.bossDescent=0;S.bossWalkDirection=-1;window.cm25SpiderGrounded=false;S.bossWebCooldown=4.1;S.bossSuperClock=9.5;S.bossFace=-1;window.cm25GolemFacing=-1;S.bossHealthAtStart=boss.hp;S.previousBossHP=boss.hp;S.defenderQueue=Array.from({length:S.files.length},(_,i)=>i);S.guardianSpawnCooldown=.8;S.bossAnchorX=W*.67;S.bossSwingSpeed=1.1;S.mobs=[];S.total=S.defenderQueue.length}
  setHud();say25('🕷️ '+S.names[S.area]+' — '+(S.area===4?'CHEFÃO!':'avance e vença a horda!'),3);
 }
 resetStage=function(){orig.reset();if(stage!==0)return;S.area=0;S.active=true;S.lootChestUsed=false;S.lootPhaseChest=false;startTerritory()};
