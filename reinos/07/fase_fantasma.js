@@ -73,7 +73,7 @@ const clamp=(a,l,r)=>Math.max(l,Math.min(r,a));
 // Mantem cada cenario e a fisica originais; corrige apenas a ancora vertical.
 const platformRatios=[.713,.713,.713,.713,.713];
 const platformY=()=>H*platformRatios[S.area];
-const heroHeight=()=>Math.min(160,H*.255);
+const heroHeight=()=>Math.min(170,H*.270);
 const bossHeight=()=>Math.min(282,H*.48);
 // O desenho dos heróis usa centro y-45; o limite é calculado pelos pés VISÍVEIS.
 // Ajuste apenas da margem transparente inferior de cada sprite (em fração da altura).

@@ -79,7 +79,7 @@ const platformRatios=[.82,.82,.82,.82,.82];
 const platformY=()=>H*platformRatios[S.area];
 // Pequena correcao optica do rodape de cada PNG das serpentes; nao mexe no piso ou nos herois.
 const serpentSoleY=()=>platformY()+Math.max(6,Math.min(12,H*.014));
-const heroHeight=()=>Math.min(160,H*.255);
+const heroHeight=()=>Math.min(170,H*.270);
 const bossHeight=()=>Math.min(320,H*.46);
 // O desenho dos heróis usa centro y-45; o limite é calculado pelos pés VISÍVEIS.
 // Ajuste apenas da margem transparente inferior de cada sprite (em fração da altura).

@@ -100,7 +100,7 @@
     fullRestoration(){return {hp:100,mana:100};},
     weapon:{
       // A arma é um volume no sprite, NUNCA todo o corpo do personagem.
-      // Offset sobre a arte já reduzida a 142px de altura.
+      // Offset proporcional ao sprite oficial de 170px (escala de profundidade no R10).
       profiles:[
         {name:'Rubi do cajado',x:.32,y:-.17,r:.155,damage:8},
         {name:'Arma glacial',x:.31,y:-.08,r:.16,damage:7},
@@ -112,10 +112,10 @@
       interval:.74,
       hitbox({heroIdx,p,H,facing=1}){
         const realm=window.CM25RealmBridge?.realm;
-        // Reino 5: preservar o alcance de arma calibrado anteriormente.
-        // Reino 10: manter a escala de profundidade.
-        const h=realm===5?Math.min(142,H*.225):
-          Math.min(160,H*.255)*(realm===10&&typeof window.cm25HeroDepthScale==='function'?window.cm25HeroDepthScale():1),
+        // Arma, desenho e colisao agora usam os mesmos 170px de referencia.
+        // Reino 5 preserva o ajuste de chao; Reino 10 preserva a profundidade.
+        const h=Math.min(170,H*.270)*
+          (realm===10&&typeof window.cm25HeroDepthScale==='function'?window.cm25HeroDepthScale():1),
           cfg=this.profiles[heroIdx]||this.profiles[0];
         return {x:p.x+(facing===-1?-1:1)*h*cfg.x,
                 y:p.y-45+h*cfg.y,radius:Math.max(13,h*cfg.r),
@@ -702,9 +702,10 @@
       const EXIT_MS=EXIT_GROW+EXIT_WALK+EXIT_CLOSE;
       const ease=t=>{t=Math.max(0,Math.min(1,t));return t*t*(3-2*t)};
       const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
-      const portalSize=()=>Math.min(255,Math.max(175,H*.35));
-      const entranceX=()=>Math.max(W*.055,H*.13);
-      const exitX=()=>W-Math.max(W*.085,H*.16);
+      const portalSize=()=>Math.min(370,Math.max(250,H*.49));
+      // O portal maior nunca deve ser cortado nas bordas da tela.
+      const entranceX=()=>Math.max(W*.055,portalSize()*.5+16);
+      const exitX=()=>W-Math.max(W*.085,portalSize()*.5+16);
       const territoryGround=()=>{
         const g=Number(window.ClassManaV25Test?.getStatus?.()?.ground);
         return Number.isFinite(g)&&g>0?g:(Number(p.y)||H*.75);
@@ -926,8 +927,8 @@
         // Sprite oficial, não recriado: idêntico ao herói escolhido no jogo.
         const image=typeof heroImgs!=='undefined'&&heroImgs[heroIdx];
         if(!image?.complete||!image.naturalWidth)return;
-        const hh=(bridge.realm===5?Math.min(178,H*.285):
-          Math.min(160,H*.255)*(bridge.realm===10&&typeof window.cm25HeroDepthScale==='function'?window.cm25HeroDepthScale():1))*scale;
+        const hh=Math.min(170,H*.270)*
+          (bridge.realm===10&&typeof window.cm25HeroDepthScale==='function'?window.cm25HeroDepthScale():1)*scale;
         const ww=hh*(image.naturalWidth/image.naturalHeight);
         ctx.save();
         ctx.globalAlpha=clamp(alpha,0,1);

@@ -58,7 +58,7 @@ const walkwayDepthInsetPxR10=Object.freeze([18,18,12,12,18]);
 const floor=()=>H*floorRatiosR10[R.area]+territoryFloorCorrectionPxR10[R.area]-walkwayDepthInsetPxR10[R.area];
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 window.cm25HeroDepthScale=()=>heroScaleRatiosR10[R.area]||1;
-const heroHeight=()=>Math.min(160,H*.255)*window.cm25HeroDepthScale();
+const heroHeight=()=>Math.min(170,H*.270)*window.cm25HeroDepthScale();
 // Uma so ancora fisica por territorio; nao deslocar apenas o desenho.
 // Assim avatar, escudo e geometria de combate acompanham a mesma posicao.
 window.cm25HeroFeetOffset=()=>0;
