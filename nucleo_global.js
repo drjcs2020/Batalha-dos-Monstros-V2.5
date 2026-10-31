@@ -354,6 +354,11 @@
           const summary=document.getElementById('rankSummary');
           const close=document.getElementById('closeRanking');
           if(!overlay||!tableContainer||!summary||!close)return;
+          // O handler online V2.5 substitui showRanking da V2.4: precisa
+          // iniciar explicitamente a trilha original e mais agitada do PLACAR.
+          // Isso também atende ao placar aberto após bônus/finalização.
+          try{playMediaAudio(cmAudio.placar,true,.42);}
+          catch(error){console.warn('[ClassMana V2.5] Música do placar',error);}
           const requestId=core.placarRequestId=(core.placarRequestId||0)+1;
           overlay.dataset.final='0';overlay.dataset.defeat='0';
           close.textContent='↩ VOLTAR À SELEÇÃO';
@@ -425,6 +430,20 @@
             tableContainer.append(notice,retry);
           }
         };
+        // Retornar à trilha da seleção quando o aluno fecha o placar comum.
+        // Manter o encerramento e o retorno próprios dos fluxos de bônus.
+        const closeRankingButton=document.getElementById('closeRanking');
+        if(closeRankingButton&&!closeRankingButton.dataset.cm25MusicReturn){
+          closeRankingButton.dataset.cm25MusicReturn='1';
+          closeRankingButton.addEventListener('click',()=>{
+            const overlay=document.getElementById('rankingOverlay');
+            const menu=document.getElementById('menu');
+            if(overlay?.classList.contains('hidden')&&menu&&!menu.classList.contains('hidden')){
+              try{playMediaAudio(cmAudio.selecao,true,.48);}
+              catch(error){console.warn('[ClassMana V2.5] Música da seleção',error);}
+            }
+          });
+        }
       }
 
       main.onclick=()=>{
