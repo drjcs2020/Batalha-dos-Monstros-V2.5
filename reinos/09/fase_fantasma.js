@@ -707,21 +707,26 @@ function moveHorde(dt){
  // mas não ficam todos sobrepostos em uma só pilha de sprites.
  function cm25SeparateMobs(dt){
   if(!playing||paused||!S.active||!Array.isArray(S.mobs))return;
-  const alive=S.mobs.filter(m=>m&&m.hp>0);
+  const alive=S.mobs.filter(m=>m&&m.hp>0).sort((a,b)=>a.x-b.x||a.id-b.id);
   if(alive.length<2)return;
   const minX=W*.10,maxX=S.area===4?W*.91:S.world-W*.10;
-  const step=Math.min(.05,Math.max(0,dt))*150;
-  for(let pass=0;pass<2;pass++){
-   for(let i=0;i<alive.length;i++)for(let j=i+1;j<alive.length;j++){
-    const a=alive[i],b=alive[j];
-    if(Math.abs(a.y-b.y)>Math.min(a.size,b.size)*.72)continue;
-    const minGap=Math.max(82,(a.size+b.size)*.53);
-    const delta=b.x-a.x,overlap=minGap-Math.abs(delta);
+  // A ordem espacial é estável: cada inimigo ocupa sua faixa sem
+  // trocar continuamente de lado e se empilhar sobre os demais.
+  const movement=Math.max(1,Math.min(.05,dt)*600);
+  for(let pass=0;pass<4;pass++){
+   for(let i=1;i<alive.length;i++){
+    const left=alive[i-1],right=alive[i];
+    if(Math.abs(left.y-right.y)>Math.min(left.size,right.size)*.72)continue;
+    const gap=Math.max(82,(left.size+right.size)*.48);
+    const overlap=gap-(right.x-left.x);
     if(overlap<=0)continue;
-    const dir=delta===0?(a.id<=b.id?1:-1):Math.sign(delta);
-    const shift=Math.min(overlap*.50,step);
-    a.x=clamp(a.x-dir*shift,minX,maxX);
-    b.x=clamp(b.x+dir*shift,minX,maxX);
+    const step=Math.min(overlap,movement);
+    if(left.x<=minX+1)right.x=clamp(right.x+step,minX,maxX);
+    else if(right.x>=maxX-1)left.x=clamp(left.x-step,minX,maxX);
+    else{
+     left.x=clamp(left.x-step*.5,minX,maxX);
+     right.x=clamp(right.x+step*.5,minX,maxX);
+    }
    }
   }
  }
