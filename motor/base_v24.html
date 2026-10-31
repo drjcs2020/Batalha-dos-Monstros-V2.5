@@ -977,29 +977,48 @@ if(q.special){ctx.globalAlpha=.72;ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beg
 ctx.restore();}
 function updateHUD(){$('#php').style.width=p.hp+'%';$('#pmana').style.width=p.mana+'%';$('#ehp').style.width=(boss.hp/boss.max*100)+'%';$('#score').textContent=score;let maxSuper=superLimit();$('#special').textContent=superUses>=maxSuper?'[X/ENTER] ✨ SUPER ESGOTADO':superCooldown>0?'[X/ENTER] ⏳ SUPER '+Math.ceil(superCooldown)+'s':'[X/ENTER] ✨ SUPER '+superUses+'/'+maxSuper+' • '+heroes[heroIdx].special.toUpperCase();$('#special').disabled=superUses>=maxSuper||superCooldown>0;$('#hearts').textContent=Math.max(0,Math.ceil(p.hp/20))+'/5';$('#shieldTxt').textContent=p.shield>0?'ATIVO':p.shieldCd>0?Math.ceil(p.shieldCd)+'s':'PRONTO';if(T>msgUntil)$('#msg').textContent=''}
 let lastHudUpdate=-1;
-// O próximo quadro precisa ser reservado ANTES de executar física/desenho.
- // Uma exceção isolada no chefão não deve encerrar para sempre a batalha,
- // enquanto o teclado (ex.: R do quiz) continua respondendo.
- let cm25LastFrameErrorLog=0;
+// Loop V2.5: recuperar TAMBÉM a pilha de ctx.save() após erros.
+ // A rotina anterior retomava o RAF sem limpar ctx.translate/ctx.scale, causando
+ // cenário sobreposto e sprites em locais incorretos depois de exceções.
+ let cm25LastFrameErrorLog=0,cm25ConsecutiveRenderErrors=0;
+ function cm25ResetCanvasAfterError(){
+  try{
+   // CanvasRenderingContext2D.reset limpa conteúdo, estilos, transformações
+   // e pilha de save/restore. Fallback para Chromium mais antigo.
+   if(typeof ctx.reset==='function')ctx.reset();
+   else c.width=c.width;
+   ctx.setTransform(DPR,0,0,DPR,0,0);
+   ctx.globalAlpha=1;
+   ctx.globalCompositeOperation='source-over';
+   ctx.imageSmoothingEnabled=true;
+   ctx.imageSmoothingQuality='high';
+  }catch(resetError){
+   console.error('[ClassMana V2.5] Erro ao recuperar Canvas',resetError);
+  }
+ }
  function loop(ms){
   requestAnimationFrame(loop);
   const dt=Math.min(.033,(ms-last)/1000||.016);
   last=ms;T+=dt;
   try{
    update(dt);
+   ctx.setTransform(DPR,0,0,DPR,0,0);
    draw();
+   cm25ConsecutiveRenderErrors=0;
    if(lastHudUpdate<0||ms-lastHudUpdate>=90){
     updateHUD();lastHudUpdate=ms;
    }
   }catch(error){
-   // Registrar a causa original para diagnóstico; limitar mensagens caso
-   // um recurso de desenho permaneça inválido, sem reiniciar a partida.
+   cm25ConsecutiveRenderErrors++;
    window.cm25LastBattleFrameError={
-    message:String(error?.message||error),stage,when:Date.now()
+    message:String(error?.message||error),stage,when:Date.now(),
+    consecutive:cm25ConsecutiveRenderErrors
    };
+   // Não continuar desenhando por cima do quadro corrompido.
+   cm25ResetCanvasAfterError();
    if(ms-cm25LastFrameErrorLog>=3000||!cm25LastFrameErrorLog){
     cm25LastFrameErrorLog=ms||1;
-    console.error('[ClassMana V2.5] Erro no quadro da batalha',error);
+    console.error('[ClassMana V2.5] Erro no quadro; Canvas restaurado',error);
    }
   }
  }
