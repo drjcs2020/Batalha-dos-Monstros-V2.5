@@ -66,7 +66,7 @@ const clamp=(a,l,r)=>Math.max(l,Math.min(r,a));
 // Todos os personagens terrestres usam exatamente ESTA tabela, nunca um ao outro.
 const platformRatios=[.705,.803,.744,.750];
 const platformY=()=>H*platformRatios[S.area];
-const heroHeight=()=>Math.min(142,H*.225);
+const heroHeight=()=>Math.min(160,H*.255);
 // O desenho dos heróis usa centro y-45; o limite é calculado pelos pés VISÍVEIS.
 // Ajuste apenas da margem transparente inferior de cada sprite (em fração da altura).
 const heroFootTrim=()=>[.015,.018,.018,.020,.016,.020][heroIdx]??.018;

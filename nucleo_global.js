@@ -52,7 +52,12 @@
       ],
       interval:.74,
       hitbox({heroIdx,p,H,facing=1}){
-        const h=Math.min(142,H*.225),cfg=this.profiles[heroIdx]||this.profiles[0];
+        const realm=window.CM25RealmBridge?.realm;
+        // Reino 5: preservar o alcance de arma calibrado anteriormente.
+        // Reino 10: manter a escala de profundidade.
+        const h=realm===5?Math.min(142,H*.225):
+          Math.min(160,H*.255)*(realm===10&&typeof window.cm25HeroDepthScale==='function'?window.cm25HeroDepthScale():1),
+          cfg=this.profiles[heroIdx]||this.profiles[0];
         return {x:p.x+(facing===-1?-1:1)*h*cfg.x,
                 y:p.y-45+h*cfg.y,radius:Math.max(13,h*cfg.r),
                 damage:cfg.damage,weapon:cfg.name};
@@ -805,7 +810,8 @@
         // Sprite oficial, não recriado: idêntico ao herói escolhido no jogo.
         const image=typeof heroImgs!=='undefined'&&heroImgs[heroIdx];
         if(!image?.complete||!image.naturalWidth)return;
-        const hh=Math.min(142,H*.225)*scale;
+        const hh=(bridge.realm===5?Math.min(178,H*.285):
+          Math.min(160,H*.255)*(bridge.realm===10&&typeof window.cm25HeroDepthScale==='function'?window.cm25HeroDepthScale():1))*scale;
         const ww=hh*(image.naturalWidth/image.naturalHeight);
         ctx.save();
         ctx.globalAlpha=clamp(alpha,0,1);

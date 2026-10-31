@@ -103,7 +103,7 @@ try{
   code=code.replace('ctx.translate(boss.x,boss.y+Math.sin(T*2.1+stage)*10);', 'ctx.translate(boss.x,boss.y+(window.cm25SpiderGrounded?0:Math.sin(T*2.1+stage)*10));');
   // Hero can cross most of the arena; flip facing with user's input.
   code=code.replaceAll('Math.min(W*.56,p.x)','Math.min(W*.91,p.x)');
-  code=code.replace('let hh=Math.min(210,H*.32)', 'let hh=Math.min(142,H*.225)');
+  code=code.replace('let hh=Math.min(210,H*.32)', 'let hh=Math.min(160,H*.255)');
   // Ajuste da âncora visual do sprite: 8px somente na posição de pouso; colisão continua pelo piso.
   code=code.replace('ctx.translate(p.x,p.y-45);if(heroIdx===3)', 'ctx.translate(p.x,p.y-45+(window.cm25HeroFeetOffset||0));if((heroIdx===3?1:-1)*(window.cm25Facing||1)>0)');
   code=code.replace('if(heroIdx===3)ctx.scale(-1,1);','if(window.cm25Facing===-1)ctx.scale(-1,1);');

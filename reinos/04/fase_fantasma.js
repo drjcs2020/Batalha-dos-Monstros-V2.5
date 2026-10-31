@@ -84,7 +84,7 @@ const FOOT_CLEARANCE_PX=()=>Math.max(3,Math.round(H*.0045));
 const platformRatios=Array(5).fill(CLASSMANA_R4_FLOOR_RATIO);
 const platformY=()=>H*CLASSMANA_R4_FLOOR_RATIO;
 const floorAnchorY=()=>platformY()-FOOT_CLEARANCE_PX();
-const heroHeight=()=>Math.min(142,H*.225);
+const heroHeight=()=>Math.min(160,H*.255);
 const bossHeight=()=>Math.min(300,H*.48);
 // O desenho dos heróis usa centro y-45; o limite é calculado pelos pés VISÍVEIS.
 // Ajuste apenas da margem transparente inferior de cada sprite (em fração da altura).
