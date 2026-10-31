@@ -258,3 +258,33 @@
  #cm25JourneyPanel .cm25JourneyStats{margin-bottom:7px!important}
  #cm25JourneyPanel .cm25JourneyDescription{margin-bottom:7px!important}
 }
+
+
+/* Resultado após encerrar manualmente a partida: batalha + bônus = total.
+   Não interfere nos painéis de guardar progresso. */
+#finishScoreBreakdown[hidden],#savePanel .saveActions #saveRanking[hidden]{display:none!important}
+#savePanel #finishScoreBreakdown.cm25FinishScores{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:9px;margin:14px 0 12px
+}
+#savePanel .cm25FinishScore{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ min-width:0;min-height:96px;gap:6px;padding:10px 5px;
+ border:2px solid #7ac9ed;border-radius:12px;
+ background:linear-gradient(150deg,#17426a,#061d39);
+ box-shadow:inset 0 0 15px #6ed9ff19;
+}
+#savePanel .cm25FinishScore:nth-child(2){border-color:#9fdcf7;background:linear-gradient(145deg,#17647c,#0b314e)}
+#savePanel .cm25FinishScore.cm25FinishTotal{border-color:#ffdd8b;background:linear-gradient(145deg,#7b511c,#302309)}
+#savePanel .cm25FinishScore strong{font:900 clamp(23px,3.5vw,36px)/1.05 "Trebuchet MS",Arial,sans-serif;color:#fff1b8}
+#savePanel .cm25FinishScore small{font:800 clamp(12px,1.15vw,15px)/1.25 "Trebuchet MS",Arial,sans-serif;color:#e5f5ff;text-align:center}
+#savePanel[data-finished="true"] .cm25SaveStats,
+#savePanel[data-finished="true"] .cm25ProgressHeading{display:none!important}
+#savePanel[data-finished="true"] .saveActions #saveRanking{
+ display:flex;align-items:center;justify-content:center;
+}
+@media(max-width:440px){
+ #savePanel .cm25FinishScore{min-height:77px;padding:8px 3px}
+ #savePanel .cm25FinishScore strong{font-size:clamp(19px,5.3vw,25px)}
+ #savePanel .cm25FinishScore small{font-size:11px}
+}
