@@ -318,7 +318,8 @@ async function enterRegisteredStudent(profile){
   // Se o motor ainda nao estiver pronto, manter a janela original de
   // confirmacao cobrindo o jogo ate Como Jogar abrir, nunca tela azul vazia.
   if(choice==='new'&&!tutorialStartedEarly)frame.style.opacity='0';
-  $('transitionLoading').hidden=choice==='new';
+  if($('transitionLoading').dataset.cm25TutorialPortal!=='1')
+   $('transitionLoading').hidden=choice==='new';
   $('transitionLabel').textContent='Reunindo suas conquistas…';
   $('transitionSubTitle').textContent='Preparando sua partida para continuar de onde parou.';
   frame.style.pointerEvents=tutorialStartedEarly?'auto':'none';
@@ -391,10 +392,11 @@ function switchRealm(next,target=1,direct=true){
  frame.style.opacity=direct?'0':'1';
  frame.style.pointerEvents=direct?'none':'auto';
  // Nao cobrir COMO JOGAR com uma tela de preparacao antecipada.
- $('transitionLoading').hidden=!direct||initialTutorial;
+ if($('transitionLoading').dataset.cm25TutorialPortal!=='1')
+  $('transitionLoading').hidden=!direct||initialTutorial;
  $('transitionLabel').textContent='Preparando o reino '+CAMPAIGN[next-1][0]+'…';
  $('transitionSubTitle').textContent='Carregando o próximo território e seu cenário…';
- frame.src=`reinos/${String(realm).padStart(2,'0')}/index.html?cm25=${loadId}&direct=${direct?'1':'0'}&rev=20261031-suprema-direcional`;
+ frame.src=`reinos/${String(realm).padStart(2,'0')}/index.html?cm25=${loadId}&direct=${direct?'1':'0'}&rev=20261031-portal-ready`;
 }
 // READY confirma o código do iframe, mas não o carregamento das imagens.
 // Aguardar o cenário antes de iniciar uma área nos testes rápidos.
@@ -466,9 +468,12 @@ async function area(n){
   }
   // Se o aluno ja apertou Comecar Agora, preservar a espera animada
   // ate o portal estar sendo desenhado no cenario real.
-  if($('transitionLoading').dataset.cm25TutorialPortal!=='1')
-   $('transitionLoading').hidden=true;
-  frame.style.opacity='1';frame.style.pointerEvents='auto';
+  const awaitingPortal=$('transitionLoading').dataset.cm25TutorialPortal==='1';
+  if(!awaitingPortal)$('transitionLoading').hidden=true;
+  // A opacidade zero nao interrompe o desenho do portal no iframe.
+  // Ele proprio liberara o canvas apenas quando pintar o primeiro quadro.
+  frame.style.opacity=awaitingPortal?'0':'1';
+  frame.style.pointerEvents=awaitingPortal?'none':'auto';
   // Revelar a tela verde pronta e fechar o próprio diálogo no mesmo ciclo.
   $('cm25JourneyDialog')?.remove();
   frame.focus();try{frame.contentWindow.focus()}catch(e){}

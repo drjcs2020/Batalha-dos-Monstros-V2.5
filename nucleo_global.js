@@ -695,7 +695,7 @@
         return image;
       });
       const state={phase:'off',territory:0,started:0,token:0,exitDone:0,
-        heroX:0,groundY:0,portalX:0,entryEndX:0,wasPaused:false,wasFacing:1};
+        heroX:0,groundY:0,portalX:0,entryEndX:0,wasPaused:false,wasFacing:1,portalPainted:false};
       const ENTRY_GROW=720,ENTRY_WALK=780,ENTRY_CLOSE=480;
       const EXIT_GROW=720,EXIT_WALK=1350,EXIT_CLOSE=490;
       const ENTRY_MS=ENTRY_GROW+ENTRY_WALK+ENTRY_CLOSE;
@@ -710,6 +710,7 @@
         return Number.isFinite(g)&&g>0?g:(Number(p.y)||H*.75);
       };
       const reset=territory=>{
+        state.portalPainted=false;
         state.token++;
         state.territory=territory;
         state.exitDone=0;
@@ -730,6 +731,12 @@
           playing=false;paused=true;
           // Nao reabrir Como Jogar se o aluno ja escolheu Comecar Agora.
           document.getElementById('tutorial')?.classList.toggle('hidden',!tutorialPending);
+          // selectArea pode chamar resetStage() e trocar a trilha.
+          // Enquanto o aluno ainda le as instrucoes, manter a musica verde.
+          if(tutorialPending&&soundOn){
+            try{playMediaAudio(cmAudio.tutorial,true,.40);}
+            catch(error){console.warn('[ClassMana] Trilha Como Jogar',error);}
+          }
         }
         return selected;
       };
@@ -751,59 +758,109 @@
           }
         }catch(error){console.warn('[ClassMana] Fechamento da preparacao',error);}
       };
-      let noticeStarted=0;
+      let noticeStarted=0,noticeBattleStarted=false,portalWarningShown=false;
+      const showPortalWaiting=()=>{
+        try{
+          const host=window.parent!==window?window.parent.document:null;
+          const loading=host?.getElementById('transitionLoading');
+          const label=host?.getElementById('transitionLabel');
+          if(!loading||!label)return false;
+          label.textContent='O portal já vai se abrir. Aguarde...';
+          const subtitle=host.getElementById('transitionSubTitle');
+          if(subtitle)subtitle.textContent='Preparando a entrada do seu herói pelo portal de mana.';
+          loading.dataset.cm25TutorialPortal='1';
+          loading.hidden=false;
+          // Mesmo que outra rotina tente esconder o carregamento, nao
+          // expor a arena antes da primeira imagem REAL do portal.
+          const iframe=host.getElementById('gameWindow');
+          if(iframe){iframe.style.opacity='0';iframe.style.pointerEvents='none';}
+          return true;
+        }catch(error){
+          console.warn('[ClassMana] Tela de espera indisponivel',error);
+          return false;
+        }
+      };
       const enterWhenReady=()=>{
-        if(!noticeActive||!entryReady||noticeTimer!==null)return;
-        // Reutilizar a barra cintilante original durante o carregamento.
+        if(!noticeActive||!entryReady||noticeTimer!==null||noticeBattleStarted)return;
+        // O cenario pronto nao significa que os seis quadros WEBP do portal
+        // estejam decodificados. Manter a espera azul ate estarem disponiveis.
+        if(!frames.every(image=>image.complete&&image.naturalWidth>0)){
+          if(!portalWarningShown&&performance.now()-noticeStarted>18000){
+            portalWarningShown=true;
+            try{
+              const label=window.parent.document.getElementById('transitionSubTitle');
+              if(label)label.textContent='O portal está demorando para carregar. Verifique sua conexão.';
+            }catch(error){}
+          }
+          noticeTimer=setTimeout(()=>{noticeTimer=null;enterWhenReady();},100);
+          return;
+        }
         const remaining=Math.max(0,1100-(performance.now()-noticeStarted));
         noticeTimer=setTimeout(()=>{
           noticeTimer=null;
-          if(!noticeActive||!entryReady)return;
-          // Iniciar por tras da espera; o portal e desenhado dentro da cena
-          // antes que a janela seja removida.
+          if(!noticeActive||!entryReady||noticeBattleStarted)return;
+          noticeBattleStarted=true;
+          state.portalPainted=false;
+          // A batalha inicia OCULTA pela tela azul; o portal e animado
+          // e renderizado antes de revelar o canvas.
           oldBeginBattle();
-          requestAnimationFrame(()=>requestAnimationFrame(()=>{
-            if(!noticeActive)return;
-            closeNotice();
-            noticeActive=false;
-          }));
+          const began=performance.now();
+          const revealAfterPaint=()=>{
+            if(!noticeActive||!noticeBattleStarted)return;
+            if(state.phase==='entry'&&state.portalPainted){
+              try{
+                const host=window.parent!==window?window.parent.document:null;
+                const iframe=host?.getElementById('gameWindow');
+                if(iframe){iframe.style.opacity='1';iframe.style.pointerEvents='auto';}
+              }catch(error){console.warn('[ClassMana] Exibicao do portal',error);}
+              // Soltar a janela na proxima pintura: nunca uma arena nua.
+              requestAnimationFrame(()=>{
+                if(!noticeActive)return;
+                closeNotice();noticeActive=false;noticeBattleStarted=false;
+              });
+              return;
+            }
+            if(performance.now()-began>15000){
+              try{
+                const label=window.parent.document.getElementById('transitionSubTitle');
+                if(label)label.textContent='O portal não conseguiu iniciar. Atualize a página para tentar novamente.';
+              }catch(error){}
+              return; // Falha segura: nao revelar heroi/monstros sem portal.
+            }
+            requestAnimationFrame(revealAfterPaint);
+          };
+          requestAnimationFrame(revealAfterPaint);
         },remaining);
       };
       const beginAfterTutorial=(...args)=>{
         if(noticeActive)return;
         if(!tutorialPending)return oldBeginBattle(...args);
         clearInterval(tutorialTimer);tutorialTimer=null;
-        tutorialPending=false;
-        noticeActive=true;
-        noticeStarted=performance.now();
-        // Exibir a janela azul aprovada ANTES de esconder Como Jogar.
-        // Assim nunca se ve a arena nem o fundo vazio entre as etapas.
-        let shown=false;
-        try{
-          const host=window.parent!==window?window.parent.document:null;
-          const loading=host?.getElementById('transitionLoading');
-          const label=host?.getElementById('transitionLabel');
-          if(loading&&label){
-            label.textContent='O portal já vai se abrir. Aguarde...';
-            const subtitle=host.getElementById('transitionSubTitle');
-            if(subtitle)subtitle.textContent='Preparando a entrada do seu herói pelo portal de mana.';
-            loading.dataset.cm25TutorialPortal='1';
-            loading.hidden=false;
-            shown=true;
-          }
-        }catch(error){console.warn('[ClassMana] Preparacao visual indisponivel',error);}
-        document.getElementById('tutorial')?.classList.add('hidden');
+        // A janela azul deve cobrir o jogo ANTES de ocultar Como Jogar.
+        const shown=showPortalWaiting();
         if(!shown){
           if(!entryReady){earlyStartRequested=true;return;}
-          noticeActive=false;
           return oldBeginBattle(...args);
         }
+        tutorialPending=false;
+        noticeActive=true;
+        noticeBattleStarted=false;
+        portalWarningShown=false;
+        noticeStarted=performance.now();
+        document.getElementById('tutorial')?.classList.add('hidden');
         earlyStartRequested=!entryReady;
         enterWhenReady();
       };
       beginBattle=beginAfterTutorial;
       const skipTutorial=document.getElementById('skipTutorial');
-      if(skipTutorial)skipTutorial.onclick=beginAfterTutorial;
+      if(skipTutorial){
+        // Capturar o clique antes de qualquer handler do motor legado:
+        // o fundo nunca fica exposto nem por um frame.
+        skipTutorial.addEventListener('click',()=>{
+          if(tutorialPending&&!noticeActive)showPortalWaiting();
+        },true);
+        skipTutorial.onclick=beginAfterTutorial;
+      }
       const oldTutorial=bridge.startTutorial?.bind(bridge);
       if(oldTutorial)bridge.startTutorial=(options={})=>{
         if(earlyTutorial&&(tutorialPending||noticeActive)){
@@ -837,7 +894,7 @@
         }
         tutorialPending=false;
         earlyTutorial=false;entryReady=true;earlyStartRequested=false;
-        noticeActive=false;
+        noticeActive=false;noticeBattleStarted=false;
         closeNotice();
         state.token++;
         state.phase='off';
@@ -884,6 +941,7 @@
         const size=portalSize();
         // Base visual da elipse PNG/WebP no piso; sem degraus e sem moldura.
         ctx.drawImage(image,x-size/2,state.groundY+H*.019-size*291/320,size,size);
+        if(state.phase==='entry')state.portalPainted=true;
       };
       const drawAnimation=()=>{
         if(state.phase!=='entry'&&state.phase!=='exit')return;
