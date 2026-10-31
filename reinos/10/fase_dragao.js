@@ -76,14 +76,6 @@ function mobDraw(m){if(!m.alive)return;const im=mobFrame(m);if(!im?.naturalWidth
  ctx.translate(dx,m.y);if(p.x>m.x)ctx.scale(-1,1);
  imageDraw(im,-width/2,-height/2,width,height);ctx.restore();
  ctx.fillStyle='#1d1d2a';ctx.fillRect(dx-26,m.y-height/2-10,52,4);ctx.fillStyle='#79ef63';ctx.fillRect(dx-26,m.y-height/2-10,52*(m.hp/m.max),4);
- if(m.cm25Shield>0){
-  const ratio=m.cm25Shield/m.cm25ShieldMax;
-  ctx.save();ctx.strokeStyle='#73edff';ctx.lineWidth=3;ctx.globalAlpha=.45+.45*ratio;
-  ctx.shadowColor='#2bdaff';ctx.shadowBlur=19;
-  ctx.beginPath();ctx.ellipse(dx,m.y,Math.max(49,m.size*.51),Math.max(44,m.size*.50),0,0,Math.PI*2);ctx.stroke();
-  ctx.globalAlpha=1;ctx.font='bold 16px "Segoe UI Emoji"';ctx.textAlign='center';
-  ctx.fillText('🛡️',dx,m.y-m.size*.53-19);ctx.restore();
- }
 }
 function createMob(territory,x,id,bossGuard=false){
  // Dragões já são jovens no desenho: escala de combate (não miniaturas).
@@ -96,20 +88,12 @@ function createMob(territory,x,id,bossGuard=false){
  const maxFlightY=floor()-size*.62;
  const minFlightY=Math.min(maxFlightY,Math.max(H*.22+size*.50,size*.58+12));
  const anchorY=bossGuard?H*(.30+(id%4)*.085):clamp(H*(.43+(id%3)*.115),minFlightY,maxFlightY);
- return {territory,x,y:anchorY,baseY:anchorY,size,max,hp:max,cm25ShieldMax:Math.max(18,Math.round(max*.32)),cm25Shield:Math.max(18,Math.round(max*.32)),alive:true,seed:id*.91,
+ return {territory,x,y:anchorY,baseY:anchorY,size,max,hp:max,alive:true,seed:id*.91,
   speed:(bossGuard?0:72+territory*9),cool:1.1+(id*.2%3),contact:0,hit:0,
   guard:bossGuard, spawned:bossGuard, spawnX:x, swoop:0, vx:0, vy:0, modeTime:.7+id*.16,
    attackUntil:0,restUntil:0,attackSlot:-1};
 }
 
-function cm25ShieldDamage(m,damage){
- damage=Math.max(0,Number(damage)||0);
- if(!m||!(m.cm25Shield>0))return damage;
- const absorbed=Math.min(m.cm25Shield,damage);
- m.cm25Shield-=absorbed;
- m.hit=Math.max(m.hit||0,.2);
- return damage-absorbed;
-}
 function updateHud(){document.getElementById('ename').textContent=R.area===4?'DRAGÃO DE FOGO':names[R.area];document.getElementById('round').textContent='REINO 10 · TERRITÓRIO '+(R.area+1)+'/5';document.getElementById('stageText').textContent=names[R.area];document.getElementById('difficulty').textContent=R.area===4?'CHEFÃO + QUATRO DRAGÕES GUARDIÕES':'SUBALTERNOS RESTANTES: '+R.mobs.filter(x=>x.alive).length;
  if(R.area<4){const alive=R.mobs.filter(x=>x.alive).length;document.getElementById('ehp').style.width=100*alive/R.mobs.length+'%';}}
 function startTerritory(){R.active=true;R.shift=false;R.cleared=false;R.cam=0;R.clock=0;R.jumpV=0;R.jumpHold=false;R.damageGrace=2.0;R.loot=null;R.lootClock=0;R.lootNext=11+Math.random()*4;R.lootCount=0;R.heartUsed=false;R.chestThisTerritory=false;R.projectiles=[];R.mobs=[];R.world=W*4.3;
@@ -192,7 +176,7 @@ function cm25WeaponContact(dt){
   if(!m.alive||(!m.spawned&&!m.guard))continue;
   const dx=m.x-hit.x,dy=m.y-hit.y;
   if(Math.hypot(dx,dy)>hit.radius+m.size*.30)continue;
-  m.hp=Math.max(0,m.hp-cm25ShieldDamage(m,hit.damage));m.hit=.2;
+  m.hp=Math.max(0,m.hp-(hit.damage));m.hit=.2;
   cm25WeaponClock=window.ClassManaNucleo.weapon.interval;
   burst(m.x-(R.area<4?R.cam:0),m.y,'#ffe3aa',11);
   if(m.hp<=0)killMob(m);return;
@@ -403,7 +387,7 @@ function mobUpdate(dt){
   }
  }
 }
-function mobHitByWeapons(dt){for(const q of shots){if(q.life<=0||q.cmBoss)continue;for(const m of R.mobs){if(!m.alive)continue;const cx=m.x,cy=m.y;const a=q.x-q.vx*dt,b=q.y-q.vy*dt,vx=q.x-a,vy=q.y-b,f=clamp(((cx-a)*vx+(cy-b)*vy)/(vx*vx+vy*vy||1),0,1);if(Math.hypot(a+vx*f-cx,b+vy*f-cy)<m.size*.32+(q.r||12)){q.life=0;m.hp=Math.max(0,m.hp-cm25ShieldDamage(m,q.dmg));m.hit=.13;if(m.hp<=0)killMob(m);else burst(m.x-R.cam,cy,'#ffeeaa',5);break}}}
+function mobHitByWeapons(dt){for(const q of shots){if(q.life<=0||q.cmBoss)continue;for(const m of R.mobs){if(!m.alive)continue;const cx=m.x,cy=m.y;const a=q.x-q.vx*dt,b=q.y-q.vy*dt,vx=q.x-a,vy=q.y-b,f=clamp(((cx-a)*vx+(cy-b)*vy)/(vx*vx+vy*vy||1),0,1);if(Math.hypot(a+vx*f-cx,b+vy*f-cy)<m.size*.32+(q.r||12)){q.life=0;m.hp=Math.max(0,m.hp-(q.dmg));m.hit=.13;if(m.hp<=0)killMob(m);else burst(m.x-R.cam,cy,'#ffeeaa',5);break}}}
  shots=shots.filter(q=>q.life>0)}
 // Chefe: mover os tiros em coordenadas DA TELA, testar impacto por trajetória.
 // O update da V2.4 não deve consumir os tiros do herói: só mantém IA, ataques e áudio do chefão.
@@ -415,7 +399,7 @@ function bossHeroShots(dt){
   // Os guardiões seguem recebendo dano das armas do jogador.
   let struck=false;
   for(const m of R.bossFollowers){if(!m.alive||!hit(m.x,m.y,m.size*.29))continue;
-   q.life=0;m.hp=Math.max(0,m.hp-cm25ShieldDamage(m,q.dmg));m.hit=.17;
+   q.life=0;m.hp=Math.max(0,m.hp-(q.dmg));m.hit=.17;
    burst(q.x,q.y,q.col||'#ffdd88',12);if(m.hp<=0)killMob(m);
    struck=true;break;
   }
