@@ -244,7 +244,7 @@ createMob=function(...args){
  return window.ClassManaNucleo.scoring.track(mob,1,points=>{
   score+=points;
   try{updateHUD()}catch(error){console.warn('[ClassMana] HUD',error)}
- });
+ },()=>S.camera);
 };
 function setHud(){
  $('#ename').textContent=S.area===3?'FANTASMA':S.names[S.area];

@@ -264,7 +264,7 @@ createMob=function(...args){
  return window.ClassManaNucleo.scoring.track(mob,3,points=>{
   score+=points;
   try{updateHUD()}catch(error){console.warn('[ClassMana] HUD',error)}
- });
+ },()=>S.camera);
 };
 function setHud(){
  $('#ename').textContent=S.area===4?'MEGA-ARANHA':S.names[S.area];

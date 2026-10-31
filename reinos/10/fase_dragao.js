@@ -103,7 +103,7 @@ createMob=function(...args){
  return window.ClassManaNucleo.scoring.track(mob,10,points=>{
   score+=points;
   try{updateHUD()}catch(error){console.warn('[ClassMana] HUD',error)}
- });
+ },()=>R.cam);
 };
 function startTerritory(){R.active=true;R.shift=false;R.cleared=false;R.cam=0;R.clock=0;R.jumpV=0;R.jumpHold=false;R.damageGrace=2.0;R.loot=null;R.lootClock=0;R.lootNext=11+Math.random()*4;R.lootCount=0;R.heartUsed=false;R.chestThisTerritory=false;R.projectiles=[];R.mobs=[];R.world=W*4.3;
  window.cm25DragonBoss=R.area===4;

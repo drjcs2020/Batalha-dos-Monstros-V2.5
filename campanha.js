@@ -394,7 +394,7 @@ function switchRealm(next,target=1,direct=true){
  $('transitionLoading').hidden=!direct||initialTutorial;
  $('transitionLabel').textContent='Preparando o reino '+CAMPAIGN[next-1][0]+'…';
  $('transitionSubTitle').textContent='Carregando o próximo território e seu cenário…';
- frame.src=`reinos/${String(realm).padStart(2,'0')}/index.html?cm25=${loadId}&direct=${direct?'1':'0'}&rev=20261031-pontos`;
+ frame.src=`reinos/${String(realm).padStart(2,'0')}/index.html?cm25=${loadId}&direct=${direct?'1':'0'}&rev=20261031-pontos-leves`;
 }
 // READY confirma o código do iframe, mas não o carregamento das imagens.
 // Aguardar o cenário antes de iniciar uma área nos testes rápidos.

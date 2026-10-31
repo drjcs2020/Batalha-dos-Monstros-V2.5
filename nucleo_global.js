@@ -42,11 +42,39 @@
     scoring:{
       pointsFor(realm,territory=0){
         const r=Math.max(1,Math.min(10,Number(realm)||1));
-        return r===10?180+Math.max(0,Math.min(4,Number(territory)||0))*30:45+(r-1)*15;
+        return r===10?100+Math.max(0,Math.min(4,Number(territory)||0))*50:r*10;
       },
-      track(mob,realm,onDefeat){
+      floaters:[],
+      pop(mob,realm,points,getCamera){
+        if(!mob||!Number.isFinite(Number(mob.x))||!Number.isFinite(Number(mob.y)))return;
+        const camera=typeof getCamera==='function'?Number(getCamera())||0:0;
+        const size=Number(mob.size)||40;
+        this.floaters.push({x:Number(mob.x)-camera,
+          y:Number(mob.y)-(realm===8?0:size*.43),
+          value:points,start:performance.now()});
+        if(this.floaters.length>14)this.floaters.splice(0,this.floaters.length-14);
+      },
+      draw(ctx){
+        const now=performance.now(),duration=850;
+        this.floaters=this.floaters.filter(f=>now-f.start<duration);
+        if(!this.floaters.length)return;
+        ctx.save();
+        ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.font='900 '+Math.max(20,Math.min(31,H*.042))+'px Trebuchet MS,Arial,sans-serif';
+        ctx.lineJoin='round';
+        for(const f of this.floaters){
+          const t=Math.max(0,(now-f.start)/duration);
+          ctx.globalAlpha=Math.min(1,(1-t)*2.4);
+          ctx.lineWidth=4;ctx.strokeStyle='#573006';
+          ctx.shadowColor='#ffd659';ctx.shadowBlur=9*(1-t);
+          ctx.strokeText('+'+f.value,f.x,f.y-46*t);
+          ctx.fillStyle='#ffd95e';ctx.fillText('+'+f.value,f.x,f.y-46*t);
+        }
+        ctx.restore();
+      },
+      track(mob,realm,onDefeat,getCamera){
         if(!mob||typeof onDefeat!=='function'||!(Number(mob.hp)>0))return mob;
-        const points=this.pointsFor(realm,mob.territory);
+        const points=this.pointsFor(realm,mob.territory),scoring=this;
         let hp=mob.hp,credited=false;
         Object.defineProperty(mob,'hp',{
           enumerable:true,configurable:true,
@@ -56,7 +84,10 @@
             hp=value;
             if(!credited&&previous>0&&Number(value)<=0){
               credited=true;
-              try{onDefeat(points)}catch(error){
+              try{
+                onDefeat(points);
+                scoring.pop(mob,realm,points,getCamera);
+              }catch(error){
                 console.error('[ClassMana] Falha ao creditar subordinado',error);
               }
             }
@@ -907,6 +938,8 @@
             p.inv=Math.max(Number(p.inv)||0,ENTRY_MS/1000+.5);
           }
           drawAnimation();
+          // Texto dourado sobe no mesmo canvas apenas ao derrotar o monstro.
+          this.scoring.draw(ctx);
           if(state.phase==='entry'&&performance.now()-state.started>=ENTRY_MS){
             p.x=state.entryEndX;
             p.y=state.groundY;
