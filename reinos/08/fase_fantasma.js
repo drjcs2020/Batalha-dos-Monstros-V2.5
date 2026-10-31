@@ -285,8 +285,8 @@ function startTerritory(){
   S.camera=0;S.bossMovement=0;S.bossSuperClock=10;S.bossBiteCool=1.2;S.bossFace=-1;
   S.bossHealthAtStart=boss.hp;S.previousBossHP=boss.hp;
   S.bossJetClock=7.4;S.bossJetLeft=0;S.bossJetGap=0;S.bossJetCount=0;
-  S.defenderQueue=Array.from({length:15},(_,i)=>i%6);
-  S.guardianSpawnCooldown=1.2;S.mobs=[];S.total=15;
+  S.defenderQueue=Array.from({length:S.files.length},(_,i)=>i);
+  S.guardianSpawnCooldown=1.2;S.mobs=[];S.total=S.defenderQueue.length;
  }
  if(soundOn){try{playMediaAudio(trilhaFases[7],true,.75)}catch(e){console.warn('Trilha da Hidra indisponível',e)}}
  setHud();say25('🐍 '+S.names[S.area]+' — '+(S.area===4?'CHEFONA!':'avance e vença as serpentes!'),3);
