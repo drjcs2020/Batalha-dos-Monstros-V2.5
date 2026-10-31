@@ -501,14 +501,10 @@
         },true);
         // Segundo comando solicitado: consultar o ranking V2.5 nesta mesma
         // tela de pontos bônus, sem passar pelo cadastro.
-        const rankingFromBonus=document.createElement('button');
-        rankingFromBonus.id='cm25BonusRanking';
-        rankingFromBonus.type='button';
-        rankingFromBonus.className='rankBtn bonusViewRanking';
-        rankingFromBonus.textContent='🏆 CONSULTAR PLACAR';
-        rankingFromBonus.disabled=true;
-        rankingFromBonus.style.cssText='display:block!important;margin:10px auto!important;min-height:48px;padding:12px 24px;border:2px solid #ffe39a;border-radius:12px;background:linear-gradient(#ffe8a2,#e5a83e);color:#173358;font:900 19px Trebuchet MS,Arial;cursor:pointer';
-        bonusButton.insertAdjacentElement('beforebegin',rankingFromBonus);
+        // Já está no HTML original da tela Pontos Bônus, DEPOIS dos pontos.
+        // Não criar botões no cabeçalho nem na seleção.
+        const rankingFromBonus=document.getElementById('cm25BonusRanking');
+        if(!rankingFromBonus)throw Error('Botão Consultar Placar ausente na tela Pontos Bônus');
         let rankingOpenedFromBonus=false;
         rankingFromBonus.addEventListener('click',()=>{
           if(rankingFromBonus.disabled)return;
