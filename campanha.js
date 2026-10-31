@@ -443,8 +443,9 @@ async function returnFromBonus(fromDefeat,showRanking=false){
    frame.contentWindow.postMessage({namespace:'CM25',action:'BONUS_RANKING_READY',realm,token:loadId},location.origin);
    return;
   }
-  sessionStorage.removeItem('cm25TesteIdentidade');
-  location.reload();
+  stopSaveMode='finish';
+  stopSaveConfirmed=true;
+  if(!returnToCharacterSelection()) throw Error('Falha ao abrir selecao apos confirmar resultado.');
  }catch(error){
   console.error('[ClassMana V2.5] Saída dos bônus:',error);
   report('⚠ Resultado não confirmado: '+String(error.message||error));
