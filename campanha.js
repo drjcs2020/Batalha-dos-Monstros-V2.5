@@ -279,9 +279,10 @@ async function enterRegisteredStudent(profile){
   // Seleção não pode reaparecer enquanto o servidor confirma e prepara a batalha.
   const introMenu=frame.contentWindow.document.getElementById('menu');
   const introMenuState=introMenu?{display:introMenu.style.display,hidden:introMenu.classList.contains('hidden')}:null;
-  // Nova partida: conservar a selecao visivel durante o pedido ao servidor.
-  // A tela de preparacao original aparecera SOMENTE apos COMO JOGAR.
-  if(introMenu&&choice!=='new'){introMenu.classList.add('hidden');introMenu.style.display='none';}
+  // Após confirmar a jornada, esconder a seleção em qualquer modalidade.
+  // Nova partida mostra COMO JOGAR apenas quando o primeiro território estiver pronto.
+  // Evita que o cadastro reapareça durante a confirmação do servidor.
+  if(introMenu){introMenu.classList.add('hidden');introMenu.style.display='none';}
   $('transitionLoading').hidden=choice==='new';
   $('transitionLabel').textContent='Reunindo suas conquistas…';
   $('transitionSubTitle').textContent='Preparando sua partida para continuar de onde parou.';
