@@ -392,7 +392,22 @@ function stopMediaAudio(){if(mediaTrack){mediaTrack.pause();mediaTrack.currentTi
 function playMediaAudio(src,loop=false,volume=.55){
  if(!soundOn)return;
  if(mediaTrack&&mediaTrack.dataset.cmOriginal===src){mediaTrack.volume=volume*.9;if(mediaTrack.paused)mediaTrack.play().catch(()=>{});return;}
- stopMediaAudio();mediaTrack=new Audio(cmPreloadedAudio[src]||src);mediaTrack.dataset.cmOriginal=src;mediaTrack.preload='auto';mediaTrack.loop=loop;mediaTrack.volume=volume*.9;mediaTrack.play().catch(()=>{});
+ stopMediaAudio();
+ // A V2.5 pré-carrega o áudio do reino antes do primeiro combate.
+ // Reutilizar o mesmo objeto evita uma segunda carga/descompressão do MP3.
+ const audioSystem=window.ClassManaNucleo?.audio;
+ const prewarmed=audioSystem?._warmedTrack;
+ if(prewarmed&&prewarmed.src===src){
+  mediaTrack=prewarmed;
+  audioSystem._warmedTrack=null;
+ }else mediaTrack=new Audio(cmPreloadedAudio[src]||src);
+ mediaTrack.dataset.cmOriginal=src;
+ mediaTrack.preload='auto';mediaTrack.loop=loop;mediaTrack.volume=volume*.9;
+ mediaTrack.play().catch(error=>{
+  // Bloqueio de reprodução automática será liberado no primeiro comando
+  // do jogador, pelo listener de desbloqueio do núcleo V2.5.
+  if(error?.name!=='NotAllowedError')console.warn('[ClassMana V2.5] Falha ao iniciar trilha',error);
+ });
 }
 const cmAudio={inicio:AS+'sons/cm_como_comecar.mp3',selecao:AS+'sons/cm_selecao_herois.mp3',tutorial:AS+'sons/cm_como_jogar.mp3',placar:AS+'sons/cm_placar.mp3',gameover:AS+'sons/cm_gameover.mp3',recarga:AS+'sons/cm_recarga.mp3'};
 const trilhaFases=[AS+'sons/cm_fantasma.mp3',AS+'sons/cm_golem.mp3',AS+'sons/cm_mega_aranha.mp3',AS+'sons/cm_flor.mp3',AS+'sons/cm_colmeia.mp3',mediaAudio.spider,AS+'sons/cm_morcego.mp3',AS+'sons/cm_hidra.mp3',AS+'sons/cm_peaks_pass.mp3',AS+'sons/cm_peaks_pass.mp3'];
