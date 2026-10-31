@@ -221,7 +221,10 @@ function chooseJourney(saved){
   function finish(value,button){
     if(pending)return;pending=true;button?.classList.add('is-selected');
     actions.querySelectorAll('button').forEach(x=>x.disabled=true);
-    overlay.remove();resolve(value);
+    // Nova partida: manter o diálogo de jornada já existente na tela
+    // até Como Jogar abrir; evita expor o fundo azul vazio.
+    if(value!=='new')overlay.remove();
+    resolve(value);
   }
   function button(label,subtitle,value,kind=''){
     const b=makeElement('button');b.type='button';b.className='cm25JourneyButton '+kind;b.dataset.action=value;
@@ -318,6 +321,7 @@ async function enterRegisteredStudent(profile){
   }finally{
    // Se o carregamento falhar, permitir nova tentativa sem novo cadastro.
    if(!journeyEntered){
+    $('cm25JourneyDialog')?.remove();
     $('transitionLoading').hidden=true;
     frame.style.opacity='1';
     frame.style.pointerEvents='auto';
@@ -430,11 +434,13 @@ async function area(n){
   }
   $('transitionLoading').hidden=true;
   frame.style.opacity='1';frame.style.pointerEvents='auto';
+  // Revelar a tela verde pronta e fechar o próprio diálogo no mesmo ciclo.
+  $('cm25JourneyDialog')?.remove();
   frame.focus();try{frame.contentWindow.focus()}catch(e){}
   report(`Reino ${realm} · território ${n} · ${n===maximum?'chefão':status.monstersLoaded+' monstros carregados'}`);
   return true;
  }catch(e){
-  if(token===loadId){$('transitionLoading').hidden=true;frame.style.opacity='1';frame.style.pointerEvents='auto';report('ERRO AO ABRIR TERRITÓRIO: '+String(e.message||e));console.error('[ClassMana] Falha ao iniciar',selectedRealm,n,e);}
+  if(token===loadId){$('cm25JourneyDialog')?.remove();$('transitionLoading').hidden=true;frame.style.opacity='1';frame.style.pointerEvents='auto';report('ERRO AO ABRIR TERRITÓRIO: '+String(e.message||e));console.error('[ClassMana] Falha ao iniciar',selectedRealm,n,e);}
   return false;
  }finally{if(token===loadId)entering=false;}
 }
