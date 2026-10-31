@@ -271,7 +271,7 @@ function startTerritory(){
  p.x=W*.19;p.y=ground();window.cm25HeroFeetOffset=0;p.hp=100;p.mana=100;p.inv=1.5;
  shots=[];bad=[];parts=[];superCooldown=0;superUses=0;
  if(S.area<4){let ids=S.waves[S.area];S.mobs=ids.map((id,i)=>createMob(id,i,ids.length));S.total=S.mobs.length}
- else {boss.max=3340;boss.hp=boss.max;boss.x=W*.78;boss.y=platformY()-bossHeight()/2-3+bossVisualFootPad();boss.cool=3.1;S.total=0;S.bossIntroTime=1.85;S.bossPhase=1;S.bossPhaseNotice=0;S.camera=0;S.bossMovement=0;S.bossWebCooldown=5.5;S.bossSuperClock=11.6;S.bossFace=-1;window.cm25GolemFacing=-1;S.bossHealthAtStart=boss.hp;S.previousBossHP=boss.hp;S.defenderQueue=Array.from({length:16},(_,i)=>i%5);S.guardianSpawnCooldown=.7;S.bossAnchorX=W*.67;S.bossSwingSpeed=1.15;S.mobs=[];S.total=16}
+ else {boss.max=3340;boss.hp=boss.max;boss.x=W*.78;boss.y=platformY()-bossHeight()/2-3+bossVisualFootPad();boss.cool=3.1;S.total=0;S.bossIntroTime=1.85;S.bossPhase=1;S.bossPhaseNotice=0;S.camera=0;S.bossMovement=0;S.bossWebCooldown=5.5;S.bossSuperClock=11.6;S.bossFace=-1;window.cm25GolemFacing=-1;S.bossHealthAtStart=boss.hp;S.previousBossHP=boss.hp;S.defenderQueue=Array.from({length:S.files.length},(_,i)=>i);S.guardianSpawnCooldown=.7;S.bossAnchorX=W*.67;S.bossSwingSpeed=1.15;S.mobs=[];S.total=S.defenderQueue.length}
  if(S.area===4&&soundOn){try{playMediaAudio(trilhaFases[6],true,.75)}catch(e){console.warn('Trilha do Morcego indisponível',e)}}
  setHud();say25('🦇 '+S.names[S.area]+' — '+(S.area===4?'CHEFÃO!':'avance e vença a horda!'),3);
 }
