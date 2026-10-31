@@ -52,7 +52,7 @@ try{
  // Integra o módulo de Magia Suprema original ao alvo real da V2.5.
  // Mantém a lógica, sons, botão e custo originais e desloca só a área visual.
  try{
-  const magicUrl=base+'assets/magia-suprema.js';
+  const magicUrl=new URL('../../assets/magia-suprema.js',location.href).href;
   const magicRes=await fetch(magicUrl,{cache:'no-cache'});
   if(magicRes.ok){
    let magicCode=await magicRes.text();
@@ -155,6 +155,7 @@ function cm25HeroBottomPad(im,hh){
  });
  if(!patched)throw Error('O formato do script original mudou. A V2.5 não foi injetada para evitar um jogo quebrado.');
  original=original.replace(/<head([^>]*)>/i,'<head$1><base href="'+base+'">');
+ original=original.replace(/src=["']assets\/magia-config\.js["']/i,'src="'+new URL('../../assets/magia-config.js',location.href).href+'"');
 
  // O carregamento e a intro originais rodam APENAS na primeira entrada normal.
  // Durante F6/F7/F8 explícitos, impedir que iniciem música/vídeo após o combate.
