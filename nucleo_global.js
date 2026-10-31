@@ -525,8 +525,12 @@
       bridge.cm25ProgressInstalled=true;
       const status=bridge.status.bind(bridge),select=bridge.selectArea.bind(bridge);
       let lastReportedTerritory=Number(status()?.territory)||1;
+      // Uma jornada pode voltar ao cadastro SEM destruir o iframe e SEM deixar
+      // a batalha anterior ativa por trás do menu de seleção.
+      let parkedAtSelection=false;
       bridge.status=()=>{
         const actual=status(),reached=Number(actual.territory)||1;
+        if(parkedAtSelection)return {...actual,active:false,playing:false,paused:false};
         // Avanço real é informado ao controlador para que Continuar retome a área correta.
         if(actual.active&&reached>lastReportedTerritory){
           lastReportedTerritory=reached;
@@ -545,6 +549,7 @@
         };
       };
       bridge.selectArea=(target,profile)=>{
+        parkedAtSelection=false;
         if(profile?.id_aluno)playerId=String(profile.id_aluno);
         const selected=select(target,profile);
         lastReportedTerritory=Number(selected)||Number(target)+1||1;
@@ -584,6 +589,20 @@
         paused=true;
         try{if(typeof mediaTrack!=='undefined'&&mediaTrack)mediaTrack.pause();}catch(e){}
         return {wasPlaying,wasPaused};
+      };
+      bridge.returnToSelection=()=>{
+        // O iframe reutilizado após uma gravação direta tem a classe abaixo.
+        // Um CSS de prioridade !important escondia o menu mesmo quando a
+        // janela de salvamento pedia para reabri-lo.
+        parkedAtSelection=true;
+        playing=false;
+        paused=false;
+        try{if(typeof stopMediaAudio==='function')stopMediaAudio();}catch(e){}
+        document.body.classList.remove('cm25-test-direct');
+        try{if(soundOn&&typeof playMediaAudio==='function')
+          playMediaAudio(cmAudio.selecao,true,.48);
+        }catch(e){console.warn('[ClassMana V2.5] Música da seleção',e);}
+        return true;
       };
       bridge.resumeAfterSave=state=>{
         if(!state)return false;
