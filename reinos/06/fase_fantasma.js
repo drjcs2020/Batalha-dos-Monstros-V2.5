@@ -221,7 +221,7 @@ function drawMobEffects(){
  ctx.restore();
 }
 
-function changedArea(name,desc,cb,stayPaused=false,delay=1850){
+function changedArea(name,desc,cb,stayPaused=false,delay=1850){if(window.ClassManaNucleo?.portalBeforeExit?.(()=>changedArea(name,desc,cb,stayPaused,delay)))return;
  S.transition=true;playing=false;paused=true;overlay.style.display='flex';
  // Reaproveita as artes aprovadas do território derrotado; nenhuma geração nova.
  overlay.querySelector('.scene-art').style.backgroundImage=`url('${S.bg[S.area]?.src||''}')`;
