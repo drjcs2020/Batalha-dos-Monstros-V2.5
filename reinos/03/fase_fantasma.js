@@ -93,10 +93,10 @@ const worldLen=()=>W*4.25; // Permite rolagem longa e pelo menos uma repetição
 const lootDefs={
  heart:{label:'CORAÇÃO',file:'heart.png',ttl:11},
  chest:{label:'BAÚ DA MAGIA',file:'chest.png',ttl:12},
- crystal:{label:'CRISTAL DE MANA',file:'crystal.png',ttl:10},
- clock:{label:'TEMPO LENTO',file:null,emoji:'⏱️',ttl:9},
- shield:{label:'ESCUDO',file:'shield.png',ttl:9},
- sword:{label:'ESPADA',file:'dagger.png',ttl:9},
+ crystal:{label:'CRISTAL DE MANA',file:'crystal.png',ttl:14},
+ clock:{label:'TEMPO LENTO',file:null,emoji:'⏱️',ttl:13},
+ shield:{label:'ESCUDO',file:'shield.png',ttl:13},
+ sword:{label:'ESPADA',file:'dagger.png',ttl:13},
  map:{label:'MAPA',file:'compass.png',ttl:11}
 };
 const lootImgs={};
@@ -135,14 +135,14 @@ function lootCollect(){
  const key=S.loot.key;
  S.loot=null;S.lootNext=12+Math.random()*5;S.lootClock=0;
  if(key==='heart')p.hp=Math.min(100,p.hp+20);
- if(key==='crystal')p.mana=Math.min(100,p.mana+25);
+ if(key==='crystal')p.mana=Math.min(100,p.mana+40);
  if(key==='chest'){S.lootChestUsed=true;S.lootPhaseChest=true;}
- if(key==='clock')S.lootBuffs.clock=6;
- if(key==='shield'){S.lootBuffs.shield=5;p.shield=Math.max(p.shield,5)}
- if(key==='sword')S.lootBuffs.sword=8;
- if(key==='map')S.lootMapUntil=8;
+ if(key==='clock')S.lootBuffs.clock=12;
+ if(key==='shield'){S.lootBuffs.shield=10;p.shield=Math.max(p.shield,10)}
+ if(key==='sword')S.lootBuffs.sword=14;
+ if(key==='map')S.lootMapUntil=12;
  burst(p.x,p.y-75,key==='heart'?'#ff6189':'#83dfff',19);
- const description={heart:'+1 CORAÇÃO',crystal:'+25 MANA',chest:'LIMITE DE SUPER x2 ATÉ O FIM DA FASE',clock:'INIMIGOS LENTOS POR 6s',shield:'PROTEÇÃO POR 5s',sword:'DANO AUMENTADO POR 8s',map:'PRÓXIMO ITEM SINALIZADO'}[key];
+ const description={heart:'+1 CORAÇÃO',crystal:'+40 MANA',chest:'LIMITE DE SUPER x2 ATÉ O FIM DA FASE',clock:'INIMIGOS LENTOS POR 12s',shield:'PROTEÇÃO POR 10s',sword:'DANO AUMENTADO POR 14s',map:'PRÓXIMO ITEM SINALIZADO'}[key];
  lootMessage('🎁 '+description);
 }
 function lootStep(dt){
@@ -658,8 +658,31 @@ function moveHorde(dt){
    ()=>{S.area=next;startTerritory();if(next===4)playBossSignal()},false,next===4?2600:1850);
  }}
 }
+
+ // Separação espacial suave: os inimigos mantêm a perseguição e ataques,
+ // mas não ficam todos sobrepostos em uma só pilha de sprites.
+ function cm25SeparateMobs(dt){
+  if(!playing||paused||!S.active||!Array.isArray(S.mobs))return;
+  const alive=S.mobs.filter(m=>m&&m.hp>0);
+  if(alive.length<2)return;
+  const minX=W*.10,maxX=S.area===4?W*.91:S.world-W*.10;
+  const step=Math.min(.05,Math.max(0,dt))*150;
+  for(let pass=0;pass<2;pass++){
+   for(let i=0;i<alive.length;i++)for(let j=i+1;j<alive.length;j++){
+    const a=alive[i],b=alive[j];
+    if(Math.abs(a.y-b.y)>Math.min(a.size,b.size)*.72)continue;
+    const minGap=Math.max(82,(a.size+b.size)*.53);
+    const delta=b.x-a.x,overlap=minGap-Math.abs(delta);
+    if(overlap<=0)continue;
+    const dir=delta===0?(a.id<=b.id?1:-1):Math.sign(delta);
+    const shift=Math.min(overlap*.50,step);
+    a.x=clamp(a.x-dir*shift,minX,maxX);
+    b.x=clamp(b.x+dir*shift,minX,maxX);
+   }
+  }
+ }
 update=function(dt){
- if(stage===0&&S.active&&S.area<4)return moveHorde(dt);
+ if(stage===0&&S.active&&S.area<4){const result=moveHorde(dt);cm25SeparateMobs(dt);return result;}
  if(stage===0&&S.active&&S.area===4){
   if(S.bossIntroTime>0){
    if(playing&&!paused){S.bossIntroTime=Math.max(0,S.bossIntroTime-dt);elapsedMs+=dt*1000;
