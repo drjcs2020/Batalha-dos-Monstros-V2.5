@@ -511,7 +511,7 @@ window.addEventListener('message',e=>{
  }
 });
 
-let stopSaveOpen=false,stopSaveConfirmed=false,stopPauseState=null,stopSaveMode='save';
+let stopSaveOpen=false,stopSaveConfirmed=false,stopPauseState=null,stopSaveMode='save',finishRankingOpen=false;
 // Apresentação do progresso: imagens 3D do acervo original ClassMana.
 const CM25_ITEM_ART='https://drjcs2020.github.io/classmana-batalha-dos-monstros-V2/assets/items3d/';
 function cm25SaveVisual(state){
@@ -544,6 +544,9 @@ function openStopAndSave(mode='save'){
  if(!pauseState){report('⚠ Aguarde o início da batalha para utilizar este botão.');return;}
  stopPauseState=pauseState;stopSaveMode=mode==='finish'?'finish':'save';
  stopSaveOpen=true;stopSaveConfirmed=false;
+ $('savePanel').dataset.finished='false';
+ $('finishScoreBreakdown').hidden=true;
+ $('saveRanking').hidden=true;
  const finishing=stopSaveMode==='finish';
  $('stopSave').hidden=true;$('finishRun').hidden=true;
  cm25SaveVisual(finishing?'finish':'save');cm25SaveStats(snapshot);
@@ -581,19 +584,37 @@ async function confirmStopAndSave(){
  try{
   const snapshot=currentSnapshot();
   if(!snapshot)throw Error('Não foi possível recuperar o estado da batalha.');
+  // Aplicar apenas uma vez o bônus ORIGINAL do jogo ao encerramento.
+  const battleScore=Math.max(0,Math.round(Number(snapshot.pontuacao)||0));
+  let bonusScore=0;
+  if(finishing){
+   const progress=frame.contentWindow.CM25RealmBridge?.status?.();
+   if(!progress||String(progress.id_aluno)!==String(identity?.id_aluno))
+    throw Error('Não foi possível conferir o bônus desta partida.');
+   bonusScore=progress.bonusApplied?0:Math.max(0,Math.round(Number(progress.bonusPreview)||0));
+   snapshot.pontuacao=battleScore+bonusScore;
+  }
   if(finishing)await queueCheckpoint(snapshot,true,'ENCERRADA',true);
   else await queueCheckpoint(snapshot,false,'ENCERRADA',true);
   stopSaveConfirmed=true;
   cm25SaveVisual('success');
+  $('savePanel').dataset.finished=finishing?'true':'false';
   $('saveTitle').textContent=finishing?'Aventura encerrada!':'Conquistas protegidas!';
+  if(finishing){
+   $('finishBattleScore').textContent=battleScore.toLocaleString('pt-BR');
+   $('finishBonusScore').textContent='+'+bonusScore.toLocaleString('pt-BR');
+   $('finishTotalScore').textContent=snapshot.pontuacao.toLocaleString('pt-BR');
+   $('finishScoreBreakdown').hidden=false;
+   $('saveRanking').hidden=false;
+  }
   $('saveDescription').textContent=finishing
-   ?'O resultado foi confirmado. Sua partida terminou e você poderá iniciar uma nova jornada.'
+   ?'Resultado confirmado! Veja seus pontos de batalha, bônus e total. Consulte sua posição no placar antes de voltar ao início.'
    :'Seu progresso foi confirmado. Use Continuar partida quando voltar.';
   $('saveDetails').textContent='Reino '+snapshot.reino+' · Território '+snapshot.territorio+' · '+snapshot.pontuacao.toLocaleString('pt-BR')+' pontos';
-  notice.textContent=finishing?'Resultado confirmado no ClassMana V2.5.':'Tudo certo! O ClassMana confirmou seu progresso.';
+  notice.textContent=finishing?'🏆 Pontuação final confirmada na V2.5. Abra o placar para consultar sua posição.':'Tudo certo! O ClassMana confirmou seu progresso.';
   confirm.hidden=true;cancel.disabled=false;cancel.hidden=finishing;
   if(!finishing)cancel.textContent='▶ Retomar batalha';
-  $('saveExit').hidden=false;$('saveExit').focus();
+  $('saveExit').hidden=false;(finishing?$('saveRanking'):$('saveExit')).focus();
  }catch(error){
   console.error('[ClassMana V2.5] Registro da partida:',error);
   cm25SaveVisual('error');
@@ -604,10 +625,44 @@ async function confirmStopAndSave(){
   confirm.disabled=false;cancel.disabled=false;
  }
 }
+
+function showRankingAfterFinish(){
+ if(!stopSaveConfirmed||stopSaveMode!=='finish'||finishRankingOpen)return;
+ let documentFrame=null,open=null,ranking=null,close=null;
+ try{
+  documentFrame=frame.contentWindow.document;
+  open=documentFrame.getElementById('openRanking');
+  ranking=documentFrame.getElementById('rankingOverlay');
+  close=documentFrame.getElementById('closeRanking');
+ }catch(error){console.error('[ClassMana V2.5] Placar final indisponível',error);}
+ if(!open||!ranking||!close){
+  report('⚠ O placar não está disponível nesta tela. Tente novamente.');
+  return;
+ }
+ const originalCloseText=close.textContent;
+ function returnToFinalResult(event){
+  if(!finishRankingOpen)return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  close.removeEventListener('click',returnToFinalResult,true);
+  ranking.classList.add('hidden');
+  close.textContent=originalCloseText;
+  finishRankingOpen=false;
+  $('saveOverlay').hidden=false;
+  $('saveRanking').focus();
+ }
+ close.addEventListener('click',returnToFinalResult,true);
+ close.textContent='↩ VOLTAR AO RESULTADO';
+ finishRankingOpen=true;
+ $('saveOverlay').hidden=true;
+ frame.style.pointerEvents='auto';
+ open.click(); // Ranking online V2.5; não usa a classificação da V2.4.
+}
 $('stopSave').addEventListener('click',()=>openStopAndSave('save'));
 $('finishRun').addEventListener('click',()=>openStopAndSave('finish'));
 $('saveCancel').addEventListener('click',closeStopAndResume);
 $('saveConfirm').addEventListener('click',confirmStopAndSave);
+$('saveRanking').addEventListener('click',showRankingAfterFinish);
 $('saveExit').addEventListener('click',()=>{if(stopSaveConfirmed)location.reload();});
 
 setInterval(()=>{
