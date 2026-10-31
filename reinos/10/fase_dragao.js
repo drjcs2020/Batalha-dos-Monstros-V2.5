@@ -494,12 +494,20 @@ window.addEventListener('keydown',e=>{if(window.ClassManaV25TestMode&&window.par
 // == Ponte de integração com o núcleo compartilhado, Reino 10 ==
 // Avanço automático de reino após o chefão (quando o módulo realmente concluiu a luta).
 const cm25FinishLocal=finishBossDefeat;
-let cm25CompletionSent=false;
+let cm25CompletionSent=false,cm25VictoryPortalPending=false;
 finishBossDefeat=function(...args){
- const lastArea=4;
- const wasBoss=stage===0&&R.area===lastArea&&!!defeatPending;
+ const wasBoss=stage===0&&R.area===4&&!!defeatPending;
+ const completed=wasBoss&&boss.hp<=0&&R.mobs.every(m=>!m.alive);
+ // O território 49 termina pelo portal antes dos resultados, sem modificar magias ou pontos.
+ if(completed&&!cm25VictoryPortalPending&&!cm25CompletionSent){
+   const scheduled=window.ClassManaNucleo?.portalBeforeExit?.(()=>{
+     cm25VictoryPortalPending=false;
+     finishBossDefeat(...args); // O núcleo mantém a guarda exitDone neste território.
+   });
+   if(scheduled){cm25VictoryPortalPending=true;return;}
+ }
+ if(cm25VictoryPortalPending)return;
  const out=cm25FinishLocal(...args);
- const completed=wasBoss&&(boss.hp<=0&&R.mobs.every(m=>!m.alive));
  if(completed&&!cm25CompletionSent){
    cm25CompletionSent=true;
    window.parent!==window&&window.parent.postMessage({namespace:'CM25',action:'COMPLETE',token:new URLSearchParams(location.search).get('cm25'),realm:10},location.origin);
