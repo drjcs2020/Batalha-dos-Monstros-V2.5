@@ -441,7 +441,7 @@ function advanceTerritory(){
   banner('TERRITÓRIO CONCLUÍDO',()=>toArea(R.area+1));
  }
 }
-function banner(text,cb,duration=1750){if(R.shift)return;R.shift=true;paused=true;playing=false;const d=document.createElement('div');d.id='r10banner';d.style.cssText='position:fixed;inset:0;z-index:999999;display:grid;place-items:center;background:#070b22ed;color:#ffdb91;text-align:center;white-space:pre-line;padding:24px;font:900 clamp(23px,4vw,42px) Trebuchet MS,Arial';d.textContent=text;document.body.appendChild(d);setTimeout(()=>{d.remove();cb()},duration)}
+function banner(text,cb,duration=1750){if(window.ClassManaNucleo?.portalBeforeExit?.(()=>banner(text,cb,duration)))return;if(R.shift)return;R.shift=true;paused=true;playing=false;const d=document.createElement('div');d.id='r10banner';d.style.cssText='position:fixed;inset:0;z-index:999999;display:grid;place-items:center;background:#070b22ed;color:#ffdb91;text-align:center;white-space:pre-line;padding:24px;font:900 clamp(23px,4vw,42px) Trebuchet MS,Arial';d.textContent=text;document.body.appendChild(d);setTimeout(()=>{d.remove();cb()},duration)}
 function defeatInTerritory(){if(p.hp>0||gameEnded)return false;showCM25Defeat();return true;}
 update=function(dt){if(stage!==0||!R.active)return orig.update(dt);if(!playing||paused||R.shift)return;
  R.clock+=dt;R.damageGrace=Math.max(0,R.damageGrace-dt);
