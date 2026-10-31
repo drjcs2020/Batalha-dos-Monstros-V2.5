@@ -643,7 +643,7 @@ const questions=[
 {q:'Quanto é 10 + 6 × 5?',a:["35", "40", "45", "80"],ok:1},
 {q:'Quanto é 50 − 8 × 5?',a:["18", "20", "42", "10"],ok:3}
 ];
-function resize(){DPR=Math.min(2,devicePixelRatio||1);c.width=innerWidth*DPR;c.height=innerHeight*DPR;W=innerWidth;H=innerHeight;ctx.setTransform(DPR,0,0,DPR,0,0)}addEventListener('resize',resize);resize();
+function resize(){DPR=Math.min(2,devicePixelRatio||1);c.width=innerWidth*DPR;c.height=innerHeight*DPR;W=innerWidth;H=innerHeight;ctx.setTransform(DPR,0,0,DPR,0,0);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high'}addEventListener('resize',resize);resize();
 let p={x:200,y:520,hp:100,mana:100,inv:0,shield:0,shieldCd:0},boss={x:1000,y:350,hp:1,max:1,cool:1,vx:0,vy:0,moveT:0,dash:0},shots=[],bad=[],parts=[],keys={},joy={x:0,y:0};
 function say(s,d=1.5){$('#msg').textContent=s;msgUntil=T+d}function tone(f=500,d=.1,type='sine',v=.05){if(!audio||!soundOn)return;let o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=f;g.gain.value=Math.min(.14,v*1.4);o.connect(g).connect(audio.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+d);o.stop(audio.currentTime+d)}
 setInterval(()=>{if(!playing||paused||gameEnded||bossDefeated||defeatPending||!soundOn)return;const current=stages[stage];if(current)monsterSfx(current.kind,false);},10000);
@@ -911,11 +911,12 @@ for(const q of bad){q.x+=q.vx*dt;q.y+=q.vy*dt;q.life-=dt;if(!defeatPending&&Math
 const projectileAuraCache=new Map();
 let backgroundCache=null,backgroundCacheKey='';
 function drawBackgroundCached(s,bg){
-  const key=stage+'|'+W+'|'+H+'|'+(bg&&bg.complete&&bg.naturalWidth?bg.src:'none');
+  const cacheScale=Math.max(1,Math.min(DPR,1.5,Math.sqrt(4000000/Math.max(1,W*H))));
+  const key=stage+'|'+W+'|'+H+'|'+cacheScale+'|'+(bg&&bg.complete&&bg.naturalWidth?bg.src:'none');
   if(key!==backgroundCacheKey){
     backgroundCacheKey=key;
-    backgroundCache=document.createElement('canvas');backgroundCache.width=W;backgroundCache.height=H;
-    const c=backgroundCache.getContext('2d',{alpha:false});
+    backgroundCache=document.createElement('canvas');backgroundCache.width=Math.round(W*cacheScale);backgroundCache.height=Math.round(H*cacheScale);
+    const c=backgroundCache.getContext('2d',{alpha:false});c.setTransform(cacheScale,0,0,cacheScale,0,0);c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
     if(bg&&bg.complete&&bg.naturalWidth){
       const ir=bg.naturalWidth/bg.naturalHeight,cr=W/H;
       let dw,dh,ox,oy;
@@ -930,7 +931,7 @@ function drawBackgroundCached(s,bg){
     if(s.tint){c.fillStyle=s.tint+'55';c.fillRect(0,0,W,H)}
     c.fillStyle='#00101a35';c.fillRect(0,0,W,H);
   }
-  ctx.drawImage(backgroundCache,0,0);
+  ctx.drawImage(backgroundCache,0,0,W,H);
 }
 
 const enemySpriteCache=new Map();
