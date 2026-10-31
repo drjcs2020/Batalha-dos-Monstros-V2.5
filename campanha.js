@@ -611,6 +611,7 @@ async function confirmStopAndSave(){
    ?'Resultado confirmado! Veja seus pontos de batalha, bônus e total. Consulte sua posição no placar antes de voltar ao início.'
    :'Seu progresso foi confirmado. Use Continuar partida quando voltar.';
   $('saveDetails').textContent='Reino '+snapshot.reino+' · Território '+snapshot.territorio+' · '+snapshot.pontuacao.toLocaleString('pt-BR')+' pontos';
+  if(finishing)$('saveDescription').textContent='🏰 Reino '+snapshot.reino+' · Território '+snapshot.territorio+' • Resultado confirmado! Confira a pontuação final e veja sua posição no placar.';
   notice.textContent=finishing?'🏆 Pontuação final confirmada na V2.5. Abra o placar para consultar sua posição.':'Tudo certo! O ClassMana confirmou seu progresso.';
   confirm.hidden=true;cancel.disabled=false;cancel.hidden=finishing;
   if(!finishing)cancel.textContent='▶ Retomar batalha';
@@ -652,11 +653,11 @@ function showRankingAfterFinish(){
   $('saveRanking').focus();
  }
  close.addEventListener('click',returnToFinalResult,true);
- close.textContent='↩ VOLTAR AO RESULTADO';
  finishRankingOpen=true;
  $('saveOverlay').hidden=true;
  frame.style.pointerEvents='auto';
  open.click(); // Ranking online V2.5; não usa a classificação da V2.4.
+ close.textContent='↩ VOLTAR AO RESULTADO';
 }
 $('stopSave').addEventListener('click',()=>openStopAndSave('save'));
 $('finishRun').addEventListener('click',()=>openStopAndSave('finish'));
