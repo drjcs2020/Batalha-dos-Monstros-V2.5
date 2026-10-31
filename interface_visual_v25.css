@@ -262,7 +262,7 @@
 
 /* Resultado após encerrar manualmente a partida: batalha + bônus = total.
    Não interfere nos painéis de guardar progresso. */
-#finishScoreBreakdown[hidden],#savePanel .saveActions #saveRanking[hidden]{display:none!important}
+#savePanel #finishScoreBreakdown.cm25FinishScores[hidden],#savePanel .saveActions #saveRanking[hidden]{display:none!important}
 #savePanel #finishScoreBreakdown.cm25FinishScores{
  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
  gap:9px;margin:14px 0 12px
