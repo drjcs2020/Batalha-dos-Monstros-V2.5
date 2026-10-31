@@ -209,25 +209,24 @@
         if(!document.getElementById(markerId)){
           const style=document.createElement('style');
           style.id=markerId;
-          style.textContent=`/* Acesso ao placar SEM iniciar, fixo no topo: os heróis ampliados não podem escondê-lo abaixo da rolagem. */
-#menu .menuActions #openRanking{
- position:fixed!important;top:max(12px,env(safe-area-inset-top))!important;
- right:max(12px,env(safe-area-inset-right))!important;
- z-index:200!important;display:inline-flex!important;align-items:center!important;
- justify-content:center!important;visibility:visible!important;opacity:1!important;
- pointer-events:auto!important;min-width:145px!important;min-height:52px!important;
- margin:0!important;padding:12px 18px!important;
- border:2px solid #ffeb96!important;border-radius:17px!important;
- background:linear-gradient(155deg,#ffe6a0,#edac32 65%,#cd8325)!important;
- box-shadow:0 0 0 2px #11234ea8,0 9px 24px #00112fb0,0 0 24px #ffe8a47a!important;
- font:900 clamp(16px,1.9vw,21px)/1.1 "Trebuchet MS",Arial,sans-serif!important;
- color:#173358!important;text-shadow:0 1px 1px #ffffffb0!important;
- cursor:pointer!important;
+          style.textContent=`/* Placar no local original: ao lado de INICIAR JORNADA, no fim da seleção. */
+#menu .menuActions{
+ display:flex!important;flex-direction:row!important;align-items:center!important;
+ justify-content:center!important;gap:12px!important;flex-wrap:wrap!important;
 }
-@media(max-width:600px){
- #menu .menuActions #openRanking{min-width:121px!important;min-height:46px!important;
- font-size:16px!important;padding:10px 12px!important}
-}`;
+#menu .menuActions #openRanking{
+ position:static!important;inset:auto!important;top:auto!important;right:auto!important;
+ bottom:auto!important;left:auto!important;z-index:auto!important;
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ visibility:visible!important;opacity:1!important;pointer-events:auto!important;
+ min-height:51px!important;margin:0!important;padding:12px 20px!important;
+ border:2px solid #e9b650!important;border-radius:13px!important;
+ background:linear-gradient(#7be9f7,#438fd1 55%,#7659b6)!important;
+ box-shadow:0 5px 0 #29386d,0 0 15px #66e8ff66!important;
+ font:900 clamp(17px,1.85vw,21px)/1.2 "Trebuchet MS",Arial,sans-serif!important;
+ color:#fff!important;text-shadow:0 2px 3px #15366b!important;cursor:pointer!important;
+}
+`;
           document.head.appendChild(style);
         }
         placarButton.removeAttribute('hidden');
