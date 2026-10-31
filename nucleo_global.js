@@ -724,8 +724,10 @@
             showFrame(frame,state.portalX);
             // O herói original caminha para dentro, perde opacidade e some.
             if(elapsed<EXIT_GROW+EXIT_WALK){
-              drawCharacter(state.portalX-W*.11*(1-walk),
-                1-ease((elapsed-EXIT_GROW)/EXIT_WALK),1-.16*walk);
+              // Caminhar a partir da posição REAL do herói na câmera, sem teleporte.
+              const heroX=state.heroX+(state.portalX-state.heroX)*walk;
+              const vanish=1-ease((walk-.65)/.35);
+              drawCharacter(heroX,vanish,1-.16*walk);
             }
           }
         }finally{ctx.restore()}
@@ -768,7 +770,14 @@
         state.phase='exit';
         state.started=performance.now();
         state.groundY=Number(p.y)||H*.75;
-        state.portalX=W*.84;
+        // A câmera da arena desloca o herói no mundo; converter para tela.
+        let cameraX=Number(st.camera);
+        if(!Number.isFinite(cameraX)){
+          const testCamera=Number(window.ClassManaV25Test?.getStatus?.()?.camera);
+          cameraX=Number.isFinite(testCamera)?testCamera:Math.max(0,Number(p.x)-W*.36);
+        }
+        state.heroX=Math.max(W*.10,Math.min(W*.84,(Number(p.x)||0)-cameraX));
+        state.portalX=Math.min(W*.89,state.heroX+Math.min(W*.15,175));
         state.wasPaused=paused;
         paused=true;
         p.inv=Math.max(Number(p.inv)||0,2.0);
