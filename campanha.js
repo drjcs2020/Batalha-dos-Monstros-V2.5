@@ -286,13 +286,28 @@ async function enterRegisteredStudent(profile){
   // Nova partida mostra COMO JOGAR apenas quando o primeiro território estiver pronto.
   // Evita que o cadastro reapareça durante a confirmação do servidor.
   if(introMenu){introMenu.classList.add('hidden');introMenu.style.display='none';}
-  // O Reino 1 ja esta carregado atras do cadastro. Nao mostrar o canvas
-  // com heroi/chefao antes da tela COMO JOGAR estar pronta.
-  if(choice==='new')frame.style.opacity='0';
+  // Nova partida: abrir IMEDIATAMENTE a tela verde original, antes
+  // de consultar/gravar o progresso no servidor e carregar o cenario.
+  const introBridge=ready&&!campaignStarted?frame.contentWindow.CM25RealmBridge:null;
+  let tutorialStartedEarly=false;
+  if(choice==='new'&&introBridge?.realm===1){
+   try{
+    const started=introBridge.startTutorial?.({early:true});
+    const green=frame.contentWindow.document.getElementById('tutorial');
+    tutorialStartedEarly=started===true&&!!green&&!green.classList.contains('hidden');
+   }catch(error){console.warn('[ClassMana] Tutorial inicial indisponivel',error);}
+   if(tutorialStartedEarly){
+    frame.style.opacity='1';
+    $('cm25JourneyDialog')?.remove();
+   }else introBridge.cancelEntryTutorial?.();
+  }
+  // Se o motor ainda nao estiver pronto, manter a janela original de
+  // confirmacao cobrindo o jogo ate Como Jogar abrir, nunca tela azul vazia.
+  if(choice==='new'&&!tutorialStartedEarly)frame.style.opacity='0';
   $('transitionLoading').hidden=choice==='new';
   $('transitionLabel').textContent='Reunindo suas conquistas…';
   $('transitionSubTitle').textContent='Preparando sua partida para continuar de onde parou.';
-  frame.style.pointerEvents='none';
+  frame.style.pointerEvents=tutorialStartedEarly?'auto':'none';
   let journeyEntered=false;
   try{
   const record=choice==='new'
@@ -321,6 +336,7 @@ async function enterRegisteredStudent(profile){
   }finally{
    // Se o carregamento falhar, permitir nova tentativa sem novo cadastro.
    if(!journeyEntered){
+    if(tutorialStartedEarly)introBridge?.cancelEntryTutorial?.();
     $('cm25JourneyDialog')?.remove();
     $('transitionLoading').hidden=true;
     frame.style.opacity='1';
@@ -437,6 +453,9 @@ async function area(n){
   // Revelar a tela verde pronta e fechar o próprio diálogo no mesmo ciclo.
   $('cm25JourneyDialog')?.remove();
   frame.focus();try{frame.contentWindow.focus()}catch(e){}
+  // Somente agora o botao Comecar Agora e o fim da contagem podem
+  // iniciar a batalha. O aluno nunca ve um fundo vazio.
+  if(selectedRealm===1&&n===1)bridge.markTutorialReady?.();
   report(`Reino ${realm} · território ${n} · ${n===maximum?'chefão':status.monstersLoaded+' monstros carregados'}`);
   return true;
  }catch(e){
