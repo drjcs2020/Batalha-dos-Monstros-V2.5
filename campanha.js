@@ -49,6 +49,36 @@ cm25LoadingMusic.load();
 cm25StartLoadingMusic();
 
 let currentRun=null,revision=0,pendingSnapshot=null,checkpointInFlight=null,pendingAutoSnapshot=null,manualCheckpointPending=false,lastCheckpoint=0,entryBusy=false,endingRun=false,finalSnapshot=null,bonusExitBusy=false;
+
+const CM25_BOSS_IMAGES=['monster_ghost.png','monster_golem.png','monster_mega.png',
+ 'monster_plant.png','monster_bee.png','monster_duchess.png','monster_bat.png',
+ 'monster_hydra.png','monster_queen.png','monster_dragon.png'];
+const CM25_BOSS_COLORS=['#aff2ff','#ffa66b','#dfbcff','#a2ffb4','#ffdf83',
+ '#dbabff','#ddb4ff','#9befe6','#ebaff5','#ffcb89'];
+const CM25_BOSS_ASSETS='https://drjcs2020.github.io/classmana-batalha-dos-monstros-V2/assets/';
+let cm25RealmStartScore=0,cm25VictoryAlreadyShown=null;
+function cm25ShowBossVictory(finishedRealm,points){
+ if(finishedRealm<1||finishedRealm>10)return;
+ const i=finishedRealm-1,box=$('cm25BossVictory'),number=Number(points);
+ const valid=Number.isFinite(number)&&number>=0;
+ const obtained=valid?Math.max(0,Math.round(number)-(Number(cm25RealmStartScore)||0)):null;
+ box.style.setProperty('--bossAccent',CM25_BOSS_COLORS[i]);
+ $('cm25BossName').textContent=CAMPAIGN[i][0].toLocaleUpperCase('pt-BR');
+ const image=$('cm25BossImage');image.src=CM25_BOSS_ASSETS+CM25_BOSS_IMAGES[i];
+ image.alt=CAMPAIGN[i][0]+' eliminado';
+ $('cm25BossEarned').textContent=obtained===null?'—':'+'+obtained.toLocaleString('pt-BR');
+ $('cm25BossTotal').textContent=valid?Math.round(number).toLocaleString('pt-BR'):'—';
+ $('cm25BossNext').textContent=finishedRealm<10
+   ?'PRÓXIMO REINO: '+CAMPAIGN[finishedRealm][0].toLocaleUpperCase('pt-BR')
+   :'OS DEZ REINOS FORAM CONQUISTADOS!';
+ $('cm25BossPreparing').textContent=finishedRealm<10
+   ?'Preparando o próximo desafio...':'Preparando o resultado final da jornada...';
+ const bar=$('cm25BossProgress').firstElementChild;
+ if(bar){bar.style.animation='none';void bar.offsetWidth;bar.style.animation='';}
+ box.hidden=false;
+}
+function cm25HideBossVictory(){$('cm25BossVictory').hidden=true;}
+
 let cm25GetSequence=0;
 function getV25(params,timeoutMs=16000){
  return new Promise((resolve,reject)=>{
@@ -340,6 +370,8 @@ async function enterRegisteredStudent(profile){
    heroi_indice:identity.hero,personagem:game.personagem||'',
    hp:game.hp??100,mana:game.mana??100,pontuacao:game.pontuacao||0,tempo:game.tempo||0,
    id_aluno:identity.id_aluno,showTutorial:choice==='new'};
+  cm25RealmStartScore=Math.max(0,Number(pendingSnapshot.pontuacao)||0);
+  cm25VictoryAlreadyShown=null;
   // No primeiro reino, reutilizar a tela que já mostrou barra de carregamento,
   // vídeo, narração, seleção de herói e cadastro: sem recarregar o áudio.
   const bridge=ready&&!campaignStarted?frame.contentWindow.CM25RealmBridge:null;
@@ -382,6 +414,7 @@ function switchRealm(next,target=1,direct=true){
   // O reino recém-alcançado começa com 100% de mana; manter pontos/herói.
   const changingRealm=Number(next)!==Number(realm);
   pendingSnapshot={...before,reino:next,territorio:target,mana:changingRealm?100:before.mana};
+  if(changingRealm)cm25RealmStartScore=Math.max(0,Number(before.pontuacao)||0);
  }
  if(autoTimer){clearTimeout(autoTimer);autoTimer=null;}
  realm=next;territory=target;pendingArea=target;ready=false;entering=false;automaticEntry=direct;loadId++;
@@ -396,7 +429,7 @@ function switchRealm(next,target=1,direct=true){
   $('transitionLoading').hidden=!direct||initialTutorial;
  $('transitionLabel').textContent='Preparando o reino '+CAMPAIGN[next-1][0]+'…';
  $('transitionSubTitle').textContent='Carregando o próximo território e seu cenário…';
- frame.src=`reinos/${String(realm).padStart(2,'0')}/index.html?cm25=${loadId}&direct=${direct?'1':'0'}&rev=20261031-bonus-placar-unico`;
+ frame.src=`reinos/${String(realm).padStart(2,'0')}/index.html?cm25=${loadId}&direct=${direct?'1':'0'}&rev=20261031-boss-victory`;
 }
 // READY confirma o código do iframe, mas não o carregamento das imagens.
 // Aguardar o cenário antes de iniciar uma área nos testes rápidos.
@@ -554,8 +587,16 @@ window.addEventListener('message',e=>{
  else if(data.action==='COMPLETE'){
   if(!currentRun||endingRun||stopSaveOpen||autoTimer)return;
   const completedRealm=realm,completedToken=loadId;
-  // Gravar somente o reino que foi vencido, jamais antecipar o próximo.
+  if(cm25VictoryAlreadyShown===completedToken+':'+completedRealm)return;
+  cm25VictoryAlreadyShown=completedToken+':'+completedRealm;
+  // Evento COMPLETE vem somente da vitoria sobre o chefe do reino.
   const completed=currentSnapshot(true);
+  const finalScore=Number(completed?.pontuacao??frame.contentWindow.CM25RealmBridge?.status?.()?.score);
+  cm25ShowBossVictory(completedRealm,finalScore);
+  // Recursos do proximo reino podem carregar enquanto o aluno comemora.
+  if(completedRealm<10)preloadScene(completedRealm+1,1).catch(error=>
+    console.warn('[ClassMana] Pre-carga da proxima arena',error));
+  // Salvar o resultado REAL, sem criar ou somar recompensas duplicadas.
   if(completed){
    finalSnapshot={...completed};
    completed.reino=realm;
@@ -567,11 +608,16 @@ window.addEventListener('message',e=>{
   }
   if(realm<10)report('Chefão derrotado! Preparando o próximo reino…');
   else report('🏆 Último chefão derrotado! Confirmando a vitória no servidor…');
-  if(realm<10)autoTimer=setTimeout(()=>{
+  autoTimer=setTimeout(()=>{
    autoTimer=null;
-   if(realm===completedRealm&&loadId===completedToken&&currentRun&&!endingRun)
-    switchRealm(realm+1,1);
-  },2300);
+   if(realm!==completedRealm||loadId!==completedToken){
+    cm25HideBossVictory();return;
+   }
+   if(completedRealm<10&&currentRun&&!endingRun){
+    switchRealm(completedRealm+1,1);
+    requestAnimationFrame(cm25HideBossVictory);
+   }else cm25HideBossVictory();
+  },3150);
  }
 });
 
@@ -733,6 +779,7 @@ function returnToCharacterSelection(){
  }
  sessionStorage.removeItem('cm25TesteIdentidade');
  identity=null;currentRun=null;revision=0;finalSnapshot=null;
+ cm25VictoryAlreadyShown=null;cm25RealmStartScore=0;cm25HideBossVictory();
  pendingSnapshot=null;pendingAutoSnapshot=null;manualCheckpointPending=false;
  campaignStarted=false;automaticEntry=false;entering=false;endingRun=false;
  stopSaveOpen=false;stopSaveConfirmed=false;stopPauseState=null;finishRankingOpen=false;
