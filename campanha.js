@@ -707,12 +707,36 @@ function openStopAndSave(mode='save'){
  $('saveCancel').hidden=false;$('saveCancel').disabled=false;$('saveCancel').textContent='▶ Voltar à batalha';
  $('saveExit').hidden=true;$('saveOverlay').hidden=false;$('saveConfirm').focus();
 }
+// Ao retomar, remover o foco dos botoes do controlador EXTERNO.
+ // Sem isso, Space/Enter do ataque e interpretado pelo navegador como um
+ // novo click em "Guardar progresso", reabrindo a janela em sequencia.
+function cm25FocusBattleAfterSave(){
+ const active=document.activeElement;
+ if(active&&typeof active.blur==='function'&&active!==frame)active.blur();
+ // O foco precisa entrar no iframe da batalha, e nao em outro botao.
+ // Limpar tambem qualquer botao que tenha ficado selecionado no motor.
+ try{
+  const inside=frame.contentWindow;
+  const el=inside?.document?.activeElement;
+  if(el&&typeof el.blur==='function'&&el!==inside.document.body)el.blur();
+  frame.focus({preventScroll:true});
+  inside?.focus();
+ }catch(error){
+  try{frame.focus({preventScroll:true});}
+  catch(focusError){console.warn('[ClassMana] Foco da batalha indisponivel',focusError);}
+ }
+}
 function closeStopAndResume(){
  if(!stopSaveOpen||stopSaveMode==='finish'&&stopSaveConfirmed)return;
- try{frame.contentWindow.CM25RealmBridge?.resumeAfterSave?.(stopPauseState);}catch(e){console.warn('[V2.5] Retorno do jogo:',e);}
- stopPauseState=null;stopSaveOpen=false;stopSaveConfirmed=false;
+ // O modal sai de cena antes de devolver o foco e descongelar o heroi.
+ const focused=document.activeElement;
+ if(focused&&typeof focused.blur==='function')focused.blur();
  $('saveOverlay').hidden=true;
- $('stopSave').hidden=false;$('finishRun').hidden=false;$('stopSave').focus();
+ $('stopSave').hidden=false;$('finishRun').hidden=false;
+ try{frame.contentWindow.CM25RealmBridge?.resumeAfterSave?.(stopPauseState);}
+ catch(e){console.warn('[V2.5] Retorno do jogo:',e);}
+ stopPauseState=null;stopSaveOpen=false;stopSaveConfirmed=false;
+ cm25FocusBattleAfterSave();
 }
 async function confirmStopAndSave(){
  if(!stopSaveOpen||stopSaveConfirmed||$('saveConfirm').disabled)return;
