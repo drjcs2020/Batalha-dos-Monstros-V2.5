@@ -96,7 +96,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050c1b;col
 
 
 /* Comemoracao especial compartilhada pelos dez chefes do ClassMana. */
-#cm25BossVictory{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:12px;
+#cm25BossVictory{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:12px;
  background:radial-gradient(ellipse at 50% 35%,#28567cf5,#0d2041fa 60%,#030817 100%);
  isolation:isolate;--bossAccent:#a7edff}
 #cm25BossVictory[hidden]{display:none!important}
@@ -111,11 +111,11 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050c1b;col
  animation:cm25BossAppear .35s ease-out both}
 #cm25BossCard:before{content:"";position:absolute;inset:9px;border:1px solid #ffe9b057;border-radius:15px;pointer-events:none}
 #cm25BossLogo{display:block;width:min(225px,48vw);height:55px;object-fit:contain;margin:auto}
-#cm25BossEyebrow{font:900 12px "Trebuchet MS",Arial,sans-serif;letter-spacing:.18em;color:#ffe5a1}
+#cm25BossEyebrow{font:900 clamp(13px,1.55vw,17px) "Trebuchet MS",Arial,sans-serif;letter-spacing:.09em;color:#fff1c6;text-shadow:0 2px 6px #000b}
 #cm25BossTitle{margin:5px 0;font:900 clamp(24px,4.6vw,42px)/1.08 Impact,"Arial Black",Arial,sans-serif;
  color:#ffe09b;text-shadow:0 3px 0 #754316,0 0 20px #ffde829e}
-#cm25BossName{font:900 clamp(15px,2.5vw,22px) "Trebuchet MS",Arial,sans-serif;
- letter-spacing:.09em;color:var(--bossAccent)}
+#cm25BossName{font:900 clamp(19px,3vw,27px) "Trebuchet MS",Arial,sans-serif;
+ letter-spacing:.04em;color:#ffffff;text-shadow:0 2px 7px #000,0 0 14px var(--bossAccent)}
 #cm25BossPortrait{position:relative;margin:8px auto 15px;width:clamp(128px,25vh,188px);aspect-ratio:1;
  display:grid;place-items:center;border-radius:50%;border:5px solid #ff6470;
  background:radial-gradient(circle,#254f7c,#07152f 75%);box-shadow:0 0 0 5px #f46b6b2e,0 0 30px #df445d75}
@@ -129,14 +129,14 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050c1b;col
 #cm25BossScoreGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;
  max-width:595px;margin:24px auto 10px}
 .cm25BossScoreCell{padding:10px 8px;border:1px solid #dbba798f;border-radius:13px;background:#082e3cbb}
-.cm25BossScoreCell small{display:block;font:800 clamp(10px,1.45vw,13px) Arial;color:#d0ecff}
+.cm25BossScoreCell small{display:block;font:900 clamp(13px,1.6vw,16px)/1.25 Arial;color:#fff4d0;text-shadow:0 1px 4px #000b}
 .cm25BossScoreCell strong{display:block;color:#ffe17f;margin-top:4px;
  font:900 clamp(22px,4vw,38px) Impact,"Arial Black",Arial,sans-serif}
-#cm25BossNext{font:900 clamp(12px,2vw,17px) Arial;color:#ffe3a0;margin:9px 0 4px}
-#cm25BossPreparing{color:#bfe8f9;font:700 clamp(11px,1.5vw,14px) Arial}
+#cm25BossNext{font:900 clamp(15px,2vw,20px) Arial;color:#ffecb7;margin:9px 0 4px;text-shadow:0 1px 6px #000b}
+#cm25BossPreparing{color:#e3f7ff;font:900 clamp(13px,1.6vw,16px) Arial;text-shadow:0 1px 6px #0009}
 #cm25BossProgress{height:6px;overflow:hidden;max-width:510px;margin:12px auto 0;border-radius:8px;background:#07172b}
 #cm25BossProgress i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#65c8ff,#ffe797,#eb984c);
- transform-origin:left;animation:cm25BossBar 3.15s linear both}
+ transform-origin:left;animation:cm25BossBar 6.10s linear both}
 @keyframes cm25BossAppear{from{opacity:0;transform:translateY(20px) scale(.975)}to{opacity:1;transform:none}}
 @keyframes cm25BossAura{to{opacity:.29}}
 @keyframes cm25BossBar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
@@ -225,6 +225,6 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050c1b;col
 <button id="enableLoadingSound" type="button" hidden>🔊 Ativar música de preparação</button>
 </div>
 <script src="configuracao_global.js"></script>
-<script src="campanha.js?v=20261031-13"></script>
+<script src="campanha.js?v=20261031-14"></script>
 </body>
 </html>

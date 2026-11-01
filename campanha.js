@@ -80,7 +80,7 @@ function cm25ShowBossVictory(finishedRealm,points){
 function cm25HideBossVictory(){$('cm25BossVictory').hidden=true;}
 
 let cm25GetSequence=0;
-function getV25(params,timeoutMs=16000){
+function getV25(params,timeoutMs=24000){
  return new Promise((resolve,reject)=>{
   const callback='cmV25Callback_'+(++cm25GetSequence),script=document.createElement('script');
   let finished=false;
@@ -99,8 +99,8 @@ function getV25(params,timeoutMs=16000){
 // Apps Script ContentService normalmente não libera CORS para leitura de POST.
 // A gravação é feita como pedido simples, e CONFIRMADA por GET/JSONP da planilha.
 // Sem confirmação não anunciamos que uma partida foi salva.
-async function postV25(data,deadlineMs=18000){
- const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),Math.min(10000,deadlineMs));
+async function postV25(data,deadlineMs=28000){
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),Math.min(16000,deadlineMs));
  const deadline=Date.now()+deadlineMs;
  try{
   const response=await fetch(CM25_SAVE_API,{method:'POST',mode:'no-cors',
@@ -109,11 +109,11 @@ async function postV25(data,deadlineMs=18000){
   // Uma resposta opaque apenas prova o envio, não que o script aceitou.
   // Consultar o estado até confirmar a revisão ou a substituição da partida.
   let lastError=null;
-  for(let n=0;n<7&&Date.now()<deadline;n++){
+  for(let n=0;n<6&&Date.now()<deadline;n++){
    if(n)await new Promise(r=>setTimeout(r,Math.min(650,Math.max(0,deadline-Date.now()-1200))));
    const remaining=deadline-Date.now();if(remaining<1150)break;
    try{
-    const confirm=await getV25({acao:'progresso',id_aluno:data.id_aluno,turma:data.turma},Math.min(2700,remaining));
+    const confirm=await getV25({acao:'progresso',id_aluno:data.id_aluno,turma:data.turma},Math.min(6500,remaining));
     if(!confirm||confirm.success!==true)throw Error(confirm?.erro||'Falha ao consultar confirmação');
     if(data.acao==='nova_partida'&&confirm.existe&&confirm.partida?.partida_id&&
        confirm.partida.partida_id!==data.partida_anterior)
@@ -180,7 +180,7 @@ function queueCheckpoint(snapshot,final=false,resultado='ENCERRADA',manual=false
    heroi_indice:snapshot.heroi_indice,personagem:snapshot.personagem,
    hp:snapshot.hp,mana:snapshot.mana,pontuacao:snapshot.pontuacao,tempo:snapshot.tempo};
   if(final)request.resultado=resultado;
-  const result=await postV25(request,priority?19000:14000);
+  const result=await postV25(request,priority?32000:24000);
   if(final){report('Partida encerrada e confirmada na V2.5.');currentRun=null;}
   else if(priority)report('Progresso confirmado no Google Sheets.');
   lastCheckpoint=Date.now();
@@ -429,7 +429,7 @@ function switchRealm(next,target=1,direct=true){
   $('transitionLoading').hidden=!direct||initialTutorial;
  $('transitionLabel').textContent='Preparando o reino '+CAMPAIGN[next-1][0]+'…';
  $('transitionSubTitle').textContent='Carregando o próximo território e seu cenário…';
- frame.src=`reinos/${String(realm).padStart(2,'0')}/index.html?cm25=${loadId}&direct=${direct?'1':'0'}&rev=20261031-boss-victory`;
+ frame.src=`reinos/${String(realm).padStart(2,'0')}/index.html?cm25=${loadId}&direct=${direct?'1':'0'}&rev=20261031-victory-readability-portal`;
 }
 // READY confirma o código do iframe, mas não o carregamento das imagens.
 // Aguardar o cenário antes de iniciar uma área nos testes rápidos.
@@ -483,15 +483,30 @@ async function area(n){
   const status=bridge.status();
   if(confirmed!==n||!status.active||status.territory!==n)throw Error('O jogo não confirmou a entrada no território');
   if(n<maximum&&status.monstersLoaded===0)throw Error('Nenhum monstro foi criado; território interrompido para evitar cenário vazio');
-  // Espera pelo primeiro desenho real da fase, não apenas pelo DOMContentLoaded.
-  // Opacity 0 não pausa o loop, ao contrário de display:none/visibility:hidden.
-  await new Promise(resolve=>{
+  // Dois quadros prontos nao garantem que a imagem do portal chegou.
+  // O reino 1 com tutorial verde usa sua propria sincronizacao aprovada.
+  const initialTutorial=selectedRealm===1&&n===1&&!!pendingSnapshot?.showTutorial;
+  if(automaticEntry&&!initialTutorial){
+   const deadline=Date.now()+26000;
+   $('transitionLabel').textContent='O portal já vai se abrir. Aguarde...';
+   $('transitionSubTitle').textContent='Preparando a entrada do herói no novo reino.';
+   // opacity:0 preserva requestAnimationFrame e o loop grafico do iframe.
+   // Esperar que o heroi apareca DENTRO do portal, nao so o cenario.
+   while(token===loadId&&selectedRealm===realm&&
+         !bridge.cm25PortalReadyToReveal?.()){
+    if(Date.now()>deadline)
+     throw Error('A entrada pelo portal não ficou pronta. Atualize a página para tentar novamente.');
+    await new Promise(resolve=>setTimeout(resolve,80));
+   }
+  }else{
+   await new Promise(resolve=>{
     let finished=false;
     const done=()=>{if(finished)return;finished=true;clearTimeout(limit);resolve();};
     const limit=setTimeout(done,700);
     try{const win=frame.contentWindow;win.requestAnimationFrame(()=>win.requestAnimationFrame(done));}
     catch(e){done();}
-  });
+   });
+  }
   if(token!==loadId||selectedRealm!==realm)return false;
   territory=n;pendingArea=0;campaignStarted=true;info();
   pendingSnapshot=null;
@@ -516,7 +531,21 @@ async function area(n){
   report(`Reino ${realm} · território ${n} · ${n===maximum?'chefão':status.monstersLoaded+' monstros carregados'}`);
   return true;
  }catch(e){
-  if(token===loadId){$('cm25JourneyDialog')?.remove();$('transitionLoading').hidden=true;frame.style.opacity='1';frame.style.pointerEvents='auto';report('ERRO AO ABRIR TERRITÓRIO: '+String(e.message||e));console.error('[ClassMana] Falha ao iniciar',selectedRealm,n,e);}
+  if(token===loadId){
+   $('cm25JourneyDialog')?.remove();
+   // Nao mostrar monstros e hero fora do portal caso os quadros falhem.
+   if(automaticEntry){
+    $('transitionLoading').hidden=false;
+    $('transitionLabel').textContent='Não foi possível abrir o portal.';
+    $('transitionSubTitle').textContent=String(e.message||e);
+    frame.style.opacity='0';frame.style.pointerEvents='none';
+   }else{
+    $('transitionLoading').hidden=true;
+    frame.style.opacity='1';frame.style.pointerEvents='auto';
+   }
+   report('ERRO AO ABRIR TERRITÓRIO: '+String(e.message||e));
+   console.error('[ClassMana] Falha ao iniciar',selectedRealm,n,e);
+  }
   return false;
  }finally{if(token===loadId)entering=false;}
 }
@@ -593,9 +622,13 @@ window.addEventListener('message',e=>{
   const completed=currentSnapshot(true);
   const finalScore=Number(completed?.pontuacao??frame.contentWindow.CM25RealmBridge?.status?.()?.score);
   cm25ShowBossVictory(completedRealm,finalScore);
-  // Recursos do proximo reino podem carregar enquanto o aluno comemora.
-  if(completedRealm<10)preloadScene(completedRealm+1,1).catch(error=>
-    console.warn('[ClassMana] Pre-carga da proxima arena',error));
+  // Dar prioridade ao primeiro envio/confirmacao no Google Sheets.
+  // Pre-carregar a arte do reino seguinte depois de iniciar o salvamento.
+  if(completedRealm<10)setTimeout(()=>{
+   if(realm===completedRealm&&loadId===completedToken)
+    preloadScene(completedRealm+1,1).catch(error=>
+     console.warn('[ClassMana] Pre-carga da proxima arena',error));
+  },1000);
   // Salvar o resultado REAL, sem criar ou somar recompensas duplicadas.
   if(completed){
    finalSnapshot={...completed};
@@ -617,7 +650,7 @@ window.addEventListener('message',e=>{
     switchRealm(completedRealm+1,1);
     requestAnimationFrame(cm25HideBossVictory);
    }else cm25HideBossVictory();
-  },3150);
+  },6100);
  }
 });
 

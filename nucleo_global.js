@@ -695,7 +695,7 @@
         return image;
       });
       const state={phase:'off',territory:0,started:0,token:0,exitDone:0,
-        heroX:0,groundY:0,heroY:0,portalX:0,entryEndX:0,wasPaused:false,wasFacing:1,portalPainted:false};
+        heroX:0,groundY:0,heroY:0,portalX:0,entryEndX:0,wasPaused:false,wasFacing:1,portalPainted:false,entryHeroPainted:false};
       const ENTRY_GROW=720,ENTRY_WALK=780,ENTRY_CLOSE=480;
       const EXIT_GROW=720,EXIT_WALK=1350,EXIT_CLOSE=490;
       const ENTRY_MS=ENTRY_GROW+ENTRY_WALK+ENTRY_CLOSE;
@@ -728,6 +728,7 @@
         if(exitWaitTimer!==null){clearTimeout(exitWaitTimer);exitWaitTimer=null;}
         queuedExit=null;
         state.portalPainted=false;
+        state.entryHeroPainted=false;
         state.token++;
         state.territory=territory;
         state.exitDone=0;
@@ -739,6 +740,11 @@
         state.portalX=entranceX();
         state.entryEndX=entryEnd();
       };
+      // Confirma a renderizacao REAL do heroi saindo do portal.
+      // O controlador da campanha espera esta marca para descobrir o
+      // novo reino: os subordinados nao aparecem antes da fada.
+      bridge.cm25PortalReadyToReveal=()=>state.phase==='entry'&&
+        state.portalPainted&&state.entryHeroPainted;
       const oldSelect=bridge.selectArea.bind(bridge);
       bridge.selectArea=(target,profile)=>{
         const selected=oldSelect(target,profile);
@@ -956,6 +962,8 @@
         // A mesma ancora do desenho normal (p.y-45), nao a linha da passarela.
         ctx.drawImage(image,x-ww/2,state.heroY-45-hh/2+
           feetOffset+bottomPad,ww,hh);
+        if(state.phase==='entry'&&state.portalPainted&&alpha>=.55)
+          state.entryHeroPainted=true;
         ctx.restore();
       };
       const showFrame=(index,x)=>{
@@ -1017,6 +1025,7 @@
           if(state.phase==='pending'&&playing&&!paused&&portalFramesReady()&&
              document.getElementById('tutorial')?.classList.contains('hidden')!==false){
             state.phase='entry';
+            state.entryHeroPainted=false;
             state.started=performance.now();
             state.wasPaused=paused;
             state.groundY=territoryGround();
