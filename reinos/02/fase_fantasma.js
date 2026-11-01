@@ -406,7 +406,7 @@ function updateMobs(dt){
     if(bad.length<7){
      const speed=185+S.area*14;
      const emoji=attackEmojiById[m.id],col=attackColorById[m.id];
-     bad.push({x:sx,y:sy,vx:dx/dist*speed,vy:dy/dist*speed,life:Math.max(3.0,dist/speed+1),r:13,kind:'ghost',col,emoji,ownerId:m.id,special:false});
+     bad.push({x:sx,y:sy,vx:dx/dist*speed,vy:dy/dist*speed,life:Math.max(3.0,dist/speed+1),r:13,kind:'lava',col,emoji,ownerId:m.id,special:false});
      m.attacks=(m.attacks||0)+1;
      burst(sx,sy,col,3);
      m.cool=4.0+(m.id%4)*.55+Math.random()*.9;
@@ -626,10 +626,10 @@ function drawBG(){
  const imageTop=H*(S.area===0?-.122:S.area===4?-.12:-.194); // Fundo se move 1:1 com câmera, com repetição contínua da textura.
  let left=-(scroll%period);
  while(left<W){ctx.drawImage(im,left,imageTop,period,targetHeight);left+=period}
- ctx.fillStyle='rgba(5,15,38,.07)';ctx.fillRect(0,0,W,H);
+ ctx.fillStyle=S.area===4?'rgba(51,13,1,.045)':'rgba(5,15,38,.07)';ctx.fillRect(0,0,W,H);
  // Neblina simples em camadas, deslocando-se bem mais lentamente do que o piso.
  ctx.save();ctx.globalAlpha=.12;
- const fog=ctx.createLinearGradient(0,H*.50,0,H*.93);fog.addColorStop(0,'rgba(130,185,255,0)');fog.addColorStop(.7,'#9dd5fc');fog.addColorStop(1,'rgba(70,108,169,0)');ctx.fillStyle=fog;ctx.fillRect(0,H*.50,W,H*.43);ctx.restore();
+ const fog=ctx.createLinearGradient(0,H*.50,0,H*.93);fog.addColorStop(0,'rgba(130,185,255,0)');fog.addColorStop(.7,S.area===4?'#ff8d35':'#9dd5fc');fog.addColorStop(1,'rgba(70,108,169,0)');ctx.fillStyle=fog;ctx.fillRect(0,H*.50,W,H*.43);ctx.restore();
 }
 drawBackgroundCached=function(s,bg){if(stage===0&&S.active){drawBG();return}orig.bg(s,bg)};
 // Retângulos visíveis medidos nos PNGs aprovados; não recorta nenhum pixel do personagem.
@@ -712,11 +712,103 @@ function drawBossEntrance(){
 function playBossSignal(){
  try{if(soundOn){tone(196,.45,'triangle',.09);setTimeout(()=>tone(247,.45,'triangle',.09),460);setTimeout(()=>tone(330,.68,'sawtooth',.07),900)}}catch(e){}
 }
-draw=function(){if(stage!==0||!S.active)return orig.draw();if(S.area===4){orig.draw();
-  for(const m of S.mobs)if(m.hp>0)drawMob(m);
-  // Chefão também lança emojis ofensivos, acompanhando os projéteis reais.
-  if(S.bossIntroTime<=0){ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='32px "Segoe UI Emoji","Apple Color Emoji",sans-serif';for(let i=0;i<bad.length;i++){const q=bad[i];if(q.life>0)ctx.fillText(['🔥','💣','💥','☄️'][i%4],q.x,q.y)}ctx.restore()}
-  lootDraw(false);lootHud();drawBossEntrance();return}drawHorde()};
+// A arena final nao depende mais de orig.draw() da V2.4, cuja pilha de
+// desenho compartilhada pode abortar o quadro inteiro se um efeito falhar.
+// A renderizacao do Golem e feita por camadas isoladas: um efeito quebrado
+// nao limpa fundo, heroi e chefao no mesmo frame.
+let cm25LastBossDrawWarning=0;
+function safeBossLayer(label,drawFn){
+ ctx.save();
+ try{drawFn()}catch(error){
+  const time=performance.now();
+  if(time-cm25LastBossDrawWarning>3000){
+   cm25LastBossDrawWarning=time;
+   console.error('[ClassMana] Camada da arena do Golem: '+label,error);
+  }
+ }finally{ctx.restore()}
+}
+function drawGolemFireball(q){
+ if(q.ownerId!==undefined){drawHostileMissile(q);return;}
+ ctx.save();
+ try{
+  ctx.translate(q.x,q.y);
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.shadowColor='#ff712c';ctx.shadowBlur=q.special?21:12;
+  if(q.mini&&q.img&&q.img.complete&&q.img.naturalWidth&&q.img.naturalHeight){
+   ctx.scale(-1,1);ctx.drawImage(q.img,-38,-38,76,76);
+  }else{
+   // Ataque do chefe: somente fogo, magma e erupcao, nunca fantasmas.
+   const image=cmMissileImgs[q.special?2:0];
+   const size=q.special?66:48;
+   if(image?.complete&&image.naturalWidth&&image.naturalHeight)
+    ctx.drawImage(image,-size/2,-size/2,size,size);
+   else{
+    ctx.fillStyle='#ff9b36';
+    ctx.font=(q.special?52:38)+'px "Segoe UI Emoji",sans-serif';
+    ctx.fillText(q.special?'🌋':'🔥',0,0);
+   }
+  }
+ }finally{ctx.restore()}
+}
+function drawGolemBossArena(){
+ // Desenhar o fundo primeiro, inclusive quando sprites ainda estao carregando.
+ safeBossLayer('cenario',()=>{
+  const bg=S.bg[4],original=bgs['bg_lava.png'];
+  if(bg?.complete&&bg.naturalWidth&&bg.naturalHeight)drawBG();
+  else if(original?.complete&&original.naturalWidth&&original.naturalHeight){
+   const scale=Math.max(W/original.naturalWidth,H/original.naturalHeight);
+   const w=original.naturalWidth*scale,h=original.naturalHeight*scale;
+   ctx.drawImage(original,(W-w)/2,(H-h)/2,w,h);
+  }else{
+   const gradient=ctx.createLinearGradient(0,0,0,H);
+   gradient.addColorStop(0,'#5b1a0a');gradient.addColorStop(1,'#120803');
+   ctx.fillStyle=gradient;ctx.fillRect(0,0,W,H);
+  }
+ });
+ safeBossLayer('chefao',()=>{
+  if(defeatPending){ctx.globalAlpha=Math.min(1,Math.max(0,(defeatDelay-.6)/2.2))}
+  drawEnemy();
+ });
+ safeBossLayer('subordinados',()=>{
+  for(const mob of S.mobs)if(mob.hp>0)drawMob(mob);
+ });
+ safeBossLayer('heroi',()=>orig.hero());
+ safeBossLayer('armas do heroi',()=>{
+  for(const q of shots)if(q.life>0)drawProjectile(q);
+ });
+ safeBossLayer('magias de fogo do Golem',()=>{
+  for(const q of bad)if(q.life>0)drawGolemFireball(q);
+ });
+ safeBossLayer('particulas',()=>{
+  for(const q of parts){
+   if(q.life<=0)continue;
+   ctx.globalAlpha=Math.max(0,Math.min(1,q.life));
+   ctx.fillStyle=q.col||'#ff9a35';
+   ctx.beginPath();ctx.arc(q.x,q.y,q.r,0,Math.PI*2);ctx.fill();
+  }
+ });
+ safeBossLayer('itens',()=>lootDraw(false));
+ safeBossLayer('avisos',()=>lootHud());
+ safeBossLayer('entrada do chefe',()=>drawBossEntrance());
+ if(defeatPending){
+  safeBossLayer('vitoria do chefe',()=>{
+   const t=3.4-defeatDelay;
+   ctx.textAlign='center';ctx.textBaseline='middle';
+   ctx.fillStyle='rgba(28,8,3,.78)';
+   ctx.fillRect(W*.28,H*.39,W*.44,H*.18);
+   ctx.font='900 '+Math.round(Math.min(36,W*.033))+'px Arial,sans-serif';
+   ctx.fillStyle='#ffe7a0';
+   ctx.fillText(t<1?'GOLPE FINAL!':t<2.35?'GOLEM DERROTADO!':'VITÓRIA!',W*.5,H*.45);
+   ctx.font='bold '+Math.round(Math.min(18,W*.016))+'px Arial,sans-serif';
+   ctx.fillText('Vida restante: '+Math.ceil(p.hp)+'%  •  Pontuação: '+Math.floor(score),W*.5,H*.51);
+  });
+ }
+}
+draw=function(){
+ if(stage!==0||!S.active)return orig.draw();
+ if(S.area===4){drawGolemBossArena();return}
+ drawHorde();
+};
 finishBossDefeat=function(){if(stage!==0||!S.active)return orig.defeat();
  defeatPending=false;playing=false;paused=true;S.active=false;
  changedArea('GOLEM DE LAVA DERROTADO!', 'Próximo reino: Mega-Aranha!',()=>{

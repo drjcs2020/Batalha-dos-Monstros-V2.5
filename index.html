@@ -116,13 +116,16 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050c1b;col
  color:#ffe09b;text-shadow:0 3px 0 #754316,0 0 20px #ffde829e}
 #cm25BossName{font:900 clamp(19px,3vw,27px) "Trebuchet MS",Arial,sans-serif;
  letter-spacing:.04em;color:#ffffff;text-shadow:0 2px 7px #000,0 0 14px var(--bossAccent)}
-#cm25BossPortrait{position:relative;margin:8px auto 15px;width:clamp(128px,25vh,188px);aspect-ratio:1;
- display:grid;place-items:center;border-radius:50%;border:5px solid #ff6470;
- background:radial-gradient(circle,#254f7c,#07152f 75%);box-shadow:0 0 0 5px #f46b6b2e,0 0 30px #df445d75}
-#cm25BossPortrait img{width:112%;height:112%;object-fit:contain;filter:drop-shadow(0 5px 10px #000a)}
-#cm25BossPortrait:after{content:"";position:absolute;left:-12%;top:47%;width:124%;height:11px;
- transform:rotate(-42deg);border:2px solid #ffbcb2;border-radius:12px;
- background:linear-gradient(#ff818a,#d22b4e);box-shadow:0 0 15px #ff5a69}
+#cm25BossPortrait{position:relative;margin:8px auto 15px;width:clamp(146px,27vh,205px);aspect-ratio:1;
+ display:grid;place-items:center;border-radius:50%;
+ background:radial-gradient(circle at 42% 36%,#355b81,#09162e 78%);
+ box-shadow:0 0 32px #f54d584f,inset 0 0 16px #040d1c}
+#cm25BossPortrait img{width:105%;height:105%;object-fit:contain;filter:drop-shadow(0 6px 11px #0009)}
+#cm25BossBanSymbol{position:absolute;inset:-9%;width:118%;height:118%;z-index:2;
+ overflow:visible;pointer-events:none;filter:drop-shadow(0 0 7px #a52242a0)}
+#cm25BossBanSymbol .cm25BanWhite{fill:none;stroke:#fff4ef;stroke-width:24;stroke-linecap:round}
+#cm25BossBanSymbol .cm25BanRed{fill:none;stroke:#f21b32;stroke-width:17;stroke-linecap:round}
+#cm25BossBanSymbol .cm25BanInner{fill:none;stroke:#9d0822;stroke-width:3;opacity:.7}
 #cm25BossSeal{position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);white-space:nowrap;
  padding:4px 15px;border:1px solid #f7a8a0;border-radius:20px;background:#8d2741;
  font:900 11px Arial,sans-serif;letter-spacing:.16em;color:#fff}
@@ -211,7 +214,15 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050c1b;col
   <div id="cm25BossEyebrow">✦ REINO CONCLUÍDO ✦</div>
   <h2 id="cm25BossTitle">CHEFÃO DERROTADO!</h2>
   <div id="cm25BossName"></div>
-  <div id="cm25BossPortrait"><img id="cm25BossImage" alt="Chefão eliminado"><span id="cm25BossSeal">ELIMINADO</span></div>
+  <div id="cm25BossPortrait"><img id="cm25BossImage" alt="Chefão eliminado">
+   <svg id="cm25BossBanSymbol" viewBox="0 0 220 220" aria-hidden="true" focusable="false">
+    <circle class="cm25BanWhite" cx="110" cy="110" r="92"/>
+    <circle class="cm25BanRed" cx="110" cy="110" r="92"/>
+    <circle class="cm25BanInner" cx="110" cy="110" r="81"/>
+    <path class="cm25BanWhite" d="M45 175 L175 45"/>
+    <path class="cm25BanRed" d="M45 175 L175 45"/>
+   </svg>
+   <span id="cm25BossSeal">ELIMINADO</span></div>
   <div id="cm25BossScoreGrid">
    <div class="cm25BossScoreCell"><small>PONTOS CONQUISTADOS NESTA ETAPA</small><strong id="cm25BossEarned">—</strong></div>
    <div class="cm25BossScoreCell"><small>TOTAL ACUMULADO</small><strong id="cm25BossTotal">—</strong></div>
@@ -225,6 +236,6 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050c1b;col
 <button id="enableLoadingSound" type="button" hidden>🔊 Ativar música de preparação</button>
 </div>
 <script src="configuracao_global.js"></script>
-<script src="campanha.js?v=20261031-14"></script>
+<script src="campanha.js?v=20261031-15"></script>
 </body>
 </html>
