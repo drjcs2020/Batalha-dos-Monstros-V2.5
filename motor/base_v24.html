@@ -687,35 +687,75 @@ function fire(power=false){if(!playing||paused||bossDefeated||defeatPending||tra
 function defend(){if(!playing||paused)return;if(p.shieldCd>0){say('🛡 Escudo recarregando...',1);return}let queen=stage===8;p.shield=queen?7.0:5.0;p.shieldCd=queen?4.5:6.5;shieldUses++;score=Math.max(0,score-(queen?65:50));tone(880,.35,'sine',.06);burst(p.x,p.y,heroes[heroIdx].col,30);say('🛡 ESCUDO ATIVADO • -'+(stage===8?65:50)+' PONTOS',1.3)}
 function startManaAutoRecharge(){if(!playing||paused||gameEnded||bossDefeated||defeatPending||transitionBusy||manaAutoCountdown!==null)return;manaAutoCountdown=3;say('🧪 MANA ESGOTADA • R para recarregar • automático em 3...',1.1)}
 let cmBankReady=false,cmBankError='';
-const cmBankPromise=fetch('banco_questoes.json?v=20261014sorteio-unico',{cache:'no-store'}).then(async r=>{
+const cmBankPromise=fetch(new URL((location.pathname.includes('/reinos/')?'../../':'../')+'banco_questoes.json?v=20261104-pedagogia500',location.href).href,{cache:'no-store'}).then(async r=>{
  if(!r.ok)throw Error('HTTP '+r.status);
  const b=await r.json();if(!Array.isArray(b.questoes)||b.questoes.length<1)throw Error('Banco vazio');
  const valid=b.questoes.filter(x=>x&&x.ativo!==false&&x.id&&x.enunciado&&x.tipo_resposta==='multipla_escolha'&&Array.isArray(x.alternativas)&&x.alternativas.length===4&&Number.isInteger(x.indice_correto)&&x.indice_correto>=0&&x.indice_correto<4);
  if(!valid.length)throw Error('Nenhuma questão elegível');
- questions.splice(0,questions.length,...valid.map(x=>({...x,q:x.enunciado,a:x.alternativas||[],ok:x.indice_correto,image:x.imagem||'',reference:x.texto_base||x.texto_referencia||'',priority:x.prioridade_sorteio||'normal',hint:x.dica||''})));
+ questions.splice(0,questions.length,...valid.map(x=>({...x,q:x.enunciado,a:x.alternativas||[],ok:x.indice_correto,image:x.imagem?new URL('../../'+x.imagem,location.href).href:'',reference:x.texto_base||x.texto_referencia||'',priority:x.prioridade_sorteio||'normal',hint:x.dica||''})));
  questionDeck=[];lastQuestionIndex=-1;cmQuestionQueues=null;cmQuestionPick=0;cmBankReady=true;
  console.info('ClassMana: banco externo carregado:',questions.length,'questões');
  return true;
 }).catch(e=>{cmBankError=String(e.message||e);console.error('ClassMana: banco externo indisponível:',e);return false;});
+// Sorteio pedagogico: 50% Matemática, 25% Português, 25% outras áreas.
+// As filas são persistidas por aluno. Entrar em outro reino não reinicia o histórico.
 let questionDeck=[],lastQuestionIndex=-1,cmQuestionQueues=null,cmQuestionPick=0;
+let cmDeckOwner='';
+const cmDeckVersion='cm25-pedagogia500-v1';
+const cmDeckPattern=['Matemática','Língua Portuguesa','Matemática','Outras'];
 function cmShuffle(items){
  for(let i=items.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[items[i],items[j]]=[items[j],items[i]];}
  return items;
 }
-function refillQuestionDeck(){
- const common=[],reserve=[];
- questions.forEach((q,i)=>{
-  if(q.priority==='reserva')reserve.push(i);
-  else common.push(i);
+function cmQuestionGroup(q){
+ return q.area==='Matemática'?'Matemática':q.area==='Língua Portuguesa'?'Língua Portuguesa':'Outras';
+}
+function cmQuestionStorageKey(){return cmDeckVersion+':'+String(playerId||'convidado');}
+function cmBalancedDeck(group){
+ const buckets={};
+ questions.forEach(q=>{
+  if(cmQuestionGroup(q)!==group)return;
+  const topic=String(q.subtema||q.area||'Geral');
+  (buckets[topic]||=([])).push(q.id);
  });
- questionDeck=[...cmShuffle(reserve),...cmShuffle(common)];
- cmQuestionQueues=null;
- cmQuestionPick=0;
+ Object.values(buckets).forEach(cmShuffle);
+ const order=[],topics=Object.keys(buckets);let previous='';
+ while(topics.some(topic=>buckets[topic].length)){
+  // Peso proporcional ao estoque restante, evitando o mesmo subtema consecutivo.
+  const eligible=topics.filter(topic=>buckets[topic].length&&topic!==previous);
+  const pool=eligible.length?eligible:topics.filter(topic=>buckets[topic].length);
+  let chance=Math.random()*pool.reduce((s,topic)=>s+buckets[topic].length,0),chosen=pool[pool.length-1];
+  for(const topic of pool){chance-=buckets[topic].length;if(chance<0){chosen=topic;break;}}
+  order.push(buckets[chosen].pop());
+  previous=chosen;
+ }
+ return order;
+}
+function refillQuestionDeck(){
+ cmDeckOwner=cmQuestionStorageKey();
+ let previous=null;
+ try{previous=JSON.parse(localStorage.getItem(cmDeckOwner)||'null')}catch(e){}
+ const groups=['Matemática','Língua Portuguesa','Outras'];
+ const validIds=new Map(questions.map(q=>[q.id,q]));
+ const valid=previous&&Number.isInteger(previous.pick)&&previous.pick>=0&&
+ previous.decks&&groups.every(group=>{
+  const deck=previous.decks[group];
+  return Array.isArray(deck)&&deck.length<=questions.length&&
+   new Set(deck).size===deck.length&&deck.every(id=>validIds.has(id)&&cmQuestionGroup(validIds.get(id))===group);
+ });
+ cmQuestionPick=valid?previous.pick:0;
+ cmQuestionQueues=valid?previous.decks:Object.fromEntries(groups.map(group=>[group,cmBalancedDeck(group)]));
 }
 function nextRechargeQuestion(){
- if(!questionDeck.length)refillQuestionDeck();
- const index=questionDeck.pop();
+ if(!cmQuestionQueues||cmDeckOwner!==cmQuestionStorageKey())refillQuestionDeck();
+ const group=cmDeckPattern[cmQuestionPick%4];
+ let deck=cmQuestionQueues[group];
+ if(!deck.length){deck=cmBalancedDeck(group);cmQuestionQueues[group]=deck;}
+ const id=deck.shift(),index=questions.findIndex(q=>q.id===id);
+ if(index<0)throw Error('Questão não encontrada no banco: '+id);
  cmQuestionPick++;lastQuestionIndex=index;
+ try{localStorage.setItem(cmDeckOwner,JSON.stringify({pick:cmQuestionPick,decks:cmQuestionQueues}));}
+ catch(e){console.warn('Não foi possível conservar o histórico de questões',e);}
  return questions[index];
 }
 let cmBonusCountAudio=null,cmBonusCashAudio=null;
