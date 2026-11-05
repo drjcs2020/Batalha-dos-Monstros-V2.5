@@ -722,6 +722,13 @@
         return Number(p.y)||H*.70;
       };
       const portalFramesReady=()=>frames.every(image=>image.complete&&image.naturalWidth>0);
+      // Não iniciar a animação antes de o sprite do herói estar carregado.
+      // Caso contrário o portal termina antes de haver um herói para desenhar,
+      // e o controlador aguarda um sinal que nunca chegará.
+      const heroSpriteReady=()=>{
+        const image=typeof heroImgs!=='undefined'&&heroImgs[heroIdx];
+        return !!(image?.complete&&image.naturalWidth>0&&image.naturalHeight>0);
+      };
       let queuedExit=null,exitWaitTimer=null;
       const entryEnd=()=>Math.max(W*.13,entranceX()+Math.min(H*.045,portalSize()*.095));
       const reset=territory=>{
@@ -743,8 +750,18 @@
       // Confirma a renderizacao REAL do heroi saindo do portal.
       // O controlador da campanha espera esta marca para descobrir o
       // novo reino: os subordinados nao aparecem antes da fada.
-      bridge.cm25PortalReadyToReveal=()=>state.phase==='entry'&&
-        state.portalPainted&&state.entryHeroPainted;
+      // A confirmação pertence ao território, não apenas ao intervalo
+      // de 2 s da animação. Evita perder o sinal se o navegador atrasar
+      // timers do iframe ou do controlador durante a mudança de reino.
+      // reset() limpa ambas as marcas na próxima entrada.
+      bridge.cm25PortalReadyToReveal=()=>state.portalPainted&&state.entryHeroPainted;
+      bridge.cm25PortalDiagnostics=()=>({
+        phase:state.phase,loadedFrames:frames.filter(image=>image.complete&&image.naturalWidth>0).length,
+        heroReady:heroSpriteReady(),portalPainted:state.portalPainted,
+        entryHeroPainted:state.entryHeroPainted,
+        playing:!!playing,paused:!!paused,
+        lastRenderError:window.cm25LastBattleFrameError?.message||''
+      });
       const oldSelect=bridge.selectArea.bind(bridge);
       bridge.selectArea=(target,profile)=>{
         const selected=oldSelect(target,profile);
@@ -1022,7 +1039,7 @@
           if(!st?.active||gameEnded)return;
           const territory=Number(st.territory)||1;
           if(state.territory!==territory)reset(territory);
-          if(state.phase==='pending'&&playing&&!paused&&portalFramesReady()&&
+          if(state.phase==='pending'&&playing&&!paused&&portalFramesReady()&&heroSpriteReady()&&
              document.getElementById('tutorial')?.classList.contains('hidden')!==false){
             state.phase='entry';
             state.entryHeroPainted=false;
