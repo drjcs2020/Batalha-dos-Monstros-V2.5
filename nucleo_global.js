@@ -725,10 +725,24 @@
       // Não iniciar a animação antes de o sprite do herói estar carregado.
       // Caso contrário o portal termina antes de haver um herói para desenhar,
       // e o controlador aguarda um sinal que nunca chegará.
-      const heroSpriteReady=()=>{
-        const image=typeof heroImgs!=='undefined'&&heroImgs[heroIdx];
-        return !!(image?.complete&&image.naturalWidth>0&&image.naturalHeight>0);
+      // A batalha usa sprites animados quando disponíveis. A entrada
+      // deve seguir a mesma preferência: exigir apenas heroImgs[] podia
+      // bloquear o portal mesmo com o herói animado já carregado.
+      const heroSprite=()=>{
+        const ready=image=>!!(image?.complete&&image.naturalWidth>0&&image.naturalHeight>0);
+        const groups=[
+          typeof fadaFrames!=='undefined'?fadaFrames:[],
+          typeof chamaFrames!=='undefined'?chamaFrames:[],
+          typeof loboFrames!=='undefined'?loboFrames:[],
+          typeof cavaleiroFrames!=='undefined'?cavaleiroFrames:[],
+          typeof magaFrames!=='undefined'?magaFrames:[],
+          typeof dragaoCombateFrames!=='undefined'?dragaoCombateFrames:[]
+        ];
+        const animated=(groups[heroIdx]||[]).find(ready);
+        const base=typeof heroImgs!=='undefined'?heroImgs[heroIdx]:null;
+        return animated||((ready(base))?base:null);
       };
+      const heroSpriteReady=()=>!!heroSprite();
       let queuedExit=null,exitWaitTimer=null;
       const entryEnd=()=>Math.max(W*.13,entranceX()+Math.min(H*.045,portalSize()*.095));
       const reset=territory=>{
@@ -965,8 +979,8 @@
       };
       const drawCharacter=(x,alpha=1,scale=1)=>{
         // Sprite oficial, não recriado: idêntico ao herói escolhido no jogo.
-        const image=typeof heroImgs!=='undefined'&&heroImgs[heroIdx];
-        if(!image?.complete||!image.naturalWidth)return;
+        const image=heroSprite();
+        if(!image)return;
         const hh=Math.min(170,H*.270)*
           (bridge.realm===10&&typeof window.cm25HeroDepthScale==='function'?window.cm25HeroDepthScale():1)*scale;
         const ww=hh*(image.naturalWidth/image.naturalHeight);

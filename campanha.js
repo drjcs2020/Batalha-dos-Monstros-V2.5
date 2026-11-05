@@ -422,7 +422,11 @@ function switchRealm(next,target=1,direct=true){
  // A entrada inicial preserva o carregamento/vídeo originais.
  // Só as mudanças de reino usam a transição discreta, sem recarregar a abertura.
  const initialTutorial=!!(pendingSnapshot?.showTutorial&&next===1&&target===1);
- frame.style.opacity=direct?'0':'1';
+ // A tela de carregamento cobre integralmente o iframe durante a troca.
+ // Não usar opacity:0 no reino seguinte: o Chromium pode reduzir ou
+ // suspender os quadros de um iframe invisível e impedir o desenho do portal.
+ // A primeira entrada com tutorial mantém seu fluxo próprio.
+ frame.style.opacity=direct&&initialTutorial?'0':'1';
  frame.style.pointerEvents=direct?'none':'auto';
  // Nao cobrir COMO JOGAR com uma tela de preparacao antecipada.
  if($('transitionLoading').dataset.cm25TutorialPortal!=='1')
@@ -487,6 +491,9 @@ async function area(n){
   // O reino 1 com tutorial verde usa sua propria sincronizacao aprovada.
   const initialTutorial=selectedRealm===1&&n===1&&!!pendingSnapshot?.showTutorial;
   if(automaticEntry&&!initialTutorial){
+   // Já existe uma máscara opaca em primeiro plano. A arena precisa
+   // permanecer renderizável por baixo dela para a entrada ser confirmada.
+   frame.style.opacity='1';
    const deadline=Date.now()+26000;
    $('transitionLabel').textContent='O portal já vai se abrir. Aguarde...';
    $('transitionSubTitle').textContent='Preparando a entrada do herói no novo reino.';
@@ -494,8 +501,12 @@ async function area(n){
    // Esperar que o heroi apareca DENTRO do portal, nao so o cenario.
    while(token===loadId&&selectedRealm===realm&&
          !bridge.cm25PortalReadyToReveal?.()){
-    if(Date.now()>deadline)
-     throw Error('A entrada pelo portal não ficou pronta. Atualize a página para tentar novamente.');
+    if(Date.now()>deadline){
+     const diagnostic=bridge.cm25PortalDiagnostics?.()||{};
+     console.error('[ClassMana] Portal não confirmou o desenho da entrada',diagnostic);
+     const details=' [quadros '+(diagnostic.loadedFrames??'?')+'/6; herói '+(diagnostic.heroReady?'pronto':'não carregado')+'; fase '+(diagnostic.phase||'?')+'; jogo '+(diagnostic.playing?'ativo':'parado')+'; erro '+String(diagnostic.lastRenderError||'não informado').slice(0,90)+']';
+     throw Error('A entrada pelo portal não ficou pronta.'+details);
+    }
     await new Promise(resolve=>setTimeout(resolve,80));
    }
   }else{
