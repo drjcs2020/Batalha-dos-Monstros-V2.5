@@ -750,6 +750,7 @@
         queuedExit=null;
         state.portalPainted=false;
         state.entryHeroPainted=false;
+        state.sceneFrames=0;
         state.token++;
         state.territory=territory;
         state.exitDone=0;
@@ -773,9 +774,27 @@
         phase:state.phase,loadedFrames:frames.filter(image=>image.complete&&image.naturalWidth>0).length,
         heroReady:heroSpriteReady(),portalPainted:state.portalPainted,
         entryHeroPainted:state.entryHeroPainted,
+        sceneFrames:state.sceneFrames||0,
         playing:!!playing,paused:!!paused,
         lastRenderError:window.cm25LastBattleFrameError?.message||''
       });
+      // Recuperação restrita a entradas automáticas. Um portal que falhou
+      // não pode impedir o aluno de jogar se o próprio cenário já foi
+      // renderizado várias vezes e a horda está ativa.
+      bridge.cm25RecoverPortalEntry=()=>{
+        const status=bridge.status();
+        if(!status?.active||(state.sceneFrames||0)<4)return false;
+        if(state.phase==='entry'||state.phase==='pending'){
+          state.token++;
+          state.phase='off';
+          state.entryHeroPainted=false;
+          state.portalPainted=false;
+          queuedExit=null;
+          paused=false;
+          p.inv=Math.max(Number(p.inv)||0,1.3);
+        }else if(state.phase!=='off')return false;
+        return true;
+      };
       const oldSelect=bridge.selectArea.bind(bridge);
       bridge.selectArea=(target,profile)=>{
         const selected=oldSelect(target,profile);
@@ -1053,6 +1072,7 @@
           if(!st?.active||gameEnded)return;
           const territory=Number(st.territory)||1;
           if(state.territory!==territory)reset(territory);
+          state.sceneFrames=(state.sceneFrames||0)+1;
           if(state.phase==='pending'&&playing&&!paused&&portalFramesReady()&&heroSpriteReady()&&
              document.getElementById('tutorial')?.classList.contains('hidden')!==false){
             state.phase='entry';

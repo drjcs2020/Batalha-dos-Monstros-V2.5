@@ -433,7 +433,7 @@ function switchRealm(next,target=1,direct=true){
   $('transitionLoading').hidden=!direct||initialTutorial;
  $('transitionLabel').textContent='Preparando o reino '+CAMPAIGN[next-1][0]+'…';
  $('transitionSubTitle').textContent='Carregando o próximo território e seu cenário…';
- frame.src=`reinos/${String(realm).padStart(2,'0')}/index.html?cm25=${loadId}&direct=${direct?'1':'0'}&rev=20261031-lava-render-fixed`;
+ frame.src=`reinos/${String(realm).padStart(2,'0')}/index.html?cm25=${loadId}&direct=${direct?'1':'0'}&rev=20261104-reino2-recovery`;
 }
 // READY confirma o código do iframe, mas não o carregamento das imagens.
 // Aguardar o cenário antes de iniciar uma área nos testes rápidos.
@@ -494,13 +494,22 @@ async function area(n){
    // Já existe uma máscara opaca em primeiro plano. A arena precisa
    // permanecer renderizável por baixo dela para a entrada ser confirmada.
    frame.style.opacity='1';
-   const deadline=Date.now()+26000;
+   const startWait=Date.now(),deadline=startWait+26000;
    $('transitionLabel').textContent='O portal já vai se abrir. Aguarde...';
    $('transitionSubTitle').textContent='Preparando a entrada do herói no novo reino.';
    // opacity:0 preserva requestAnimationFrame e o loop grafico do iframe.
    // Esperar que o heroi apareca DENTRO do portal, nao so o cenario.
    while(token===loadId&&selectedRealm===realm&&
          !bridge.cm25PortalReadyToReveal?.()){
+    // O Reino 2 já foi carregado e desenhado, mas um recurso visual
+    // pode falhar. Após a espera inicial, permitir a batalha sem
+    // deixar o jogador preso na tela azul. Outros reinos não mudam.
+    if(selectedRealm===2&&Date.now()-startWait>=9500&&
+       bridge.cm25RecoverPortalEntry?.()){
+      console.warn('[ClassMana] Reino 2: portal não confirmou; cena pronta, batalha liberada.',
+        bridge.cm25PortalDiagnostics?.());
+      break;
+    }
     if(Date.now()>deadline){
      const diagnostic=bridge.cm25PortalDiagnostics?.()||{};
      console.error('[ClassMana] Portal não confirmou o desenho da entrada',diagnostic);
